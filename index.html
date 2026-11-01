@@ -516,6 +516,7 @@ table.t td .row svg { flex: none; }
 .ghost8 { background: transparent !important; color: #fff !important; border-color: #ffffff44 !important; }
 .t8-foot { margin: 6px 0 0; font-size: 11.5px; color: #ffffff66; text-align: center; }
 @media (min-width: 720px) { .t8-btns { grid-template-columns: 1fr 1fr; } .t8-in { padding-top: 80px; } }
+@media (min-width: 720px) { .t8-btns.t8-b3 { grid-template-columns: 1fr 1fr 1fr; } }
 /* ===== wizard ===== */
 .w8-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0 14px; }
 .w8-steps div { display: flex; flex-direction: column; align-items: center; gap: 4px; font: 600 11px var(--disp); color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
@@ -2535,7 +2536,9 @@ function tKerjaya() {
 A['ask'] = function () { S.settings.ask = !S.settings.ask; save(); render(); };
 A['mini'] = function () { S.settings.mini = !S.settings.mini; save(); render(); };
 A['export'] = function () {
-  var code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  var sv = UI.screen === 'menu' ? loadSave() : S;
+  if (!sv) { toast('No saved career to export.'); return; }
+  var code = btoa(unescape(encodeURIComponent(JSON.stringify(sv))));
   showModal('<h2>Export save</h2><p class="dim">Copy this code and keep it somewhere safe.</p><textarea id="exp" readonly spellcheck="false">' + code + '</textarea><div class="row"><button class="btn pri" data-act="copy">Copy</button><button class="btn" data-act="mclose">Close</button></div>');
 };
 A['copy'] = function () {
@@ -6457,7 +6460,7 @@ function vMenu() {
     var p = sv.drivers[sv.pi], t = sv.teams[p.team];
     h += '<div class="t8-save" style="--tc:' + t.color + '"><div class="t8-hl">' + helmetSVG(Object.assign({}, p, { team: null }), 58, false) + '</div><div class="t8-si"><small>Continue career</small><b>' + esc(p.name) + '</b><span>' + esc(t.name) + ' · Season ' + sv.season + ' · Round ' + Math.min(sv.round + 1, 10) + '/10</span></div><button class="btn pri" data-act="continue">Continue →</button></div>';
   }
-  h += '<div class="t8-btns"><button class="btn ' + (sv ? '' : 'pri') + ' wide" data-act="new">New career</button><button class="btn wide ghost8" data-act="import">Import save</button></div>' +
+  h += '<div class="t8-btns' + (sv && sv.drivers ? ' t8-b3' : '') + '"><button class="btn ' + (sv ? '' : 'pri') + ' wide" data-act="new">New career</button>' + (sv && sv.drivers ? '<button class="btn wide ghost8" data-act="export">Export save</button>' : '') + '<button class="btn wide ghost8" data-act="import">Import save</button></div>' +
     '<p class="t8-foot">All teams, drivers and circuits are fictional.<br><button class="t8-ver" data-act="chlog">v' + APEX.ver + ' · What\'s new</button></p></div></div>';
   return h;
 }

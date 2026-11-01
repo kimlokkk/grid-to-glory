@@ -511,6 +511,7 @@ table.t td .row svg { flex: none; }
 .ghost8 { background: transparent !important; color: #fff !important; border-color: #ffffff44 !important; }
 .t8-foot { margin: 6px 0 0; font-size: 11.5px; color: #ffffff66; text-align: center; }
 @media (min-width: 720px) { .t8-btns { grid-template-columns: 1fr 1fr; } .t8-in { padding-top: 80px; } }
+@media (min-width: 720px) { .t8-btns.t8-b3 { grid-template-columns: 1fr 1fr 1fr; } }
 /* ===== wizard ===== */
 .w8-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0 14px; }
 .w8-steps div { display: flex; flex-direction: column; align-items: center; gap: 4px; font: 600 11px var(--disp); color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }

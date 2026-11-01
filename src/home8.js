@@ -25,7 +25,7 @@ function vMenu() {
     var p = sv.drivers[sv.pi], t = sv.teams[p.team];
     h += '<div class="t8-save" style="--tc:' + t.color + '"><div class="t8-hl">' + helmetSVG(Object.assign({}, p, { team: null }), 58, false) + '</div><div class="t8-si"><small>Continue career</small><b>' + esc(p.name) + '</b><span>' + esc(t.name) + ' · Season ' + sv.season + ' · Round ' + Math.min(sv.round + 1, 10) + '/10</span></div><button class="btn pri" data-act="continue">Continue →</button></div>';
   }
-  h += '<div class="t8-btns"><button class="btn ' + (sv ? '' : 'pri') + ' wide" data-act="new">New career</button><button class="btn wide ghost8" data-act="import">Import save</button></div>' +
+  h += '<div class="t8-btns' + (sv && sv.drivers ? ' t8-b3' : '') + '"><button class="btn ' + (sv ? '' : 'pri') + ' wide" data-act="new">New career</button>' + (sv && sv.drivers ? '<button class="btn wide ghost8" data-act="export">Export save</button>' : '') + '<button class="btn wide ghost8" data-act="import">Import save</button></div>' +
     '<p class="t8-foot">All teams, drivers and circuits are fictional.<br><button class="t8-ver" data-act="chlog">v' + APEX.ver + ' · What\'s new</button></p></div></div>';
   return h;
 }

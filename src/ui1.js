@@ -249,7 +249,9 @@ function tKerjaya() {
 A['ask'] = function () { S.settings.ask = !S.settings.ask; save(); render(); };
 A['mini'] = function () { S.settings.mini = !S.settings.mini; save(); render(); };
 A['export'] = function () {
-  var code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  var sv = UI.screen === 'menu' ? loadSave() : S;
+  if (!sv) { toast('No saved career to export.'); return; }
+  var code = btoa(unescape(encodeURIComponent(JSON.stringify(sv))));
   showModal('<h2>Export save</h2><p class="dim">Copy this code and keep it somewhere safe.</p><textarea id="exp" readonly spellcheck="false">' + code + '</textarea><div class="row"><button class="btn pri" data-act="copy">Copy</button><button class="btn" data-act="mclose">Close</button></div>');
 };
 A['copy'] = function () {
