@@ -1,0 +1,20 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 390, height: 844 } }); const errs = [];
+  pg.on('pageerror', e => errs.push(e.message));
+  await pg.goto(require('url').pathToFileURL(require('path').resolve(__dirname, '../index.html')).href); await pg.waitForTimeout(300);
+  await pg.click('[data-act=new]'); await pg.fill('#w8l', 'Lokman'); await pg.click('[data-act=w8-next]'); await pg.click('[data-act=w8-next]'); await pg.click('[data-act=d-team][data-v="8"]'); await pg.click('[data-act=w8-next]');
+  await pg.evaluate("A['new-go']()"); await pg.waitForTimeout(300);
+  await pg.evaluate("S.xp=0; UI.screen='hub'; UI.tab='musim'; render()");
+  console.log('nudge xp0:', await pg.evaluate("document.body.innerText.indexOf('XP to spend')>=0"));
+  await pg.evaluate("S.xp=60; render()");
+  console.log('nudge xp60:', await pg.evaluate("document.body.innerText.indexOf('XP to spend')>=0"));
+  await pg.screenshot({ path: 'nudge.png' });
+  await pg.click('.spon-b [data-act=tab]'); await pg.waitForTimeout(200);
+  console.log('tab after click:', await pg.evaluate("UI.tab"));
+  await pg.evaluate("A.menu()"); await pg.waitForTimeout(200);
+  await pg.click('[data-act=new]'); await pg.waitForTimeout(200);
+  await pg.fill('#w8l', 'Baru'); await pg.click('[data-act=w8-next]'); await pg.click('[data-act=w8-next]'); await pg.click('[data-act=d-team][data-v="8"]'); await pg.click('[data-act=w8-next]');
+  console.log('has go:', await pg.evaluate("!!document.querySelector('[data-act=new-go]')"), 'sure:', await pg.evaluate("!!document.querySelector('[data-act=w8-sure]')"));
+  console.log('ERRS', JSON.stringify(errs)); await b.close();
+})();

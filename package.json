@@ -1,0 +1,14 @@
+{
+  "name": "grid-to-glory",
+  "version": "1.0.0",
+  "description": "Browser-based motorsport career game in a single HTML file",
+  "private": true,
+  "scripts": {
+    "build": "bash build.sh",
+    "test": "bash qa/all.sh --quick",
+    "test:full": "bash qa/all.sh"
+  },
+  "devDependencies": {
+    "playwright": "^1.45.0"
+  }
+}
