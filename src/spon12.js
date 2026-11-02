@@ -124,3 +124,48 @@ if (typeof A !== 'undefined') A['press'] = function (d) {
   var pr = UI.wk && UI.wk.press; if (!pr || pr.done != null) return;
   var o = PRESS[pr.kind].o[+d.i]; pr.done = +d.i; pressApply(S, o, pr.home); save(); render();
 };
+
+/* ---- sidang akhbar pra-musim (modal, sekali setiap musim dari Musim 2) ---- */
+function preMake(S) {
+  var p = S.drivers[S.pi], t = S.teams[p.team], sh = p.sh && p.sh.length ? p.sh[p.sh.length - 1] : null, tg = t.dev && t.dev.target, rk = teamRank(S, t.id);
+  var moved = sh && sh.t !== t.short, ctx = { team: t.name, tg: tg, rk: rk, last: sh ? sh.pos : null, lt: sh ? sh.t : null };
+  var kind = moved ? 'move' : sh && sh.pos <= 3 ? 'top' : sh && (p.miss || 0) >= 1 ? 'press' : 'std';
+  return { s: S.season, kind: kind, ctx: ctx, done: null };
+}
+var PRE = {
+  move: { q: function (c) { return 'New colours, new season. How are you settling in at ' + c.team + '?'; }, o: [
+    { k: 'humble', t: '“The team has made me feel at home. I just want to learn and repay their trust.”', hint: 'Safe', mor: 3, fame: 0.5, rel: 2, mood: 0, r: 'The new garage warms to you straight away.' },
+    { k: 'conf', t: '“I did not come here to make up the numbers. I am here to win.”', hint: 'Bold', mor: 1, fame: 2, rel: 0, mood: 1, r: 'Headlines everywhere. Now you have to deliver.' },
+    { k: 'dig', t: '“My old team never gave me the tools. Here it feels different.”', hint: 'Spicy', mor: 0, fame: 3, rel: -1, mood: -1, r: 'Your old team will not forget that quote.' }] },
+  top: { q: function (c) { return 'You finished P' + c.last + ' last year. Is the pressure on to do it again?'; }, o: [
+    { k: 'humble', t: '“Every season starts from zero. We go race by race.”', hint: 'Safe', mor: 2, fame: 0.5, rel: 1, mood: 0, r: 'Calm and professional. Exactly what the team wants to hear.' },
+    { k: 'conf', t: '“I want the championship. Nothing less.”', hint: 'Bold', mor: 1, fame: 2.5, rel: 0, mood: 1, r: 'The fans love it. The garage is already counting the points.' },
+    { k: 'dig', t: '“The others should be worried, not me.”', hint: 'Spicy', mor: 0, fame: 3, rel: -1, mood: -0.5, r: 'A soundbite for the ages. Rivals take note.' }] },
+  press: { q: function (c) { return 'Last season did not go to plan. What has changed this winter?'; }, o: [
+    { k: 'own', t: '“I know what I did wrong. I have worked on it all winter.”', hint: 'Safe', mor: 3, fame: 0, rel: 1.5, mood: 0, r: 'Honest and humble. The engineers respect it.' },
+    { k: 'conf', t: '“Judge me on this year. I am a different driver now.”', hint: 'Bold', mor: 1, fame: 1.5, rel: 0, mood: 0.5, r: 'A confident reset. The pressure is yours now.' },
+    { k: 'dig', t: '“The car held me back. Give me a good one and see.”', hint: 'Spicy', mor: -2, fame: 2, rel: -2, mood: -1, r: 'The factory reads it twice.' }] },
+  std: { q: function (c) { return 'The boss wants P' + c.tg + ' in the constructors\' this year. Realistic?'; }, o: [
+    { k: 'humble', t: '“It is a big ask, but we will give everything for it.”', hint: 'Safe', mor: 2, fame: 0.5, rel: 1, mood: 0, r: 'Measured and loyal. The pit wall nods.' },
+    { k: 'conf', t: '“We can do better than that. Watch us.”', hint: 'Bold', mor: 1, fame: 2, rel: 0, mood: 1, r: 'Ambition sells. Sponsors perk up.' },
+    { k: 'dig', t: '“Targets are easy to set. Cars are harder to build.”', hint: 'Spicy', mor: -1, fame: 2.5, rel: -1.5, mood: -0.5, r: 'A quip aimed at the boss. The boss heard it.' }] }
+};
+function preHTML(pr) {
+  var Q = PRE[pr.kind], h = '<div class="stack press"><div class="row sp"><h3>Pre-season press conference</h3><span class="mono dim">Season ' + pr.s + '</span></div><p style="margin:0"><b>' + Q.q(pr.ctx) + '</b></p>';
+  if (pr.done == null) h += Q.o.map(function (o, i) { return '<button class="opt press-o" data-act="pre-a" data-i="' + i + '"><div class="t">' + o.t + '</div><div class="s">' + o.hint + '</div></button>'; }).join('');
+  else { var c = Q.o[pr.done]; h += '<div class="press-a"><i>' + c.t + '</i><p>' + c.r + '</p><div class="chips">' + [['Morale', c.mor], ['Fame', c.fame], ['Team', c.rel]].map(function (x) { return '<span class="' + (x[1] > 0 ? 'up' : x[1] < 0 ? 'dn' : '') + '">' + x[0] + ' ' + (x[1] > 0 ? '+' : '') + x[1] + '</span>'; }).join('') + '</div></div><button class="btn pri wide" data-act="pre-ok">On to the season</button>'; }
+  return h + '</div>';
+}
+A['pre-a'] = function (d) { var pr = S.pre; if (!pr || pr.done != null) return; var o = PRE[pr.kind].o[+d.i]; pr.done = +d.i; pressApply(S, o, false); save(); showModal(preHTML(pr)); };
+A['pre-ok'] = function () { closeModal(); };
+(function () {
+  var r0 = render;
+  render = function () {
+    r0();
+    try {
+      if (S && S.drivers && UI.screen === 'hub' && S.round === 0 && S.season >= 2 && !$modal.innerHTML) {
+        if (!S.pre || S.pre.s !== S.season) { S.pre = preMake(S); save(); showModal(preHTML(S.pre)); }
+      }
+    } catch (e) { }
+  };
+})();
