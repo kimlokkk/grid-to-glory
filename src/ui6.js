@@ -77,7 +77,7 @@ function drvCard() {
     (typeof objDrvHTML === 'function' ? objDrvHTML(S, p) : '') + '<div class="tiles3"><div><small>Standing</small><b>P' + pos + '</b></div><div><small>Points</small><b>' + p.pts + '</b></div><div><small>XP</small><b>' + S.xp + '</b></div><div><small>Morale</small><b>' + (S.morale == null ? 50 : S.morale) + '%</b></div></div></div>';
 }
 function hUtama() {
-  var p = me(), t = myTeam(), h = '<div class="grid6">';
+  var p = me(), t = myTeam(), h = '<div class="grid6' + (S.rival && S.rival.season === S.season ? ' hr' : '') + '">';
   h += '<div class="g-a">' + drvCard() + '</div>';
   if (S.round < 10) {
     var ci = S.cal[S.round], c = CIRCUITS[ci];
@@ -95,22 +95,31 @@ function hUtama() {
     var rv = S.drivers[S.rival.di];
     h += '<div class="g-f card"><h3>Season rival</h3><div class="vs6">' + avatarSVG(p, 48) + '<div class="sc6"><b>' + S.rival.w + ' – ' + S.rival.l + '</b><small>H2H</small></div>' + avatarSVG(rv, 48) + '</div><p class="dim" style="text-align:center">' + esc(p.name.split(' ')[0]) + ' vs ' + esc(rv.name) + ' (' + S.teams[rv.team].short + ')</p></div>';
   }
-  h += (typeof xpNudgeHTML === 'function' ? xpNudgeHTML('g-g') : '') + (typeof sponBannerHTML === 'function' ? sponBannerHTML('g-g') : '') + (typeof mktCard === 'function' ? mktCard('g-g') : '') + newsCard('g-g', 4);
+  h += '<div class="g-gs stack">' + (typeof xpNudgeHTML === 'function' ? xpNudgeHTML('') : '') + (typeof sponBannerHTML === 'function' ? sponBannerHTML('') : '') + (typeof mktCard === 'function' ? mktCard('') : '') + newsCard('', 4) + '</div>';
   /* kalendar mini */
   var up = ''; for (var i = S.round; i < Math.min(10, S.round + 3); i++) { var cc = CIRCUITS[S.cal[i]]; up += '<div class="krow">' + flagSVG(S.cal[i], 24) + '<span class="mono dim">R' + (i + 1) + '</span><span>' + cc.name + '</span><span class="dim">' + laps2(cc) + ' laps</span></div>'; }
   if (up) h += '<div class="g-h card"><div class="row sp"><h3>Coming up</h3><button class="btn sm" data-act="tab" data-v="kal">Calendar →</button></div>' + up + '</div>';
   return h + '</div>';
 }
 function hKal() {
-  var h = '<div class="card"><div class="row sp" style="margin-bottom:6px"><h3>Season calendar ' + S.season + '</h3><span class="dim">' + S.round + ' / 10 done</span></div>';
+  var h = '<div class="card"><div class="row sp" style="margin-bottom:6px"><h3>Season calendar ' + S.season + '</h3><span class="dim">' + S.round + ' / 10 done</span></div><div class="krows">';
   for (var i = 0; i < 10; i++) {
     var ci = S.cal[i], c = CIRCUITS[ci], r = S.results[i], cur = i === S.round;
     var res = r ? (r.dnf ? '<span class="pill6 bad">DNF</span>' : '<span class="pill6 ' + (r.pos <= 3 ? 'pod' : r.pos <= 10 ? 'pts' : '') + '">P' + r.pos + '</span>') + (r.pts ? ' <span class="dim mono">' + r.pts + ' pts</span>' : '') : cur ? '<span class="pill6 now">Next</span>' : '<span class="dim">–</span>';
     h += '<div class="krow big clk' + (cur ? ' cur' : '') + '" data-act="th" data-v="' + ci + '"><span class="mono dim">R' + (i + 1) + '</span>' + flagSVG(ci, 30) + '<div style="min-width:0"><b>' + c.name + '</b><small class="dim">' + c.loc + ' · ' + laps2(c) + ' laps · rain ' + Math.round(c.rain * 100) + '%</small></div><div class="r6">' + res + '</div></div>';
   }
-  return h + '<p class="dim" style="font-size:12.5px;margin:8px 2px 0">Tap a circuit to see its history.</p></div>';
+  return h + '</div><p class="dim" style="font-size:12.5px;margin:8px 2px 0">Tap a circuit to see its history.</p></div>';
 }
+var WIDE = window.matchMedia ? window.matchMedia('(min-width: 1100px)') : { matches: false };
+if (WIDE.addEventListener) WIDE.addEventListener('change', function () { if (typeof UI !== 'undefined' && UI.screen === 'hub' && !document.querySelector('#modal > *')) render(); });
 function hKed() {
+  if (!WIDE.matches || UI.kedMode === 'j') return hKed1();
+  var keep = UI.kedMode, seg = function (on) { return '<div class="seg" style="margin-bottom:12px;max-width:340px;grid-template-columns:repeat(2,1fr)"><button class="' + (on ? 'on' : '') + '" data-act="ked-m" data-v="p">Standings</button><button class="' + (on ? '' : 'on') + '" data-act="ked-m" data-v="j">Juniors</button></div>'; };
+  var strip = function (x) { return x.replace(/^<div class="seg"[\s\S]*?<\/button><\/div>/, ''); };
+  UI.kedMode = 'p'; var a = strip(hKed1()); UI.kedMode = 't'; var b = strip(hKed1()); UI.kedMode = keep;
+  return seg(true) + '<div class="kedwide">' + a + b + '</div>';
+}
+function hKed1() {
   var mode = UI.kedMode || 'p', p = me(), h = '<div class="seg" style="margin-bottom:12px;max-width:480px;grid-template-columns:repeat(6,1fr)"><button class="' + (mode === 'p' ? 'on' : '') + '" data-act="ked-m" data-v="p" style="grid-column:span 2">Drivers</button><button class="' + (mode === 't' ? 'on' : '') + '" data-act="ked-m" data-v="t" style="grid-column:span 2">Constructors</button><button class="' + (mode === 'j' ? 'on' : '') + '" data-act="ked-m" data-v="j" style="grid-column:span 2">Juniors</button></div><div class="card">';
   if (mode === 'p') {
     var ds = driverStandings(S);
