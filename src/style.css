@@ -793,3 +793,18 @@ tr.clk { cursor: pointer; } tr.clk:hover td { background: var(--accSoft); }
 .pfrr { display: grid; justify-items: center; gap: 1px; min-width: 52px; padding: 6px 8px; border-radius: 10px; background: var(--panel2); border: 1.5px solid var(--line); color: var(--fg); cursor: pointer; font: inherit; }
 .pfrr b { font: 800 14px/1 var(--disp); } .pfrr small { font-size: 9.5px; color: var(--dim); letter-spacing: .06em; }
 .pfrr.pod { background: #f0b42933; border-color: #f0b429; } .pfrr.pts { background: #34c46c22; border-color: #34c46c88; } .pfrr.bad { background: #e0555522; border-color: #e0555588; }
+
+/* ===== strategi pit ===== */
+.strats { display: grid; gap: 8px; }
+@media (min-width: 900px) { .strats { grid-template-columns: repeat(2, 1fr); } }
+.strat { text-align: left; background: var(--panel); border: 1.5px solid var(--line); border-radius: 14px; padding: 11px 13px; cursor: pointer; color: var(--fg); font: inherit; display: grid; gap: 5px; }
+.strat:hover { border-color: var(--acc); }
+.strat.on { border-color: var(--acc); background: var(--accSoft); box-shadow: 0 0 0 2px var(--acc) inset; }
+.strat .sh { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.strat .sd { display: flex; align-items: center; gap: 4px; }
+.strat .sd em { font-style: normal; color: var(--dim); }
+.sdot { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font: 800 11px/1 var(--disp); color: #111; border: 2px solid #0003; }
+.srec { font: 700 9.5px/1 var(--disp); letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; border-radius: 20px; background: var(--a2); color: var(--onA2); }
+.strat .sn { font-size: 14px; }
+.strat .se { display: flex; justify-content: space-between; font-size: 13.5px; }
+.strat .sw { font-size: 12.5px; color: var(--dim); line-height: 1.4; }

@@ -74,13 +74,13 @@ var ROOKIE_NAT = { 'Ivo Brandão': 'BR', 'Lukas Hofer': 'AT', 'Remy Delacroix': 
 /* wear = kadar haus tayar, ot = kesukaran memotong (0-1), pw = pengaruh enjin, rain = peluang hujan, pit = kos lorong pit (s) */
 var CIRCUITS = [
   { name: 'GP Cempaka Raya', loc: 'Lembah Cempaka', laps: 22, base: 97.0, km: 5.5, wear: 1.0, ot: 0.50, pw: 0.55, rain: 0.40, pit: 14 },
-  { name: 'GP Costa Vermelha', loc: 'Costa Vermelha', laps: 24, base: 88.5, km: 4.6, wear: 1.25, ot: 0.60, pw: 0.45, rain: 0.10, pit: 13 },
-  { name: 'GP Monte Albrecht', loc: 'Monte Albrecht (street circuit)', laps: 28, base: 73.0, km: 3.3, wear: 0.80, ot: 0.95, pw: 0.30, rain: 0.25, pit: 12 },
+  { name: 'GP Costa Vermelha', loc: 'Costa Vermelha', laps: 24, base: 88.5, km: 4.6, wear: 1.70, ot: 0.60, pw: 0.45, rain: 0.10, pit: 13 },
+  { name: 'GP Monte Albrecht', loc: 'Monte Albrecht (street circuit)', laps: 28, base: 73.0, km: 3.3, wear: 1.20, ot: 0.95, pw: 0.30, rain: 0.25, pit: 12 },
   { name: 'GP Hanabi', loc: 'Teluk Hanabi', laps: 22, base: 93.0, km: 5.3, wear: 1.10, ot: 0.55, pw: 0.50, rain: 0.30, pit: 15 },
-  { name: 'GP Sierra Alta', loc: 'Sierra Alta', laps: 24, base: 84.0, km: 4.3, wear: 1.30, ot: 0.45, pw: 0.60, rain: 0.05, pit: 13 },
+  { name: 'GP Sierra Alta', loc: 'Sierra Alta', laps: 24, base: 84.0, km: 4.3, wear: 1.75, ot: 0.45, pw: 0.60, rain: 0.05, pit: 13 },
   { name: 'GP Nordkap', loc: 'Nordkap', laps: 20, base: 101.0, km: 6.0, wear: 0.90, ot: 0.50, pw: 0.55, rain: 0.45, pit: 16 },
   { name: 'GP Dunmere', loc: 'Dunmere Moor', laps: 24, base: 90.0, km: 4.9, wear: 0.90, ot: 0.50, pw: 0.45, rain: 0.50, pit: 14 },
-  { name: 'GP Valle Dorado', loc: 'Valle Dorado', laps: 26, base: 80.0, km: 4.0, wear: 1.00, ot: 0.70, pw: 0.35, rain: 0.15, pit: 13 },
+  { name: 'GP Valle Dorado', loc: 'Valle Dorado', laps: 26, base: 80.0, km: 4.0, wear: 1.40, ot: 0.70, pw: 0.35, rain: 0.15, pit: 13 },
   { name: 'GP Seri Mutiara', loc: 'Seri Mutiara', laps: 22, base: 92.0, km: 5.0, wear: 1.10, ot: 0.50, pw: 0.50, rain: 0.35, pit: 14 },
   { name: 'GP Aurelia', loc: 'Aurelia Bay', laps: 26, base: 86.0, km: 5.0, wear: 1.00, ot: 0.60, pw: 0.60, rain: 0.20, pit: 14 }
 ];
