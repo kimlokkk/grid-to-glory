@@ -217,7 +217,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
       else if (e.fac) pushNews(S, { k: 'fac', t: e.t, up: e.up, lv: e.lv, s: S.season + 1, r: 0 });
       else if (e.g != null && e.t === mineT) pushNews(S, { k: 'winter', t: e.t, p: e.k, g: +e.g.toFixed(1), s: S.season + 1, r: 0 });
     });
-    S.teams.forEach(function (t) { var tp = t.dev.tp; if ((tp.amb >= 2 && rnd() < 0.5) || t.id === mineT) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, am: tp.amb, s: S.season + 1, r: 0 }); });
+    S.teams.forEach(function (t) { var tp = t.dev.tp; if (tp.amb >= 2 && rnd() < 0.5) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, am: tp.amb, s: S.season + 1, r: 0 }); });
     if (typeof mktNews === 'function') mktNews(S);
   } else S.teams.forEach(function (t) {
     ['aero', 'engine', 'chassis', 'rel'].forEach(function (k) { t.car[k] = clamp(Math.round(0.7 * t.car[k] + 0.3 * t.base[k] + gauss() * 2.5), 45, 99); });

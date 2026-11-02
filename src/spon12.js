@@ -89,14 +89,20 @@ var PRESS = {
     { k: 'humble', t: '“Solid day. We build step by step.”', hint: 'Safe', mor: 2, fame: 0, rel: 0.5, mood: 0, r: 'Professional. The engineers nod.' },
     { k: 'conf', t: '“We left something on the table. I want more.”', hint: 'Bold', mor: 0, fame: 1, rel: 0, mood: 0.5, r: 'Hunger is attractive to everyone, brands included.' },
     { k: 'dig', t: '“Honestly, the car is not good enough for the speed I have.”', hint: 'Spicy', mor: -3, fame: 2, rel: -1.5, mood: -1, r: 'Quoted everywhere. The team principal is not amused.' }] },
+  over: { q: 'Outside the points, but well ahead of where this car should be. How do you see it?', o: [
+    { k: 'humble', t: '“The team gave me a good car and a good strategy. We maximised it.”', hint: 'Safe', mor: 3, fame: 0.5, rel: 1, mood: 0, r: 'The garage appreciates the credit. A job well done.' },
+    { k: 'conf', t: '“This is what we are capable of. Imagine when we get the upgrades.”', hint: 'Bold', mor: 2, fame: 1.5, rel: 0, mood: 0.5, r: 'A hopeful quote. The factory is listening.' },
+    { k: 'dig', t: '“We beat cars that should be quicker than us. Someone should ask them why.”', hint: 'Spicy', mor: 0, fame: 2.5, rel: -1, mood: -0.5, r: 'A sharp line, and a few rival garages bristle.' }] },
   bad: { q: 'A tough one today. What happened out there?', o: [
     { k: 'own', t: '“My mistake. I will learn from it and come back stronger.”', hint: 'Safe', mor: 2, fame: 0, rel: 1, mood: 0, r: 'Respect from the garage. Mistakes happen.' },
     { k: 'car', t: '“The car was just not quick enough today.”', hint: 'Risky', mor: -2, fame: 0.5, rel: -1, mood: -0.5, r: 'True, perhaps, but the engineers noticed who said it.' },
     { k: 'blame', t: '“Ask the pit wall. The strategy cost us everything.”', hint: 'Spicy', mor: -5, fame: 2, rel: -2.5, mood: -1, r: 'Explosive soundbite. Relationships with the team take a hit.' }] }
 };
 function pressMake(S, P, ci) {
-  var kind = P.dnf || P.pos > 14 ? 'bad' : P.pos === 1 ? 'win' : P.pos <= 3 ? 'pod' : P.pos <= 10 ? 'pts' : 'bad';
-  var big = kind === 'win' || kind === 'pod' || P.dnf || P.pos - 0 > 14 || (!P.dnf && P.car.grid - P.pos >= 4) || isHome(S, ci);
+  /* konteks: bandingkan dengan jangkaan kereta/pasukan (pasukan ke-8 yang tamat P11 = keputusan baik) */
+  var exp = teamRank(S, P.car.team) * 2 - 0.5, dlt = P.dnf ? -99 : exp - P.pos;
+  var kind = P.dnf ? 'bad' : P.pos === 1 ? 'win' : P.pos <= 3 ? 'pod' : P.pos <= 10 ? (dlt < -3 ? 'bad' : 'pts') : (dlt >= 2 ? 'over' : 'bad');
+  var big = kind === 'win' || kind === 'pod' || kind === 'over' || P.dnf || (kind === 'bad' && !P.dnf && P.pos > 14) || (!P.dnf && P.car.grid - P.pos >= 4) || isHome(S, ci);
   if (!big && rnd() > 0.35) return null;
   return { kind: kind, home: isHome(S, ci), done: null };
 }
