@@ -169,3 +169,13 @@ A['pre-ok'] = function () { closeModal(); };
     } catch (e) { }
   };
 })();
+
+/* log ralat: disimpan dalam save (turut ikut Export save) supaya bug yang susah direproduce boleh dikesan */
+window.addEventListener('error', function (e) {
+  try {
+    if (typeof S === 'undefined' || !S || !S.drivers) return;
+    S.errs = (S.errs || []).slice(-9);
+    S.errs.push({ s: S.season, r: S.round, scr: UI.screen, m: String(e.message || '').slice(0, 160), at: String((e.error && e.error.stack) || '').split('\n').slice(0, 3).join(' | ').slice(0, 300) });
+    save();
+  } catch (x) { }
+});
