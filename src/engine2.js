@@ -492,10 +492,11 @@ function tick2(R) {
       f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); f.crewT = null; f.comp = k; f.eff = 0; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
       R.log.push({ t: R.t, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, tags: ['pit'].concat(f.why ? [f.why] : []) }); f.why = null;
     } else f.s += dl;
-    var wm = P2.push.wear[f.push] * (1 + P2.dirty.wear * f.dirty) * (f.atk > 0 ? P2.atk.wear : 1);
+    var scW = R.sc === 'SC' ? 0.3 : R.sc === 'VSC' ? 0.55 : 1, scF = R.sc === 'SC' ? 0.45 : R.sc === 'VSC' ? 0.7 : 1;   /* safety car: laju rendah, tayar/minyak/tenaga jimat */
+    var wm = P2.push.wear[f.push] * (1 + P2.dirty.wear * f.dirty) * (f.atk > 0 ? P2.atk.wear : 1) * scW;
     f.eff += dl * wm;
-    f.fuel -= dl * P2.push.fuel[f.push] * (f.atk > 0 ? 1.05 : 1) * (R.sc ? 0.6 : 1);
-    var enr = P2.push.en[f.push]; f.en = clamp(f.en + dl * (enr > 0 ? enr * f.t.car.engine / 80 : enr), 0, 1);
+    f.fuel -= dl * P2.push.fuel[f.push] * (f.atk > 0 ? 1.05 : 1) * scF;
+    var enr = P2.push.en[f.push]; if (R.sc) enr = enr > 0 ? enr * 1.3 : enr * 0.15; f.en = clamp(f.en + dl * (enr > 0 ? enr * f.t.car.engine / 80 : enr), 0, 1);
   });
   /* kekang jarak dan pintasan */
   var prev = null;

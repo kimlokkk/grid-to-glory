@@ -5,7 +5,9 @@ var RIV = {
   pass: ['There he is, {r}! Your rival is behind you. Feels good, doesn\'t it?', 'Past {r}! I want a screenshot of his face.', '{r} left behind. His team is scratching their heads.'],
   lost: ['{r} got past. I know, I know. Stay calm.', 'Your rival got by. Take it back later, nothing stupid now.', '{r} waved as he went past. Rude.'],
   win: ['You beat {r} today. Head-to-head {w}-{l}.', 'Rival down. {r} is heading back to the hotel grumpy. H2H {w}-{l}.'],
-  lose: ['{r} wins today\'s duel. H2H {w}-{l}. Plenty of races left.', '{r} finished ahead today. No worries, H2H {w}-{l}, we\'re not done.']
+  lose: ['{r} wins today\'s duel. H2H {w}-{l}. Plenty of races left.', '{r} finished ahead today. No worries, H2H {w}-{l}, we\'re not done.'],
+  lastLose: ['{r} finishes ahead in the season finale. Final H2H {w}-{l}.', '{r} gets the last word this year. Final H2H {w}-{l}. We go again next season.'],
+  lastWin: ['You beat {r} in the finale. Final H2H {w}-{l}. A perfect way to end the season.', 'Last race, last word: you finish ahead of {r}. Final H2H {w}-{l}.']
 };
 var OBJT = {
   q3: { n: 'Reach Q3', xp: 6 }, q2: { n: 'Make it to Q2', xp: 5 },
@@ -67,7 +69,7 @@ function judgeRace(wk, R) {
   var rmsg = null;
   if (rv) {
     var won = P.pos < rv.pos; if (won) S.rival.w++; else S.rival.l++;
-    rmsg = fmtR(pick(won ? RIV.win : RIV.lose), { r: rv.d.name.split(' ').slice(-1)[0], w: S.rival.w, l: S.rival.l });
+    rmsg = fmtR(pick(S.round >= 9 ? (won ? RIV.lastWin : RIV.lastLose) : (won ? RIV.win : RIV.lose)), { r: rv.d.name.split(' ').slice(-1)[0], w: S.rival.w, l: S.rival.l });
   }
   return { xp: xp, mor: mor, rmsg: rmsg };
 }

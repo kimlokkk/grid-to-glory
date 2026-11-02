@@ -1254,7 +1254,9 @@ function finalizeRace(R) {
 'use strict';
 /* ===== Logik karier: kedudukan, XP, R&D, musim, kontrak ===== */
 var RDNAME = { aero: 'Aero', engine: 'Engine', chassis: 'Chassis', rel: 'Reliability' };
-function driverStandings(S) { return S.drivers.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || b.pods - a.pods || a.id - b.id; }); }
+/* countback: mata sama -> paling banyak menang, kemudian P2, P3... sampai P20 (pemandu tanpa mata disusun ikut keputusan terbaik) */
+function cbCmp(a, b) { var x = a.fp || [], y = b.fp || []; for (var i = 0; i < 20; i++) { var df = (y[i] || 0) - (x[i] || 0); if (df) return df; } return 0; }
+function driverStandings(S) { return S.drivers.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || cbCmp(a, b) || b.pods - a.pods || a.id - b.id; }); }
 function teamStandings(S) { return S.teams.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || a.id - b.id; }); }
 function teamPower(t) { return (t.car.aero + t.car.engine + t.car.chassis + t.car.rel) / 4; }
 function teamRank(S, id) { var l = S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }); for (var i = 0; i < l.length; i++) if (l[i].id === id) return i + 1; return 10; }
@@ -1307,6 +1309,7 @@ function finishRace(S, R, mg) {
     if (R.fl.di === x.car.di && !x.dnf && x.pos <= 10) pts += 1;
     x.pts = pts; d.pts += pts; d.starts++;
     if (x.car.grid === 1) d.poles++;
+    if (!x.dnf) { d.fp = d.fp || []; d.fp[x.pos - 1] = (d.fp[x.pos - 1] || 0) + 1; }
     if (x.dnf) d.dnf++; else { if (x.pos === 1) { d.wins++; S.teams[d.team].wins++; } if (x.pos <= 3) d.pods++; }
     if (R.fl.di === x.car.di) d.fl++;
     S.teams[d.team].pts += pts;
@@ -1427,7 +1430,7 @@ function mkOffer(S, p, t, o) {
 function usedCodes(S) { var u = {}; S.drivers.forEach(function (d) { u[d.code] = 1; }); return u; }
 
 function startNewSeason(S, teamId, years, buyId, opts) {
-  var p = S.drivers[S.pi];
+  var p = S.drivers[S.pi], prevTeam = p.team;
   if (teamId != null && teamId !== p.team) {
     var bd = buyId != null && +buyId >= 0 ? S.drivers[+buyId] : null;
     if (bd && bd.team === teamId && bd.id !== S.pi && bd.con) {   /* buyout: team pays him off and he goes into the open market */
@@ -1440,15 +1443,16 @@ function startNewSeason(S, teamId, years, buyId, opts) {
   }
   if (opts && opts.sit && typeof sitStart === 'function') sitStart(S, p.team);
   if (years != null) S.contract = years; else S.contract--;
+  if (teamId != null && typeof pushNews === 'function') pushNews(S, { k: 'psign', n: p.name, t: p.team, f: prevTeam, y: years != null ? years : S.contract, mv: p.team !== prevTeam, s: S.season + 1, r: 0 });
   var dlog = [];
   S.drivers.forEach(function (d) {
     d.age++;
     if (d.id === S.pi) { if (d.age >= 31) ['pace', 'cons', 'race', 'wet', 'tyre'].forEach(function (k) { d[k] = clamp(Math.round(d[k] - (d.age < 33 ? rr(0, 0.6) : rr(0.6, 1.4) + 0.7 * (d.age - 33))), 45, 99); }); }
-    d.pts = 0; d.wins = 0; d.pods = 0;
+    d.pts = 0; d.wins = 0; d.pods = 0; d.fp = [];
   });
   if (S.xp > 800) S.xp = Math.round(800 + (S.xp - 800) * 0.5);                       /* simpanan XP berlebihan susut */
   if (typeof drvNewSeason === 'function') drvNewSeason(S, dlog);
-  p.pts = 0; p.wins = 0; p.pods = 0;
+  p.pts = 0; p.wins = 0; p.pods = 0; p.fp = [];
   if (typeof devWinter === 'function') {
     ensureDev(S);
     var wl = [], reg = devWinter(S, wl), mineT = S.drivers[S.pi].team;
@@ -1466,7 +1470,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
       else if (e.fac) pushNews(S, { k: 'fac', t: e.t, up: e.up, lv: e.lv, s: S.season + 1, r: 0 });
       else if (e.g != null && e.t === mineT) pushNews(S, { k: 'winter', t: e.t, p: e.k, g: +e.g.toFixed(1), s: S.season + 1, r: 0 });
     });
-    S.teams.forEach(function (t) { var tp = t.dev.tp; if (tp.amb >= 2 && rnd() < 0.5) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, s: S.season + 1, r: 0 }); });
+    S.teams.forEach(function (t) { var tp = t.dev.tp; if ((tp.amb >= 2 && rnd() < 0.5) || t.id === mineT) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, am: tp.amb, s: S.season + 1, r: 0 }); });
     if (typeof mktNews === 'function') mktNews(S);
   } else S.teams.forEach(function (t) {
     ['aero', 'engine', 'chassis', 'rel'].forEach(function (k) { t.car[k] = clamp(Math.round(0.7 * t.car[k] + 0.3 * t.base[k] + gauss() * 2.5), 45, 99); });
@@ -1971,10 +1975,11 @@ function tick2(R) {
       f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); f.crewT = null; f.comp = k; f.eff = 0; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
       R.log.push({ t: R.t, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, tags: ['pit'].concat(f.why ? [f.why] : []) }); f.why = null;
     } else f.s += dl;
-    var wm = P2.push.wear[f.push] * (1 + P2.dirty.wear * f.dirty) * (f.atk > 0 ? P2.atk.wear : 1);
+    var scW = R.sc === 'SC' ? 0.3 : R.sc === 'VSC' ? 0.55 : 1, scF = R.sc === 'SC' ? 0.45 : R.sc === 'VSC' ? 0.7 : 1;   /* safety car: laju rendah, tayar/minyak/tenaga jimat */
+    var wm = P2.push.wear[f.push] * (1 + P2.dirty.wear * f.dirty) * (f.atk > 0 ? P2.atk.wear : 1) * scW;
     f.eff += dl * wm;
-    f.fuel -= dl * P2.push.fuel[f.push] * (f.atk > 0 ? 1.05 : 1) * (R.sc ? 0.6 : 1);
-    var enr = P2.push.en[f.push]; f.en = clamp(f.en + dl * (enr > 0 ? enr * f.t.car.engine / 80 : enr), 0, 1);
+    f.fuel -= dl * P2.push.fuel[f.push] * (f.atk > 0 ? 1.05 : 1) * scF;
+    var enr = P2.push.en[f.push]; if (R.sc) enr = enr > 0 ? enr * 1.3 : enr * 0.15; f.en = clamp(f.en + dl * (enr > 0 ? enr * f.t.car.engine / 80 : enr), 0, 1);
   });
   /* kekang jarak dan pintasan */
   var prev = null;
@@ -2283,7 +2288,9 @@ var RIV = {
   pass: ['There he is, {r}! Your rival is behind you. Feels good, doesn\'t it?', 'Past {r}! I want a screenshot of his face.', '{r} left behind. His team is scratching their heads.'],
   lost: ['{r} got past. I know, I know. Stay calm.', 'Your rival got by. Take it back later, nothing stupid now.', '{r} waved as he went past. Rude.'],
   win: ['You beat {r} today. Head-to-head {w}-{l}.', 'Rival down. {r} is heading back to the hotel grumpy. H2H {w}-{l}.'],
-  lose: ['{r} wins today\'s duel. H2H {w}-{l}. Plenty of races left.', '{r} finished ahead today. No worries, H2H {w}-{l}, we\'re not done.']
+  lose: ['{r} wins today\'s duel. H2H {w}-{l}. Plenty of races left.', '{r} finished ahead today. No worries, H2H {w}-{l}, we\'re not done.'],
+  lastLose: ['{r} finishes ahead in the season finale. Final H2H {w}-{l}.', '{r} gets the last word this year. Final H2H {w}-{l}. We go again next season.'],
+  lastWin: ['You beat {r} in the finale. Final H2H {w}-{l}. A perfect way to end the season.', 'Last race, last word: you finish ahead of {r}. Final H2H {w}-{l}.']
 };
 var OBJT = {
   q3: { n: 'Reach Q3', xp: 6 }, q2: { n: 'Make it to Q2', xp: 5 },
@@ -2345,7 +2352,7 @@ function judgeRace(wk, R) {
   var rmsg = null;
   if (rv) {
     var won = P.pos < rv.pos; if (won) S.rival.w++; else S.rival.l++;
-    rmsg = fmtR(pick(won ? RIV.win : RIV.lose), { r: rv.d.name.split(' ').slice(-1)[0], w: S.rival.w, l: S.rival.l });
+    rmsg = fmtR(pick(S.round >= 9 ? (won ? RIV.lastWin : RIV.lastLose) : (won ? RIV.win : RIV.lose)), { r: rv.d.name.split(' ').slice(-1)[0], w: S.rival.w, l: S.rival.l });
   }
   return { xp: xp, mor: mor, rmsg: rmsg };
 }
@@ -4084,7 +4091,7 @@ function vHub() {
 
 function drvCard() {
   var p = me(), t = myTeam(), ds = driverStandings(S), pos = ds.indexOf(p) + 1;
-  return '<div class="card dcard"><div class="row" style="gap:12px;flex-wrap:nowrap"><button class="hbtn" data-act="prof" data-v="d:' + p.id + '">' + avatarSVG(p, 64) + '</button><div style="min-width:0"><h2>' + esc(p.name) + ' <span class="dim" style="font-size:15px">#' + p.num + '</span></h2><p class="dim" style="margin:0">' + (typeof flagE === 'function' ? flagE(p.nat) + ' ' + natName(p.nat) : p.nat) + '</p><p class="dim">' + esc(t.name) + ' · age ' + p.age + ' · contract ' + S.contract + (S.contract === 1 ? ' season' : ' seasons') + ' · ' + payTxt(conOf(S, p).pay) + '</p></div></div>' +
+  return '<div class="card dcard"><div class="row" style="gap:12px;flex-wrap:nowrap"><button class="hbtn" data-act="prof" data-v="d:' + p.id + '">' + avatarSVG(p, 64) + '</button><div style="min-width:0"><h2>' + esc(p.name) + ' <span class="dim" style="font-size:15px">#' + p.num + '</span></h2><p class="dim" style="margin:0">' + (typeof flagE === 'function' ? flagE(p.nat) + ' ' + natName(p.nat) : p.nat) + '</p><p class="dim">' + esc(t.name) + ' · age ' + p.age + ' · contract ' + S.contract + (S.contract === 1 ? ' season' : ' seasons') + ' · ' + payTxt(conOf(S, p).pay) + '</p></div><div style="margin-left:auto;text-align:center"><div class="big" style="font-size:36px;line-height:1">' + ovr(p) + '</div><small class="dim">Rating</small></div></div>' +
     (typeof objDrvHTML === 'function' ? objDrvHTML(S, p) : '') + '<div class="tiles3"><div><small>Standing</small><b>P' + pos + '</b></div><div><small>Points</small><b>' + p.pts + '</b></div><div><small>XP</small><b>' + S.xp + '</b></div><div><small>Morale</small><b>' + (S.morale == null ? 50 : S.morale) + '%</b></div></div></div>';
 }
 function hUtama() {
@@ -4134,8 +4141,8 @@ function hKed1() {
   var mode = UI.kedMode || 'p', p = me(), h = '<div class="seg" style="margin-bottom:12px;max-width:480px;grid-template-columns:repeat(6,1fr)"><button class="' + (mode === 'p' ? 'on' : '') + '" data-act="ked-m" data-v="p" style="grid-column:span 2">Drivers</button><button class="' + (mode === 't' ? 'on' : '') + '" data-act="ked-m" data-v="t" style="grid-column:span 2">Constructors</button><button class="' + (mode === 'j' ? 'on' : '') + '" data-act="ked-m" data-v="j" style="grid-column:span 2">Juniors</button></div><div class="card">';
   if (mode === 'p') {
     var ds = driverStandings(S);
-    h += '<div class="scroll"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>';
-    ds.forEach(function (d, i) { h += '<tr class="' + (d === p ? 'me' : '') + ' clk" data-act="prof" data-v="d:' + d.id + '"><td class="mono dim">' + (i + 1) + '</td><td><div class="row" style="gap:8px;flex-wrap:nowrap">' + avatarSVG(d, 28) + '<span>' + tagD(d) + ' ' + esc(d.name) + (S.rival && d.id === S.rival.di ? ' <span class="pill6 pod">rival</span>' : '') + '</span></div></td><td class="r mono">' + d.wins + '</td><td class="r mono"><b>' + d.pts + '</b></td></tr>'; });
+    h += '<div class="scroll"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">OVR</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>';
+    ds.forEach(function (d, i) { h += '<tr class="' + (d === p ? 'me' : '') + ' clk" data-act="prof" data-v="d:' + d.id + '"><td class="mono dim">' + (i + 1) + '</td><td><div class="row" style="gap:8px;flex-wrap:nowrap">' + avatarSVG(d, 28) + '<span>' + tagD(d) + ' ' + esc(d.name) + (S.rival && d.id === S.rival.di ? ' <span class="pill6 pod">rival</span>' : '') + '</span></div></td><td class="r mono dim">' + ovr(d) + '</td><td class="r mono">' + d.wins + '</td><td class="r mono"><b>' + d.pts + '</b></td></tr>'; });
   } else if (mode === 'j') {
     var J = S.juniors.map(function (j, i) { return { j: j, i: i }; }).sort(function (a, b) { return (a.j.jr.last || 99) - (b.j.jr.last || 99) || rating(b.j) - rating(a.j); });
     h += '<p class="dim" style="font-size:12.5px;margin:0 0 8px">' + JR_NAME + ': the next generation. When a seat opens, the best-rated junior gets promoted.' + (S.jrChamp ? ' Reigning champion: <b>' + esc(S.jrChamp.name) + '</b>.' : '') + '</p>';
@@ -4954,7 +4961,7 @@ function newsStory(n) {
       sub: n.g >= 0 ? '+' + n.g + ' ' + part + ' found over the off-season.' : 'The ' + part + ' went backwards (' + n.g + '). Not the start the team wanted.' };
     case 'tp': return { kick: 'INTERVIEW', kc: 'k-int', col: t.color, team: t,
       head: '“We’re targeting P' + n.x + ' this year”',
-      sub: n.n + ' (' + t.name + ') sets a bold goal. Journalists exchange knowing looks.' };
+      sub: n.n + ' (' + t.name + ') ' + (n.am == null || n.am >= 2 ? 'sets a bold goal. Journalists exchange knowing looks.' : n.am <= 0 ? 'plays it safe and asks for patience as the new season begins.' : 'lays out the plan for the new season.') };
     case 'retire': return { kick: 'RETIREMENT', kc: 'k-ana', col: t ? t.color : '#888', team: t,
       head: n.nd ? n.n + ' retires after finding no seat' : nPick(n, [n.n + ' calls time on his career', 'End of an era: ' + n.n + ' retires', n.n + ' hangs up his helmet']),
       sub: 'The ' + n.a + '-year-old leaves ' + (t ? t.name : 'the grid') + ' after ' + (n.ti ? n.ti + ' world title' + (n.ti > 1 ? 's' : '') + ' and ' : '') + n.w + ' win' + (n.w === 1 ? '' : 's') + '. The paddock will miss him.' };
@@ -4995,6 +5002,9 @@ function newsStory(n) {
     case 'opn': return { kick: 'BREAKING', kc: 'k-brk', col: t.color, team: t,
       head: n.by === 'team' ? t.name + ' let ' + n.n + ' option lapse' : n.n + ' passes on option, will test the market',
       sub: n.by === 'team' ? 'The team chose not to keep him for an extra year. He will be on the market this winter.' : 'He believes there are better places to be. Expect offers from rivals.' };
+    case 'psign': return { kick: n.mv ? 'BREAKING' : 'CONFIRMED', kc: n.mv ? 'k-brk' : 'k-trf', col: t.color, team: t,
+      head: n.mv ? n.n + ' signs for ' + t.name : n.n + ' stays at ' + t.name,
+      sub: n.mv ? 'The deal is done: ' + n.n + ' leaves ' + T(n.f).name + ' to join ' + t.name + ' on a ' + n.y + '-year contract. The paddock is talking.' : t.name + ' have tied down ' + n.n + ' with a new ' + n.y + '-year deal. Continuity for the new season.' };
     case 'cmove': return { kick: 'TRANSFER', kc: 'k-trf', col: t.color, team: t,
       head: nPick(n, [n.n + ' joins ' + t.name, 'CONFIRMED: ' + n.n + ' signs for ' + t.name, t.name + ' land ' + n.n]),
       sub: 'He leaves ' + T(n.f).name + ' on a deal that runs to Season ' + n.u + '. ' + (n.o >= 86 ? 'A blockbuster signing.' : n.o >= 80 ? 'A solid addition to the line-up.' : 'A quiet one, but it might pay off.') };
@@ -5554,14 +5564,14 @@ function mktRun(S, dlog) {
     if (d.vac) return;
     var o = ovr(d);
     if (d.age >= 35 || (o < 70 && d.age >= 30)) { retirePerson(S, d, 'nodeal'); mktLog(S, { k: 'retire2', n: d.name, a: d.age, f: d.team }); if (dlog) dlog.push({ retire: d.name, age: d.age, t: d.team, wins: d.cs.wins + d.wins, titles: d.cs.titles, nodeal: true }); }
-    else { var f = d.team; d.exTeam = f; d.team = -1; d.id = -1; d.rs = 0; d.con = null; d.pts = 0; d.wins = 0; d.pods = 0; S.reserves.push(d); mktLog(S, { k: 'drop', n: d.name, nat: d.nat, a: d.age, o: o, f: f }); }
+    else { var f = d.team; d.exTeam = f; d.team = -1; d.id = -1; d.rs = 0; d.con = null; d.pts = 0; d.wins = 0; d.pods = 0; d.fp = []; S.reserves.push(d); mktLog(S, { k: 'drop', n: d.name, nat: d.nat, a: d.age, o: o, f: f }); }
   });
   /* 3) yang masuk: simpanan / junior / baru */
   enter.forEach(function (x, i) {
     var slot = freeSlots[i], c = x.c, d = c.d, nd;
     if (c.k === 'res') {
       S.reserves.splice(S.reserves.indexOf(d), 1); d.id = slot; d.team = x.t; d.rs = 0; d.exTeam = null;
-      d.pts = 0; d.wins = 0; d.pods = 0; d.miss = 0; d.con = conMake(S, d, { from: N }); nd = d;
+      d.pts = 0; d.wins = 0; d.pods = 0; d.fp = []; d.miss = 0; d.con = conMake(S, d, { from: N }); nd = d;
       mktLog(S, { k: 'sign', n: d.name, nat: d.nat, a: d.age, o: ovr(d), f: c.from, t: x.t, u: d.con.end });
     } else {
       if (c.k === 'jr') S.juniors.splice(S.juniors.indexOf(d), 1);

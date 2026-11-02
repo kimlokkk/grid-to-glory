@@ -175,14 +175,14 @@ function mktRun(S, dlog) {
     if (d.vac) return;
     var o = ovr(d);
     if (d.age >= 35 || (o < 70 && d.age >= 30)) { retirePerson(S, d, 'nodeal'); mktLog(S, { k: 'retire2', n: d.name, a: d.age, f: d.team }); if (dlog) dlog.push({ retire: d.name, age: d.age, t: d.team, wins: d.cs.wins + d.wins, titles: d.cs.titles, nodeal: true }); }
-    else { var f = d.team; d.exTeam = f; d.team = -1; d.id = -1; d.rs = 0; d.con = null; d.pts = 0; d.wins = 0; d.pods = 0; S.reserves.push(d); mktLog(S, { k: 'drop', n: d.name, nat: d.nat, a: d.age, o: o, f: f }); }
+    else { var f = d.team; d.exTeam = f; d.team = -1; d.id = -1; d.rs = 0; d.con = null; d.pts = 0; d.wins = 0; d.pods = 0; d.fp = []; S.reserves.push(d); mktLog(S, { k: 'drop', n: d.name, nat: d.nat, a: d.age, o: o, f: f }); }
   });
   /* 3) yang masuk: simpanan / junior / baru */
   enter.forEach(function (x, i) {
     var slot = freeSlots[i], c = x.c, d = c.d, nd;
     if (c.k === 'res') {
       S.reserves.splice(S.reserves.indexOf(d), 1); d.id = slot; d.team = x.t; d.rs = 0; d.exTeam = null;
-      d.pts = 0; d.wins = 0; d.pods = 0; d.miss = 0; d.con = conMake(S, d, { from: N }); nd = d;
+      d.pts = 0; d.wins = 0; d.pods = 0; d.fp = []; d.miss = 0; d.con = conMake(S, d, { from: N }); nd = d;
       mktLog(S, { k: 'sign', n: d.name, nat: d.nat, a: d.age, o: ovr(d), f: c.from, t: x.t, u: d.con.end });
     } else {
       if (c.k === 'jr') S.juniors.splice(S.juniors.indexOf(d), 1);

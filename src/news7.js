@@ -52,7 +52,7 @@ function newsStory(n) {
       sub: n.g >= 0 ? '+' + n.g + ' ' + part + ' found over the off-season.' : 'The ' + part + ' went backwards (' + n.g + '). Not the start the team wanted.' };
     case 'tp': return { kick: 'INTERVIEW', kc: 'k-int', col: t.color, team: t,
       head: '“We’re targeting P' + n.x + ' this year”',
-      sub: n.n + ' (' + t.name + ') sets a bold goal. Journalists exchange knowing looks.' };
+      sub: n.n + ' (' + t.name + ') ' + (n.am == null || n.am >= 2 ? 'sets a bold goal. Journalists exchange knowing looks.' : n.am <= 0 ? 'plays it safe and asks for patience as the new season begins.' : 'lays out the plan for the new season.') };
     case 'retire': return { kick: 'RETIREMENT', kc: 'k-ana', col: t ? t.color : '#888', team: t,
       head: n.nd ? n.n + ' retires after finding no seat' : nPick(n, [n.n + ' calls time on his career', 'End of an era: ' + n.n + ' retires', n.n + ' hangs up his helmet']),
       sub: 'The ' + n.a + '-year-old leaves ' + (t ? t.name : 'the grid') + ' after ' + (n.ti ? n.ti + ' world title' + (n.ti > 1 ? 's' : '') + ' and ' : '') + n.w + ' win' + (n.w === 1 ? '' : 's') + '. The paddock will miss him.' };
@@ -93,6 +93,9 @@ function newsStory(n) {
     case 'opn': return { kick: 'BREAKING', kc: 'k-brk', col: t.color, team: t,
       head: n.by === 'team' ? t.name + ' let ' + n.n + ' option lapse' : n.n + ' passes on option, will test the market',
       sub: n.by === 'team' ? 'The team chose not to keep him for an extra year. He will be on the market this winter.' : 'He believes there are better places to be. Expect offers from rivals.' };
+    case 'psign': return { kick: n.mv ? 'BREAKING' : 'CONFIRMED', kc: n.mv ? 'k-brk' : 'k-trf', col: t.color, team: t,
+      head: n.mv ? n.n + ' signs for ' + t.name : n.n + ' stays at ' + t.name,
+      sub: n.mv ? 'The deal is done: ' + n.n + ' leaves ' + T(n.f).name + ' to join ' + t.name + ' on a ' + n.y + '-year contract. The paddock is talking.' : t.name + ' have tied down ' + n.n + ' with a new ' + n.y + '-year deal. Continuity for the new season.' };
     case 'cmove': return { kick: 'TRANSFER', kc: 'k-trf', col: t.color, team: t,
       head: nPick(n, [n.n + ' joins ' + t.name, 'CONFIRMED: ' + n.n + ' signs for ' + t.name, t.name + ' land ' + n.n]),
       sub: 'He leaves ' + T(n.f).name + ' on a deal that runs to Season ' + n.u + '. ' + (n.o >= 86 ? 'A blockbuster signing.' : n.o >= 80 ? 'A solid addition to the line-up.' : 'A quiet one, but it might pay off.') };

@@ -1,7 +1,9 @@
 'use strict';
 /* ===== Logik karier: kedudukan, XP, R&D, musim, kontrak ===== */
 var RDNAME = { aero: 'Aero', engine: 'Engine', chassis: 'Chassis', rel: 'Reliability' };
-function driverStandings(S) { return S.drivers.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || b.pods - a.pods || a.id - b.id; }); }
+/* countback: mata sama -> paling banyak menang, kemudian P2, P3... sampai P20 (pemandu tanpa mata disusun ikut keputusan terbaik) */
+function cbCmp(a, b) { var x = a.fp || [], y = b.fp || []; for (var i = 0; i < 20; i++) { var df = (y[i] || 0) - (x[i] || 0); if (df) return df; } return 0; }
+function driverStandings(S) { return S.drivers.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || cbCmp(a, b) || b.pods - a.pods || a.id - b.id; }); }
 function teamStandings(S) { return S.teams.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || a.id - b.id; }); }
 function teamPower(t) { return (t.car.aero + t.car.engine + t.car.chassis + t.car.rel) / 4; }
 function teamRank(S, id) { var l = S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }); for (var i = 0; i < l.length; i++) if (l[i].id === id) return i + 1; return 10; }
@@ -54,6 +56,7 @@ function finishRace(S, R, mg) {
     if (R.fl.di === x.car.di && !x.dnf && x.pos <= 10) pts += 1;
     x.pts = pts; d.pts += pts; d.starts++;
     if (x.car.grid === 1) d.poles++;
+    if (!x.dnf) { d.fp = d.fp || []; d.fp[x.pos - 1] = (d.fp[x.pos - 1] || 0) + 1; }
     if (x.dnf) d.dnf++; else { if (x.pos === 1) { d.wins++; S.teams[d.team].wins++; } if (x.pos <= 3) d.pods++; }
     if (R.fl.di === x.car.di) d.fl++;
     S.teams[d.team].pts += pts;
@@ -174,7 +177,7 @@ function mkOffer(S, p, t, o) {
 function usedCodes(S) { var u = {}; S.drivers.forEach(function (d) { u[d.code] = 1; }); return u; }
 
 function startNewSeason(S, teamId, years, buyId, opts) {
-  var p = S.drivers[S.pi];
+  var p = S.drivers[S.pi], prevTeam = p.team;
   if (teamId != null && teamId !== p.team) {
     var bd = buyId != null && +buyId >= 0 ? S.drivers[+buyId] : null;
     if (bd && bd.team === teamId && bd.id !== S.pi && bd.con) {   /* buyout: team pays him off and he goes into the open market */
@@ -187,15 +190,16 @@ function startNewSeason(S, teamId, years, buyId, opts) {
   }
   if (opts && opts.sit && typeof sitStart === 'function') sitStart(S, p.team);
   if (years != null) S.contract = years; else S.contract--;
+  if (teamId != null && typeof pushNews === 'function') pushNews(S, { k: 'psign', n: p.name, t: p.team, f: prevTeam, y: years != null ? years : S.contract, mv: p.team !== prevTeam, s: S.season + 1, r: 0 });
   var dlog = [];
   S.drivers.forEach(function (d) {
     d.age++;
     if (d.id === S.pi) { if (d.age >= 31) ['pace', 'cons', 'race', 'wet', 'tyre'].forEach(function (k) { d[k] = clamp(Math.round(d[k] - (d.age < 33 ? rr(0, 0.6) : rr(0.6, 1.4) + 0.7 * (d.age - 33))), 45, 99); }); }
-    d.pts = 0; d.wins = 0; d.pods = 0;
+    d.pts = 0; d.wins = 0; d.pods = 0; d.fp = [];
   });
   if (S.xp > 800) S.xp = Math.round(800 + (S.xp - 800) * 0.5);                       /* simpanan XP berlebihan susut */
   if (typeof drvNewSeason === 'function') drvNewSeason(S, dlog);
-  p.pts = 0; p.wins = 0; p.pods = 0;
+  p.pts = 0; p.wins = 0; p.pods = 0; p.fp = [];
   if (typeof devWinter === 'function') {
     ensureDev(S);
     var wl = [], reg = devWinter(S, wl), mineT = S.drivers[S.pi].team;
@@ -213,7 +217,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
       else if (e.fac) pushNews(S, { k: 'fac', t: e.t, up: e.up, lv: e.lv, s: S.season + 1, r: 0 });
       else if (e.g != null && e.t === mineT) pushNews(S, { k: 'winter', t: e.t, p: e.k, g: +e.g.toFixed(1), s: S.season + 1, r: 0 });
     });
-    S.teams.forEach(function (t) { var tp = t.dev.tp; if (tp.amb >= 2 && rnd() < 0.5) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, s: S.season + 1, r: 0 }); });
+    S.teams.forEach(function (t) { var tp = t.dev.tp; if ((tp.amb >= 2 && rnd() < 0.5) || t.id === mineT) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, am: tp.amb, s: S.season + 1, r: 0 }); });
     if (typeof mktNews === 'function') mktNews(S);
   } else S.teams.forEach(function (t) {
     ['aero', 'engine', 'chassis', 'rel'].forEach(function (k) { t.car[k] = clamp(Math.round(0.7 * t.car[k] + 0.3 * t.base[k] + gauss() * 2.5), 45, 99); });
