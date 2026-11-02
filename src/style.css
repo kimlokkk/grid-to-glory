@@ -881,3 +881,6 @@ tr.clk { cursor: pointer; } tr.clk:hover td { background: var(--accSoft); }
 .pcf .chips span { background: #ffffff1c; }
 .pcf .chips .up { color: #7ee2a8; } .pcf .chips .dn { color: #ff8a8a; }
 @media (min-width: 900px) { .offer { grid-template-columns: 1fr; } }
+.pick:has(> .offer) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px; }
+.pick > .offer { min-width: 0; }
+.of-car svg { max-width: 120px; height: auto; }

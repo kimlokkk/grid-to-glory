@@ -4,9 +4,13 @@
 function offerAttrs(o) {
   return 'data-t="' + o.team + '" data-y="' + o.years + '" data-p="' + o.pay + '" data-w="' + (o.wb || 0) + '" data-o="' + (o.opt ? 1 : 0) + '" data-b="' + (o.buy ? o.buy.id : -1) + '" data-sit="' + (o.sit ? 1 : 0) + '" data-r="' + (o.renew ? 1 : 0) + '"';
 }
-function offerKind(o) { return o.sit ? 'Reserve year' : o.renew ? 'Contract extension' : o.last ? 'Final offer' : 'Contract offer'; }
+function offerKind(o) { return o.f1 ? 'Formula 1 promotion' : o.stay ? 'Stay in the Junior Series' : o.sit ? 'Reserve year' : o.renew ? 'Contract extension' : o.last ? 'Final offer' : 'Contract offer'; }
+/* pasukan F1 sebenar (data asas) untuk tawaran naik taraf dari Junior Series */
+function f1Team(id) { var t = TEAMS[id]; return { id: t.id, name: t.name, short: t.short, color: t.color, car: t.car, prestige: t.prestige }; }
+function f1Rank(id) { var l = TEAMS.slice().sort(function (a, b) { return (b.car.aero + b.car.engine + b.car.chassis + b.car.rel) - (a.car.aero + a.car.engine + a.car.chassis + a.car.rel); }); for (var i = 0; i < l.length; i++) if (l[i].id === id) return i + 1; return 10; }
+function offTeam(o) { return o.f1 ? f1Team(o.team) : S.teams[o.team]; }
 function offerCardHTML(o) {
-  var t = S.teams[o.team], rk = teamRank(S, o.team), tg = t.dev && t.dev.target;
+  var t = offTeam(o), rk = o.f1 ? f1Rank(o.team) : teamRank(S, o.team), tg = !o.f1 && t.dev && t.dev.target;
   return '<div class="offer" style="--tc:' + t.color + '"><div class="of-h"><div class="of-id"><span class="of-k">' + offerKind(o) + '</span><b>' + esc(t.name) + '</b><small>Car rank #' + rk + (tg ? ' · board target P' + tg : '') + '</small></div><div class="of-car">' + carSVG(t, 120) + '</div></div>' +
     '<div class="of-g"><div><small>Term</small><b>' + o.years + (o.years === 1 ? ' season' : ' seasons') + '</b></div><div><small>Salary</small><b>' + payTxt(o.pay) + '</b><em>per season</em></div>' +
     '<div><small>Win bonus</small><b>' + (o.wb ? payTxt(o.wb) : '–') + '</b>' + (o.wb ? '<em>per win</em>' : '') + '</div><div><small>Team option</small><b>' + (o.opt ? '+1 season' : 'None') + '</b></div></div>' +
@@ -15,32 +19,31 @@ function offerCardHTML(o) {
     '<button class="btn pri wide" data-act="sign-pre" ' + offerAttrs(o) + '>Review contract</button></div>';
 }
 A['sign-pre'] = function (d) {
-  var t = S.teams[+d.t], p = me(), yrs = +d.y, pay = +d.p, wb = +d.w, sit = +d.sit === 1, ren = +d.r === 1, today = 'Season ' + (S.season + 1);
-  var attrs = 'data-t="' + d.t + '" data-y="' + d.y + '" data-p="' + d.p + '" data-w="' + d.w + '" data-o="' + d.o + '" data-b="' + d.b + '" data-sit="' + d.sit + '" data-r="' + d.r + '"';
+  var t = +d.f1 === 1 ? f1Team(+d.t) : S.teams[+d.t], p = me(), yrs = +d.y, pay = +d.p, wb = +d.w, sit = +d.sit === 1, ren = +d.r === 1, today = 'Season ' + (S.season + 1);
+  var attrs = 'data-t="' + d.t + '" data-y="' + d.y + '" data-p="' + d.p + '" data-w="' + d.w + '" data-o="' + d.o + '" data-b="' + d.b + '" data-sit="' + d.sit + '" data-r="' + d.r + '" data-f1="' + (d.f1 || 0) + '"';
   showModal('<div class="contract" style="--tc:' + t.color + '"><div class="ct-top"><span>' + esc(t.name).toUpperCase() + '</span><small>DRIVER CONTRACT</small></div>' +
     '<p class="ct-p">This agreement is made between <b>' + esc(t.name) + '</b> (the Team) and <b>' + esc(p.name) + '</b> (the Driver) for the ' + today + ' championship' + (yrs > 1 ? ' and the ' + (yrs - 1) + ' following ' + (yrs - 1 === 1 ? 'season' : 'seasons') : '') + '.</p>' +
     '<table class="ct-t"><tbody><tr><td>Type</td><td>' + (sit ? 'Test and reserve driver' : ren ? 'Contract extension' : 'Race driver') + '</td></tr><tr><td>Term</td><td>' + yrs + (yrs === 1 ? ' season' : ' seasons') + '</td></tr><tr><td>Base salary</td><td>' + payTxt(pay) + ' per season</td></tr>' +
     '<tr><td>Win bonus</td><td>' + (wb ? payTxt(wb) + ' per win' : 'None') + '</td></tr><tr><td>Team option</td><td>' + (+d.o ? 'One extra season at the Team\'s discretion' : 'None') + '</td></tr>' +
-    (t.dev && t.dev.target ? '<tr><td>Board target</td><td>P' + t.dev.target + ' in the constructors\' championship</td></tr>' : '') + '</tbody></table>' +
+    (+d.f1 !== 1 && t.dev && t.dev.target ? '<tr><td>Board target</td><td>P' + t.dev.target + ' in the constructors\' championship</td></tr>' : '') + '</tbody></table>' +
     '<div class="ct-sig"><div><svg viewBox="0 0 200 50" class="ct-pen"><path d="M8 38 C 28 4, 38 62, 58 26 S 98 6, 118 34 S 160 52, 192 18"/></svg><span>' + esc(p.name) + ' · Driver</span></div><div><i>' + esc(t.name) + '</i><span>Team Principal</span></div></div>' +
     '<div class="row" style="flex-wrap:nowrap"><button class="btn" data-act="mclose">Back</button><button class="btn pri" style="flex:1" data-act="sign" ' + attrs + '>Sign contract</button></div></div>');
 };
 
 /* majlis menandatangani selepas kontrak disahkan */
+function ceremonyModal(t, name, mv, ren, yrs, pay, season) {
+  var conf = ''; for (var i = 0; i < 26; i++) conf += '<i style="left:' + Math.round(Math.random() * 100) + '%;animation-delay:' + (Math.random() * 1.2).toFixed(2) + 's;background:' + (i % 3 ? t.color : '#f0b429') + '"></i>';
+  showModal('<div class="ceremony" style="--tc:' + t.color + '"><div class="cm-conf">' + conf + '</div><div class="cm-bar"><span class="cm-live"><i></i>BREAKING NEWS</span><span>PADDOCK WIRE</span></div>' +
+    '<div class="cm-hero"><div class="cm-car">' + carSVG(t, 210, true) + '</div></div><div class="cm-body"><span class="cm-hs">🤝</span><h2>' + esc(name) + (mv ? ' signs for ' : ren ? ' extends with ' : ' commits to ') + esc(t.name) + '</h2>' +
+    '<p>' + (mv ? 'The move is official. ' : '') + yrs + '-year deal worth ' + payTxt(pay) + ' per season' + (mv ? '. A new chapter begins.' : '. Continuity for the new season.') + '</p></div>' +
+    '<div class="cm-tick"><div><p>' + esc(name).toUpperCase() + ' · ' + esc(t.name).toUpperCase() + ' · SEASON ' + season + '<i>◆</i>DEAL DONE<i>◆</i>' + esc(name).toUpperCase() + ' · ' + esc(t.name).toUpperCase() + ' · SEASON ' + season + '<i>◆</i>DEAL DONE</p></div></div>' +
+    '<button class="btn pri wide" data-act="cm-ok">Let\'s go</button></div>');
+}
 var sign0 = A['sign'];
 A['sign'] = function (d) {
   var t = S.teams[+d.t], sit = +d.sit === 1, ren = +d.r === 1, prev = me().team, name = me().name, yrs = +d.y, pay = +d.p;
   sign0(d);
-  try {
-    if (sit) return;
-    var mv = !ren && +d.t !== prev;
-    var conf = ''; for (var i = 0; i < 26; i++) conf += '<i style="left:' + Math.round(Math.random() * 100) + '%;animation-delay:' + (Math.random() * 1.2).toFixed(2) + 's;background:' + (i % 3 ? t.color : '#f0b429') + '"></i>';
-    showModal('<div class="ceremony" style="--tc:' + t.color + '"><div class="cm-conf">' + conf + '</div><div class="cm-bar"><span class="cm-live"><i></i>BREAKING NEWS</span><span>PADDOCK WIRE</span></div>' +
-      '<div class="cm-hero"><div class="cm-car">' + carSVG(t, 210, true) + '</div></div><div class="cm-body"><span class="cm-hs">🤝</span><h2>' + esc(name) + (mv ? ' signs for ' : ren ? ' extends with ' : ' commits to ') + esc(t.name) + '</h2>' +
-      '<p>' + (mv ? 'The move is official. ' : '') + yrs + (yrs === 1 ? '-year' : '-year') + ' deal worth ' + payTxt(pay) + ' per season' + (mv ? '. A new chapter begins.' : '. Continuity for the new season.') + '</p></div>' +
-      '<div class="cm-tick"><div><p>' + esc(name).toUpperCase() + ' · ' + esc(t.name).toUpperCase() + ' · SEASON ' + S.season + '<i>◆</i>DEAL DONE<i>◆</i>' + esc(name).toUpperCase() + ' · ' + esc(t.name).toUpperCase() + ' · SEASON ' + S.season + '<i>◆</i>DEAL DONE</p></div></div>' +
-      '<button class="btn pri wide" data-act="cm-ok">Let\'s go</button></div>');
-  } catch (e) { }
+  try { if (!sit) ceremonyModal(t, name, !ren && +d.t !== prev, ren, yrs, pay, S.season); } catch (e) { }
 };
 A['cm-ok'] = function () { closeModal(); render(); };
 
