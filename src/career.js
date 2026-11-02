@@ -64,6 +64,10 @@ function finishRace(S, R, mg) {
   });
   var P = R.cls.filter(function (x) { return x.car.isP; })[0];
   S.live = null;
+  /* rekod keputusan penuh (nama disimpan sebab slot pemandu boleh diganti musim depan) */
+  S.rr = S.rr || [];
+  S.rr.push({ s: S.season, r: S.round, ci: R.ci, fl: R.fl.di >= 0 && S.drivers[R.fl.di] ? S.drivers[R.fl.di].name : null, c: R.cls.map(function (x) { var d = x.car.d; return [d.name, d.team, x.dnf ? 0 : x.pos, x.pts || 0, x.car.grid, x.car.isP ? 1 : 0, d.nat || '']; }) });
+  if (S.rr.length > 400) S.rr = S.rr.slice(-400);
   if (typeof thRecord === 'function') thRecord(S, R, S.sit ? null : P);
   var xp = 0;
   if (!S.sit) {

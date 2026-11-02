@@ -256,7 +256,7 @@ textarea { width: 100%; min-height: 90px; background: var(--panel2); color: var(
 /* ---------- hab v6 ---------- */
 .hub6 { display: block; }
 .snav { display: none; }
-.bnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--panel); box-shadow: 0 -4px 18px #1b234014, 0 -1px 0 var(--line); padding: 4px max(6px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px)); }
+.bnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(6, 1fr); background: var(--panel); box-shadow: 0 -4px 18px #1b234014, 0 -1px 0 var(--line); padding: 4px max(6px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px)); }
 .bnav button, .snav nav button { border: 0; background: none; color: var(--dim); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; font: 600 10.5px var(--disp); letter-spacing: .04em; text-transform: uppercase; cursor: pointer; border-radius: 12px; }
 .bnav button.on { color: var(--accDeep); }
 .bnav button.on svg { background: var(--accSoft); border-radius: 10px; padding: 2px 10px; box-sizing: content-box; }
@@ -773,6 +773,34 @@ tr.clk { cursor: pointer; } tr.clk:hover td { background: var(--accSoft); }
 .onb-step p { margin: 4px 0 0; font-size: 16px; line-height: 1.5; }
 .onb-res { padding: 22px 14px; border-radius: 14px; text-align: center; font: 700 18px/1.4 var(--disp); background: var(--panel2); }
 .onb-res.good { color: #1a8f4c; } .onb-res.warn { color: #c0392b; }
+
+/* ===== fasa 14: news, results, profiles ===== */
+.nwfull { display: grid; gap: 8px; padding: 6px 12px 12px; }
+.nwb { text-align: left; background: var(--panel); border: 1.5px solid var(--line); border-left: 5px solid var(--tc, var(--acc)); border-radius: 12px; padding: 11px 13px; cursor: pointer; color: var(--fg); font: inherit; display: grid; gap: 3px; }
+.nwb:hover { border-color: var(--tc, var(--acc)); }
+.nwb b { font-size: 15.5px; line-height: 1.3; }
+.nwb p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nwb small { color: var(--dim); font-size: 11.5px; }
+.nwd-img { display: grid; place-items: center; padding: 8px; border-radius: 14px; background: var(--tc, #222); }
+.nwpod { display: grid; gap: 4px; padding: 10px 12px; background: var(--panel2); border-radius: 12px; }
+.recgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.pfgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pfc { display: flex; align-items: center; gap: 10px; text-align: left; background: var(--panel); border: 1.5px solid var(--line); border-radius: 14px; padding: 9px 12px; cursor: pointer; color: var(--fg); font: inherit; }
+.pfc:hover { border-color: var(--acc); }
+.pfc.me { border-color: var(--acc); background: var(--accSoft); }
+.pfh { flex: none; display: grid; place-items: center; width: 50px; }
+.pfh.pfcar { width: 76px; }
+.pfn { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pfn b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pfn small { color: var(--dim); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pfo { text-align: center; flex: none; }
+.pfo b { display: block; font: 800 22px/1 var(--disp); }
+.pfo small { font: 700 9px/1 var(--disp); letter-spacing: .12em; color: var(--dim); }
+.bnav button span { letter-spacing: 0; font-size: 10px; }
+.pf-rr { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pfrr { display: grid; justify-items: center; gap: 1px; min-width: 52px; padding: 6px 8px; border-radius: 10px; background: var(--panel2); border: 1.5px solid var(--line); color: var(--fg); cursor: pointer; font: inherit; }
+.pfrr b { font: 800 14px/1 var(--disp); } .pfrr small { font-size: 9.5px; color: var(--dim); letter-spacing: .06em; }
+.pfrr.pod { background: #f0b42933; border-color: #f0b429; } .pfrr.pts { background: #34c46c22; border-color: #34c46c88; } .pfrr.bad { background: #e0555522; border-color: #e0555588; }
 </style>
 <div id="app"></div><div id="modal"></div>
 <script>
@@ -1350,6 +1378,10 @@ function finishRace(S, R, mg) {
   });
   var P = R.cls.filter(function (x) { return x.car.isP; })[0];
   S.live = null;
+  /* rekod keputusan penuh (nama disimpan sebab slot pemandu boleh diganti musim depan) */
+  S.rr = S.rr || [];
+  S.rr.push({ s: S.season, r: S.round, ci: R.ci, fl: R.fl.di >= 0 && S.drivers[R.fl.di] ? S.drivers[R.fl.di].name : null, c: R.cls.map(function (x) { var d = x.car.d; return [d.name, d.team, x.dnf ? 0 : x.pos, x.pts || 0, x.car.grid, x.car.isP ? 1 : 0, d.nat || '']; }) });
+  if (S.rr.length > 400) S.rr = S.rr.slice(-400);
   if (typeof thRecord === 'function') thRecord(S, R, S.sit ? null : P);
   var xp = 0;
   if (!S.sit) {
@@ -4104,19 +4136,20 @@ function spark(arr, w, h) {
 var ICO = {
   musim: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
   kal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  news: '<path d="M5 4h11a2 2 0 0 1 2 2v13H7a2 2 0 0 1-2-2zM18 8h2v9a2 2 0 0 1-2 2M8 8h7M8 12h7M8 15h4"/>',
   kej: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4"/>',
   kereta: '<path d="M3 15l2-5h14l2 5v3H3zM7 18v2M17 18v2M5 13h14"/><circle cx="7.5" cy="15.5" r="1"/><circle cx="16.5" cy="15.5" r="1"/>',
   saya: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>'
 };
 function ico(k) { return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>'; }
-var NAV = [['musim', 'Home'], ['kal', 'Calendar'], ['kej', 'Standings'], ['kereta', 'Team'], ['saya', 'Me']];
+var NAV = [['musim', 'Home'], ['news', 'News'], ['kal', 'Races'], ['kej', 'Standings'], ['kereta', 'Team'], ['saya', 'Me']];
 
 function vHub() {
   if (UI.tab === 'pemandu' || UI.tab === 'kerjaya') UI.tab = 'saya';
   if (!NAV.some(function (x) { return x[0] === UI.tab; })) UI.tab = 'musim';
   if (typeof ensureDev === 'function') ensureDev(S);
   var nav = NAV.map(function (x) { return '<button class="' + (UI.tab === x[0] ? 'on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + ico(x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
-  var body = ({ musim: hUtama, kal: hKal, kej: hKed, kereta: hPasukan, saya: hSaya })[UI.tab]();
+  var body = ({ musim: hUtama, news: hNews, kal: hKalX, kej: hKed, kereta: hPasukan, saya: hSaya })[UI.tab]();
   return '<div class="hub6"><aside class="snav"><div class="brand">Grid to <b>Glory</b></div><nav>' + nav + '</nav><button class="btn sm" data-act="menu">Main menu</button></aside>' +
     '<main class="hmain"><div class="top htop"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>Season ' + S.season + ' · Round ' + Math.min(S.round + 1, 10) + '/10</span><button class="btn sm" data-act="menu">Menu</button></div></div>' + body + '</main>' +
     '<nav class="bnav">' + nav + '</nav></div>';
@@ -4164,14 +4197,14 @@ function hKal() {
 var WIDE = window.matchMedia ? window.matchMedia('(min-width: 1100px)') : { matches: false };
 if (WIDE.addEventListener) WIDE.addEventListener('change', function () { if (typeof UI !== 'undefined' && UI.screen === 'hub' && !document.querySelector('#modal > *')) render(); });
 function hKed() {
-  if (!WIDE.matches || UI.kedMode === 'j') return hKed1();
-  var keep = UI.kedMode, seg = function (on) { return '<div class="seg" style="margin-bottom:12px;max-width:340px;grid-template-columns:repeat(2,1fr)"><button class="' + (on ? 'on' : '') + '" data-act="ked-m" data-v="p">Standings</button><button class="' + (on ? '' : 'on') + '" data-act="ked-m" data-v="j">Juniors</button></div>'; };
+  if (!WIDE.matches || UI.kedMode === 'j' || UI.kedMode === 'pf') return hKed1();
+  var keep = UI.kedMode, seg = function (on) { return '<div class="seg" style="margin-bottom:12px;max-width:340px;grid-template-columns:repeat(3,1fr)"><button class="on" data-act="ked-m" data-v="p">Standings</button><button data-act="ked-m" data-v="j">Juniors</button><button data-act="ked-m" data-v="pf">Profiles</button></div>'; };
   var strip = function (x) { return x.replace(/^<div class="seg"[\s\S]*?<\/button><\/div>/, ''); };
   UI.kedMode = 'p'; var a = strip(hKed1()); UI.kedMode = 't'; var b = strip(hKed1()); UI.kedMode = keep;
   return seg(true) + '<div class="kedwide">' + a + b + '</div>';
 }
 function hKed1() {
-  var mode = UI.kedMode || 'p', p = me(), h = '<div class="seg" style="margin-bottom:12px;max-width:480px;grid-template-columns:repeat(6,1fr)"><button class="' + (mode === 'p' ? 'on' : '') + '" data-act="ked-m" data-v="p" style="grid-column:span 2">Drivers</button><button class="' + (mode === 't' ? 'on' : '') + '" data-act="ked-m" data-v="t" style="grid-column:span 2">Constructors</button><button class="' + (mode === 'j' ? 'on' : '') + '" data-act="ked-m" data-v="j" style="grid-column:span 2">Juniors</button></div><div class="card">';
+  var mode = UI.kedMode || 'p', p = me(), h = '<div class="seg" style="margin-bottom:12px;max-width:480px;grid-template-columns:repeat(4,1fr)"><button class="' + (mode === 'p' ? 'on' : '') + '" data-act="ked-m" data-v="p">Drivers</button><button class="' + (mode === 't' ? 'on' : '') + '" data-act="ked-m" data-v="t">Teams</button><button class="' + (mode === 'j' ? 'on' : '') + '" data-act="ked-m" data-v="j">Juniors</button><button class="' + (mode === 'pf' ? 'on' : '') + '" data-act="ked-m" data-v="pf">Profiles</button></div>'; if (mode === 'pf') return h + hProf(); h += '<div class="card">';
   if (mode === 'p') {
     var ds = driverStandings(S);
     h += '<div class="scroll"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">OVR</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>';
@@ -4947,7 +4980,7 @@ function pushNews(S, o) {
   if (o.s == null) o.s = S.season;
   if (o.r == null) o.r = S.round + 1;
   o.id = (S.newsId = (S.newsId || 0) + 1);
-  S.news.unshift(o); S.news = S.news.slice(0, 30);
+  S.news.unshift(o); S.news = S.news.slice(0, 300);
 }
 function newsList(S) {
   /* buang teks lama (versi Bahasa Melayu dulu) */
@@ -5106,7 +5139,7 @@ function newsCard(cls, max) {
   h += '<div class="nw-top" style="--tc:' + st.col + '"><div class="nw-tx"><span class="nw-k ' + st.kc + '">' + st.kick + '</span><h4>' + esc(st.head) + '</h4><p>' + esc(st.sub) + '</p><small>' + newsMeta(top) + '</small></div>' +
     (st.team ? '<div class="nw-img">' + carSVG(st.team, 150, true) + '</div>' : st.ci != null ? '<div class="nw-img trk">' + circuitSVG(st.ci, 70, '#ffffff') + '</div>' : '') + '</div>';
   if (rest.length) h += '<div class="nw-list">' + rest.map(function (n) { var s = newsStory(n); return '<div class="nw-it" style="--tc:' + s.col + '"><span class="nw-k ' + s.kc + '">' + s.kick + '</span><b>' + esc(s.head) + '</b><small>' + newsMeta(n) + '</small></div>'; }).join('') + '</div>';
-  if (L.length > (max || 4)) h += '<button class="nw-more" data-act="nw-all">' + (all ? 'Show less ▴' : 'More news ▾') + '</button>';
+  if (L.length > (max || 4)) h += '<button class="nw-more" data-act="tab" data-v="news">All news →</button>';
   var tick = L.slice(0, 6).map(function (n) { return esc(newsStory(n).head); }).join('<i>◆</i>');
   h += '<div class="nw-tick"><span>NEWS</span><div><p>' + tick + '<i>◆</i>' + tick + '</p></div></div>';
   return h + '</div>';
@@ -5305,7 +5338,7 @@ function profileHTML(kind, i) {
   } else {
     var ds = driverStandings(S), c = careerOf(d);
     if (typeof conSectionHTML === 'function') h += conSectionHTML(S, d);
-    h += '<h4>Season ' + S.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]);
+    h += '<h4>Season ' + S.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]) + (typeof pfRaces === 'function' ? pfRaces(d) : '');
     h += '<h4>Career</h4>' + pfTiles([['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles]]);
     var rh = (d.rh || []).map(function (x) { return x.r; }); if (!rh.length || rh[rh.length - 1] !== o) rh = rh.concat([o]);
     if (rh.length >= 2) h += '<h4>Rating trend</h4><div class="pf-spark">' + rateSpark(rh, d.rh || []) + '</div>';
@@ -6833,7 +6866,8 @@ A['onb-replay'] = function () { if (!onbRep) return; UI.mkey = null; ONB = { key
 /* ---------- 2. tip kontekstual (sekali setiap skrin) ---------- */
 var TIPS = {
   'hub:musim': ['Welcome to Home', 'This is your base. See your next race, your standing and what is happening in the paddock. When you are ready, start the race weekend from here.'],
-  'hub:kal': ['The calendar', 'All 10 races of the season. Each track suits different strengths, so look at the next one before you race.'],
+  'hub:kal': ['Races', 'The calendar lists all 10 races. Switch to Results for the full classification of every race, or History for past seasons and records.'],
+  'hub:news': ['Paddock Wire', 'All the news of the season: race reports, transfers, upgrades and rumours. Tap a story to read it in full and jump to the related driver, team or race results.'],
   'hub:kej': ['Standings', 'Points go to the top 10: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1. Tap any driver or team to see their profile.'],
   'hub:kereta': ['Your car', 'Aero = cornering grip, Engine = straight-line speed, Chassis = tyre care, Reliability = fewer breakdowns. Upgrades arrive during the season. Finance shows what your team can afford to develop.'],
   'hub:saya': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Your contract and objectives are here too.'],
@@ -6898,4 +6932,141 @@ A['onb-style'] = function (d) {
     } catch (e) { }
   };
 })();
+'use strict';
+/* ===== Fasa 14: tab News, keputusan penuh, sejarah, pelayar profil ===== */
+
+function rrTag(tid) { var t = S.teams[tid] || { color: '#888', short: '?' }; return '<span class="tag" style="--tc:' + t.color + '">' + t.short + '</span>'; }
+function rrSeasons() {
+  var seen = {}, out = [];
+  (S.rr || []).forEach(function (e) { if (!seen[e.s]) { seen[e.s] = 1; out.push(e.s); } });
+  if (!seen[S.season]) out.push(S.season);
+  return out.sort(function (a, b) { return a - b; });
+}
+function rrOf(s) { return (S.rr || []).map(function (e, i) { return { e: e, i: i }; }).filter(function (x) { return x.e.s === s; }).sort(function (a, b) { return a.e.r - b.e.r; }); }
+function rrMine(e) { for (var i = 0; i < e.c.length; i++) if (e.c[i][5]) return e.c[i]; return null; }
+function rrPos(row) { return row[2] ? 'P' + row[2] : 'DNF'; }
+
+/* ---------- Races: Calendar | Results | History ---------- */
+function hKalX() {
+  var m = UI.kalMode || 'cal';
+  var h = '<div class="seg" style="margin-bottom:12px;max-width:420px;grid-template-columns:repeat(3,1fr)">' + [['cal', 'Calendar'], ['res', 'Results'], ['his', 'History']].map(function (x) { return '<button class="' + (m === x[0] ? 'on' : '') + '" data-act="kal-m" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
+  return h + (m === 'res' ? hRes() : m === 'his' ? hHist() : hKal());
+}
+A['kal-m'] = function (d) { UI.kalMode = d.v; render(); };
+
+function hRes() {
+  var ss = rrSeasons(), cur = UI.rsS && ss.indexOf(UI.rsS) > -1 ? UI.rsS : S.season, L = rrOf(cur);
+  var h = '<div class="card"><div class="row sp" style="margin-bottom:8px"><h3>Race results</h3><div class="row" style="gap:6px">' + ss.map(function (s) { return '<button class="btn sm ' + (s === cur ? 'on' : '') + '" data-act="rs-s" data-v="' + s + '">S' + s + '</button>'; }).join('') + '</div></div>';
+  if (!L.length) return h + '<p class="dim" style="margin:0">' + (cur === S.season ? 'No races completed yet this season.' : 'Full results were not recorded for this season.') + ' Full results are saved from every race you finish from now on.</p></div>';
+  h += '<div class="krows">' + L.map(function (x) {
+    var e = x.e, c = CIRCUITS[e.ci], w = e.c[0], pole = null, me = rrMine(e);
+    e.c.forEach(function (r) { if (r[4] === 1) pole = r; });
+    return '<div class="krow big clk" data-act="rr-open" data-v="' + x.i + '"><span class="mono dim">R' + (e.r + 1) + '</span>' + flagSVG(e.ci, 30) + '<div style="min-width:0"><b>' + c.name + '</b><small class="dim">Winner ' + esc(w[0]) + ' ' + rrTag(w[1]) + (pole ? ' · Pole ' + esc(pole[0].split(' ').slice(-1)[0]) : '') + '</small></div><div class="r6">' + (me ? '<span class="pill6 ' + (me[2] && me[2] <= 3 ? 'pod' : me[2] && me[2] <= 10 ? 'pts' : me[2] ? '' : 'bad') + '">' + rrPos(me) + '</span>' : '') + '</div></div>';
+  }).join('') + '</div><p class="dim" style="font-size:12.5px;margin:8px 2px 0">Tap a race for the full classification.</p></div>';
+  return h;
+}
+A['rs-s'] = function (d) { UI.rsS = +d.v; render(); };
+function rrHTML(i) {
+  var e = (S.rr || [])[i]; if (!e) return '';
+  var c = CIRCUITS[e.ci], pole = null; e.c.forEach(function (r) { if (r[4] === 1) pole = r; });
+  var rows = e.c.map(function (r, k) {
+    var gain = r[2] && r[4] ? r[4] - r[2] : null;
+    return '<tr class="' + (r[5] ? 'me' : '') + '"><td class="mono dim">' + (r[2] || '–') + '</td><td>' + rrTag(r[1]) + ' ' + esc(r[0]) + '</td><td class="r mono dim">' + (r[4] || '–') + '</td><td class="r mono ' + (gain > 0 ? 'good' : gain < 0 ? 'bad' : 'dim') + '">' + (gain == null ? '' : gain > 0 ? '▲' + gain : gain < 0 ? '▼' + (-gain) : '–') + '</td><td class="r mono"><b>' + (r[3] || (r[2] ? '' : 'DNF')) + '</b></td></tr>';
+  }).join('');
+  return '<div class="stack"><div class="row sp"><div><h3 style="margin:0">' + c.name + '</h3><small class="dim">Season ' + e.s + ' · Round ' + (e.r + 1) + '</small></div>' + flagSVG(e.ci, 34) + '</div>' +
+    '<div class="scroll" style="max-height:56vh;overflow-y:auto"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">Grid</th><th class="r">+/-</th><th class="r">Pts</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<p class="dim" style="font-size:12.5px;margin:0">' + (pole ? 'Pole: ' + esc(pole[0]) + '. ' : '') + (e.fl ? 'Fastest lap: ' + esc(e.fl) + '.' : '') + '</p><button class="btn pri wide" data-act="mclose">Close</button></div>';
+}
+A['rr-open'] = function (d) { showModal(rrHTML(+d.v)); };
+
+/* ---------- History ---------- */
+function hRecords() {
+  var w = {}, p = {}, st = {};
+  (S.rr || []).forEach(function (e) { e.c.forEach(function (r) { var n = r[0]; if (r[2] === 1) w[n] = (w[n] || 0) + 1; if (r[2] && r[2] <= 3) p[n] = (p[n] || 0) + 1; }); });
+  var top = function (o) { return Object.keys(o).map(function (k) { return [k, o[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 5); };
+  var tbl = function (t, L) { return '<div><h4 style="margin:0 0 4px">' + t + '</h4>' + (L.length ? L.map(function (x, i) { return '<div class="row sp" style="padding:3px 0;border-bottom:1px solid var(--line)"><span>' + (i + 1) + '. ' + esc(x[0]) + '</span><b class="mono">' + x[1] + '</b></div>'; }).join('') : '<p class="dim" style="margin:0">None yet.</p>') + '</div>'; };
+  return '<div class="card"><h3 style="margin-bottom:8px">Records</h3><div class="recgrid">' + tbl('Most wins', top(w)) + tbl('Most podiums', top(p)) + '</div><p class="dim" style="font-size:12.5px;margin:8px 0 0">Counted from the races recorded since this feature was added.</p></div>';
+}
+function hHist() {
+  var c = S.career, h = '<div class="card"><h3 style="margin-bottom:8px">Your career</h3><div class="pf-tiles">' + [['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles], ['Points', c.pts]].map(function (x) { return '<div><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('') + '</div></div>';
+  h += hRecords();
+  h += '<div class="card"><h3 style="margin-bottom:8px">Season by season</h3>';
+  if (!S.hist.length) h += '<p class="dim" style="margin:0">Your first season is still in progress. Completed seasons appear here.</p>';
+  else {
+    h += '<div class="scroll"><table class="t"><thead><tr><th>Season</th><th>Team</th><th class="r">Pos</th><th class="r">Pts</th><th class="r">Wins</th><th>Champion</th></tr></thead><tbody>' + S.hist.slice().reverse().map(function (r) {
+      var has = (S.rr || []).some(function (e) { return e.s === r.season; });
+      return '<tr class="' + (has ? 'clk' : '') + '"' + (has ? ' data-act="hs-open" data-v="' + r.season + '"' : '') + '><td class="mono">S' + r.season + '</td><td><span class="tag" style="--tc:' + r.tcol + '">' + r.team + '</span></td><td class="r mono">P' + r.pos + '</td><td class="r mono">' + r.pts + '</td><td class="r mono">' + (r.wins || 0) + '</td><td class="dim">' + esc(r.champ) + (r.champTeam ? '<br><small>' + esc(r.champTeam) + '</small>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div><p class="dim" style="font-size:12.5px;margin:8px 0 0">Tap a season with full results to see its final standings.</p>';
+  }
+  return h + '</div>';
+}
+function hsHTML(s) {
+  var pts = {}, wins = {}, tm = {};
+  rrOf(s).forEach(function (x) { x.e.c.forEach(function (r) { pts[r[0]] = (pts[r[0]] || 0) + r[3]; if (r[2] === 1) wins[r[0]] = (wins[r[0]] || 0) + 1; tm[r[0]] = r[1]; }); });
+  var L = Object.keys(pts).sort(function (a, b) { return pts[b] - pts[a] || (wins[b] || 0) - (wins[a] || 0); }), me = S.drivers[S.pi].name;
+  return '<div class="stack"><h3 style="margin:0">Season ' + s + ' standings</h3><div class="scroll" style="max-height:60vh;overflow-y:auto"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>' + L.map(function (n, i) { return '<tr class="' + (n === me ? 'me' : '') + '"><td class="mono dim">' + (i + 1) + '</td><td>' + rrTag(tm[n]) + ' ' + esc(n) + '</td><td class="r mono">' + (wins[n] || 0) + '</td><td class="r mono"><b>' + pts[n] + '</b></td></tr>'; }).join('') + '</tbody></table></div><button class="btn pri wide" data-act="mclose">Close</button></div>';
+}
+A['hs-open'] = function (d) { showModal(hsHTML(+d.v)); };
+
+/* ---------- Profiles browser (Standings › Profiles) ---------- */
+function hProf() {
+  var m = UI.pfM || 'd', h = '<div class="seg" style="margin-bottom:12px;max-width:300px;grid-template-columns:repeat(2,1fr)"><button class="' + (m === 'd' ? 'on' : '') + '" data-act="pf-m" data-v="d">Drivers</button><button class="' + (m === 't' ? 'on' : '') + '" data-act="pf-m" data-v="t">Teams</button></div>';
+  if (m === 'd') {
+    var L = S.drivers.slice().sort(function (a, b) { return ovr(b) - ovr(a); });
+    h += '<div class="pfgrid">' + L.map(function (d) {
+      var t = S.teams[d.team], k = d.id === S.pi;
+      return '<button class="pfc ' + (k ? 'me' : '') + '" data-act="prof" data-v="d:' + d.id + '"><span class="pfh">' + helmetSVG(d, 46, false) + '</span><span class="pfn"><b>' + esc(d.name) + '</b><small>' + flagE(d.nat) + ' ' + esc(t.name) + ' · age ' + d.age + '</small></span><span class="pfo"><b>' + ovr(d) + '</b><small>OVR</small></span></button>';
+    }).join('') + '</div>';
+  } else {
+    var T = S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }), ts = teamStandings(S);
+    h += '<div class="pfgrid">' + T.map(function (t, i) {
+      var mates = S.drivers.filter(function (d) { return d.team === t.id; });
+      return '<button class="pfc ' + (t.id === S.drivers[S.pi].team ? 'me' : '') + '" data-act="tprof" data-v="' + t.id + '"><span class="pfh pfcar">' + carSVG(t, 70) + '</span><span class="pfn"><b>' + esc(t.name) + '</b><small>' + mates.map(function (d) { return esc(d.name.split(' ').slice(-1)[0]); }).join(' · ') + ' · P' + (ts.indexOf(t) + 1) + '</small></span><span class="pfo"><b>#' + (i + 1) + '</b><small>CAR</small></span></button>';
+    }).join('') + '</div>';
+  }
+  return h;
+}
+A['pf-m'] = function (d) { UI.pfM = d.v; render(); };
+
+/* ---------- News ---------- */
+var NWCAT = { all: 'All', race: 'Races', trf: 'Transfers', oth: 'Other' };
+function nwCat(st) { return st.kc === 'k-race' ? 'race' : st.kc === 'k-trf' ? 'trf' : 'oth'; }
+function hNews() {
+  var f = UI.nwF || 'all', L = newsList(S).map(function (n) { var st = null; try { st = newsStory(n); } catch (e) { } return st ? { n: n, st: st } : null; }).filter(Boolean);
+  var h = '<div class="card nw"><div class="nw-bar"><span class="nw-brand">PADDOCK<b>WIRE</b></span><span class="nw-live"><i></i>' + L.length + ' STORIES</span></div>' +
+    '<div class="row" style="gap:6px;padding:10px 12px 4px">' + Object.keys(NWCAT).map(function (k) { return '<button class="btn sm ' + (f === k ? 'on' : '') + '" data-act="nw-f" data-v="' + k + '">' + NWCAT[k] + '</button>'; }).join('') + '</div>';
+  var V = L.filter(function (x) { return f === 'all' || nwCat(x.st) === f; });
+  if (!V.length) return h + '<p class="dim" style="padding:12px">No stories here yet. They appear as the season unfolds.</p></div>';
+  h += '<div class="nw-list nwfull">' + V.map(function (x) {
+    return '<button class="nw-it nwb" data-act="nw-open" data-v="' + x.n.id + '" style="--tc:' + x.st.col + '"><span class="nw-k ' + x.st.kc + '">' + x.st.kick + '</span><b>' + esc(x.st.head) + '</b><p>' + esc(x.st.sub) + '</p><small>' + newsMeta(x.n) + '</small></button>';
+  }).join('') + '</div>';
+  return h + '</div>';
+}
+A['nw-f'] = function (d) { UI.nwF = d.v; render(); };
+A['nw-open'] = function (d) {
+  var n = newsList(S).filter(function (x) { return x.id === +d.v; })[0]; if (!n) return;
+  var st = newsStory(n), extra = '', btns = '';
+  if (n.k === 'race') {
+    var e = (S.rr || []).filter(function (x) { return x.s === n.s && x.r === n.r - 1; })[0], ix = (S.rr || []).indexOf(e);
+    if (e) {
+      extra = '<div class="nwpod">' + e.c.slice(0, 3).map(function (r, i) { return '<div><span class="mono dim">P' + (i + 1) + '</span> ' + rrTag(r[1]) + ' <b>' + esc(r[0]) + '</b></div>'; }).join('') + '</div>';
+      btns += '<button class="btn" data-act="rr-open" data-v="' + ix + '">Full results</button>';
+    }
+  }
+  if (n.t != null && S.teams[n.t]) btns += '<button class="btn" data-act="tprof" data-v="' + n.t + '">' + esc(S.teams[n.t].name) + ' profile</button>';
+  var who = n.n && S.drivers.filter(function (x) { return x.name === n.n; })[0];
+  if (who) btns += '<button class="btn" data-act="prof" data-v="d:' + who.id + '">' + esc(who.name) + ' profile</button>';
+  showModal('<div class="stack nwd" style="--tc:' + st.col + '"><div class="row sp"><span class="nw-k ' + st.kc + '">' + st.kick + '</span><small class="dim">' + newsMeta(n) + '</small></div>' +
+    (st.team ? '<div class="nw-img nwd-img">' + carSVG(st.team, 190, true) + '</div>' : st.ci != null ? '<div class="nw-img trk nwd-img">' + circuitSVG(st.ci, 90, '#ffffff') + '</div>' : '') +
+    '<h2 style="margin:0">' + esc(st.head) + '</h2><p style="margin:0;font-size:15.5px;line-height:1.6">' + esc(st.sub) + '</p>' + extra +
+    (btns ? '<div class="row">' + btns + '</div>' : '') + '<button class="btn pri wide" data-act="mclose">Close</button></div>');
+};
+
+/* keputusan perlumbaan musim ini dalam profil pemandu */
+function pfRaces(d) {
+  var L = rrOf(S.season), out = [];
+  L.forEach(function (x) { x.e.c.forEach(function (r) { if (r[0] === d.name) out.push({ r: x.e.r, ci: x.e.ci, g: r[4], p: r[2], pts: r[3], i: x.i }); }); });
+  if (!out.length) return '';
+  return '<div class="pf-rr">' + out.map(function (o) { return '<button class="pfrr ' + (o.p && o.p <= 3 ? 'pod' : o.p && o.p <= 10 ? 'pts' : o.p ? '' : 'bad') + '" data-act="rr-open" data-v="' + o.i + '"><small>R' + (o.r + 1) + '</small><b>' + (o.p ? 'P' + o.p : 'DNF') + '</b><small>G' + o.g + '</small></button>'; }).join('') + '</div>';
+}
 </script>

@@ -190,7 +190,7 @@ function profileHTML(kind, i) {
   } else {
     var ds = driverStandings(S), c = careerOf(d);
     if (typeof conSectionHTML === 'function') h += conSectionHTML(S, d);
-    h += '<h4>Season ' + S.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]);
+    h += '<h4>Season ' + S.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]) + (typeof pfRaces === 'function' ? pfRaces(d) : '');
     h += '<h4>Career</h4>' + pfTiles([['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles]]);
     var rh = (d.rh || []).map(function (x) { return x.r; }); if (!rh.length || rh[rh.length - 1] !== o) rh = rh.concat([o]);
     if (rh.length >= 2) h += '<h4>Rating trend</h4><div class="pf-spark">' + rateSpark(rh, d.rh || []) + '</div>';

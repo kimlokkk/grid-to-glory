@@ -5,7 +5,7 @@ function pushNews(S, o) {
   if (o.s == null) o.s = S.season;
   if (o.r == null) o.r = S.round + 1;
   o.id = (S.newsId = (S.newsId || 0) + 1);
-  S.news.unshift(o); S.news = S.news.slice(0, 30);
+  S.news.unshift(o); S.news = S.news.slice(0, 300);
 }
 function newsList(S) {
   /* buang teks lama (versi Bahasa Melayu dulu) */
@@ -164,7 +164,7 @@ function newsCard(cls, max) {
   h += '<div class="nw-top" style="--tc:' + st.col + '"><div class="nw-tx"><span class="nw-k ' + st.kc + '">' + st.kick + '</span><h4>' + esc(st.head) + '</h4><p>' + esc(st.sub) + '</p><small>' + newsMeta(top) + '</small></div>' +
     (st.team ? '<div class="nw-img">' + carSVG(st.team, 150, true) + '</div>' : st.ci != null ? '<div class="nw-img trk">' + circuitSVG(st.ci, 70, '#ffffff') + '</div>' : '') + '</div>';
   if (rest.length) h += '<div class="nw-list">' + rest.map(function (n) { var s = newsStory(n); return '<div class="nw-it" style="--tc:' + s.col + '"><span class="nw-k ' + s.kc + '">' + s.kick + '</span><b>' + esc(s.head) + '</b><small>' + newsMeta(n) + '</small></div>'; }).join('') + '</div>';
-  if (L.length > (max || 4)) h += '<button class="nw-more" data-act="nw-all">' + (all ? 'Show less ▴' : 'More news ▾') + '</button>';
+  if (L.length > (max || 4)) h += '<button class="nw-more" data-act="tab" data-v="news">All news →</button>';
   var tick = L.slice(0, 6).map(function (n) { return esc(newsStory(n).head); }).join('<i>◆</i>');
   h += '<div class="nw-tick"><span>NEWS</span><div><p>' + tick + '<i>◆</i>' + tick + '</p></div></div>';
   return h + '</div>';

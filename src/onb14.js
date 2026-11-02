@@ -84,7 +84,8 @@ A['onb-replay'] = function () { if (!onbRep) return; UI.mkey = null; ONB = { key
 /* ---------- 2. tip kontekstual (sekali setiap skrin) ---------- */
 var TIPS = {
   'hub:musim': ['Welcome to Home', 'This is your base. See your next race, your standing and what is happening in the paddock. When you are ready, start the race weekend from here.'],
-  'hub:kal': ['The calendar', 'All 10 races of the season. Each track suits different strengths, so look at the next one before you race.'],
+  'hub:kal': ['Races', 'The calendar lists all 10 races. Switch to Results for the full classification of every race, or History for past seasons and records.'],
+  'hub:news': ['Paddock Wire', 'All the news of the season: race reports, transfers, upgrades and rumours. Tap a story to read it in full and jump to the related driver, team or race results.'],
   'hub:kej': ['Standings', 'Points go to the top 10: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1. Tap any driver or team to see their profile.'],
   'hub:kereta': ['Your car', 'Aero = cornering grip, Engine = straight-line speed, Chassis = tyre care, Reliability = fewer breakdowns. Upgrades arrive during the season. Finance shows what your team can afford to develop.'],
   'hub:saya': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Your contract and objectives are here too.'],

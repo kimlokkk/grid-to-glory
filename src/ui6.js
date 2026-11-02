@@ -53,19 +53,20 @@ function spark(arr, w, h) {
 var ICO = {
   musim: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
   kal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  news: '<path d="M5 4h11a2 2 0 0 1 2 2v13H7a2 2 0 0 1-2-2zM18 8h2v9a2 2 0 0 1-2 2M8 8h7M8 12h7M8 15h4"/>',
   kej: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4"/>',
   kereta: '<path d="M3 15l2-5h14l2 5v3H3zM7 18v2M17 18v2M5 13h14"/><circle cx="7.5" cy="15.5" r="1"/><circle cx="16.5" cy="15.5" r="1"/>',
   saya: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>'
 };
 function ico(k) { return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>'; }
-var NAV = [['musim', 'Home'], ['kal', 'Calendar'], ['kej', 'Standings'], ['kereta', 'Team'], ['saya', 'Me']];
+var NAV = [['musim', 'Home'], ['news', 'News'], ['kal', 'Races'], ['kej', 'Standings'], ['kereta', 'Team'], ['saya', 'Me']];
 
 function vHub() {
   if (UI.tab === 'pemandu' || UI.tab === 'kerjaya') UI.tab = 'saya';
   if (!NAV.some(function (x) { return x[0] === UI.tab; })) UI.tab = 'musim';
   if (typeof ensureDev === 'function') ensureDev(S);
   var nav = NAV.map(function (x) { return '<button class="' + (UI.tab === x[0] ? 'on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + ico(x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
-  var body = ({ musim: hUtama, kal: hKal, kej: hKed, kereta: hPasukan, saya: hSaya })[UI.tab]();
+  var body = ({ musim: hUtama, news: hNews, kal: hKalX, kej: hKed, kereta: hPasukan, saya: hSaya })[UI.tab]();
   return '<div class="hub6"><aside class="snav"><div class="brand">Grid to <b>Glory</b></div><nav>' + nav + '</nav><button class="btn sm" data-act="menu">Main menu</button></aside>' +
     '<main class="hmain"><div class="top htop"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>Season ' + S.season + ' · Round ' + Math.min(S.round + 1, 10) + '/10</span><button class="btn sm" data-act="menu">Menu</button></div></div>' + body + '</main>' +
     '<nav class="bnav">' + nav + '</nav></div>';
@@ -113,14 +114,14 @@ function hKal() {
 var WIDE = window.matchMedia ? window.matchMedia('(min-width: 1100px)') : { matches: false };
 if (WIDE.addEventListener) WIDE.addEventListener('change', function () { if (typeof UI !== 'undefined' && UI.screen === 'hub' && !document.querySelector('#modal > *')) render(); });
 function hKed() {
-  if (!WIDE.matches || UI.kedMode === 'j') return hKed1();
-  var keep = UI.kedMode, seg = function (on) { return '<div class="seg" style="margin-bottom:12px;max-width:340px;grid-template-columns:repeat(2,1fr)"><button class="' + (on ? 'on' : '') + '" data-act="ked-m" data-v="p">Standings</button><button class="' + (on ? '' : 'on') + '" data-act="ked-m" data-v="j">Juniors</button></div>'; };
+  if (!WIDE.matches || UI.kedMode === 'j' || UI.kedMode === 'pf') return hKed1();
+  var keep = UI.kedMode, seg = function (on) { return '<div class="seg" style="margin-bottom:12px;max-width:340px;grid-template-columns:repeat(3,1fr)"><button class="on" data-act="ked-m" data-v="p">Standings</button><button data-act="ked-m" data-v="j">Juniors</button><button data-act="ked-m" data-v="pf">Profiles</button></div>'; };
   var strip = function (x) { return x.replace(/^<div class="seg"[\s\S]*?<\/button><\/div>/, ''); };
   UI.kedMode = 'p'; var a = strip(hKed1()); UI.kedMode = 't'; var b = strip(hKed1()); UI.kedMode = keep;
   return seg(true) + '<div class="kedwide">' + a + b + '</div>';
 }
 function hKed1() {
-  var mode = UI.kedMode || 'p', p = me(), h = '<div class="seg" style="margin-bottom:12px;max-width:480px;grid-template-columns:repeat(6,1fr)"><button class="' + (mode === 'p' ? 'on' : '') + '" data-act="ked-m" data-v="p" style="grid-column:span 2">Drivers</button><button class="' + (mode === 't' ? 'on' : '') + '" data-act="ked-m" data-v="t" style="grid-column:span 2">Constructors</button><button class="' + (mode === 'j' ? 'on' : '') + '" data-act="ked-m" data-v="j" style="grid-column:span 2">Juniors</button></div><div class="card">';
+  var mode = UI.kedMode || 'p', p = me(), h = '<div class="seg" style="margin-bottom:12px;max-width:480px;grid-template-columns:repeat(4,1fr)"><button class="' + (mode === 'p' ? 'on' : '') + '" data-act="ked-m" data-v="p">Drivers</button><button class="' + (mode === 't' ? 'on' : '') + '" data-act="ked-m" data-v="t">Teams</button><button class="' + (mode === 'j' ? 'on' : '') + '" data-act="ked-m" data-v="j">Juniors</button><button class="' + (mode === 'pf' ? 'on' : '') + '" data-act="ked-m" data-v="pf">Profiles</button></div>'; if (mode === 'pf') return h + hProf(); h += '<div class="card">';
   if (mode === 'p') {
     var ds = driverStandings(S);
     h += '<div class="scroll"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">OVR</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>';
