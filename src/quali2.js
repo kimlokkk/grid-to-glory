@@ -14,11 +14,14 @@ var QK = {
 };
 var QNAME = ['Q1', 'Q2', 'Q3'];
 function qkInit(S, ci, wq) {
-  var c = CIRCUITS[ci], setup = {}, temp = P2.v3 ? rnd() : 0.5, base = {};
-  S.teams.forEach(function (t) { setup[t.id] = P2.v3 ? gauss() * P2.setupK : 0; });
+  trainingPrepare(S);
+  evaluationPrepare(S, ci);
+  var c = circuitFor(S, ci), setup = {}, temp = P2.v3 ? rnd() : 0.5, base = {};
+  S.teams.forEach(function (t) { setup[t.id] = (P2.v3 ? gauss() * P2.setupK : 0) + worldSetup(t); });
   S.drivers.forEach(function (d) {
-    var team = S.teams[d.team], cp = carPerf3(team, c, P2.v3), a = drvAttrs(d, P2.v3);
+    var team = S.teams[d.team], cp = carPerf3(team, c, P2.v3), a = worldAttributes(S, d);
     var t = (100 - cp.q) * P2.carK + (100 - a.qpace) * P2.drvK + setup[team.id];
+    t += combinedPace(driverFocus(S, d.id), abilityEffects(S, ci, d.id), true, wq);
     if (wq > 0.02) t += wq * 8 + (100 - (0.6 * d.wet + 0.4 * a.adapt)) * 0.04 * wq - (team.car.aero - 75) * 0.01 * wq;
     base[d.id] = { t: t, nz: P2.qNoise - (d.cons - 70) / 600, wet: wq };
   });

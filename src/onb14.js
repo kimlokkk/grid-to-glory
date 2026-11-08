@@ -83,14 +83,16 @@ A['onb-replay'] = function () { if (!onbRep) return; UI.mkey = null; ONB = { key
 
 /* ---------- 2. tip kontekstual (sekali setiap skrin) ---------- */
 var TIPS = {
-  'hub:musim': ['Welcome to Home', 'This is your base. See your next race, your standing and what is happening in the paddock. When you are ready, start the race weekend from here.'],
-  'hub:kal': ['Races', 'The calendar lists all 10 races. Switch to Results for the full classification of every race, or History for past seasons and records.'],
+  'hub:utama': ['Home', 'This is your base. See your next race, your standing and what is happening in the paddock. When you are ready, start the race weekend from here.'],
+  'hub:musim': ['Season', 'Open the calendar, race results, standings, news and history from the section buttons.'],
+  'hub:kerjaya': ['Career', 'Review your contract, sponsor offers and career record here.'],
+  'hub:kal': ['Races', 'The calendar lists every race in your season. Switch to Results for the full classification of every race, or History for past seasons and records.'],
   'hub:news': ['Paddock Wire', 'All the news of the season: race reports, transfers, upgrades and rumours. Tap a story to read it in full and jump to the related driver, team or race results.'],
   'hub:kej': ['Standings', 'Points go to the top 10: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1. Tap any driver or team to see their profile.'],
-  'hub:kereta': ['Your car', 'Aero = cornering grip, Engine = straight-line speed, Chassis = tyre care, Reliability = fewer breakdowns. Upgrades arrive during the season. Finance shows what your team can afford to develop.'],
-  'hub:saya': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Your contract and objectives are here too.'],
-  'wk:quali': ['Qualifying', 'Qualifying decides your starting grid. A better grid makes the race easier. The mini-game rewards a clean, well-timed lap. If you prefer to skip it, turn Mini game off in Me › Settings.'],
-  'wk:strat': ['Strategy: tyres and pace', 'Soft = fast but wears quickly. Medium = balanced. Hard = slow but lasts. Most races need a pit stop, and your engineer recommends a plan you can follow or change. In the race, Save/Balanced/Attack sets how hard you push: more push is faster but uses more tyre and fuel. Boost spends energy for a short overtake burst.'],
+  'hub:team': ['Your car', 'Aero = cornering grip, Engine = straight-line speed, Chassis = tyre care, Reliability = fewer breakdowns. Upgrades arrive during the season. Finance shows what your team can afford to develop.'],
+  'hub:aku': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Settings and save controls are here too.'],
+  'wk:quali': ['Qualifying', 'Qualifying decides your starting grid. A better grid makes the race easier. The mini-game rewards a clean, well-timed lap. If you prefer to skip it, turn Mini game off in Driver › Settings.'],
+  'wk:strat': ['Strategy: tyres and pace', 'Soft = fast but wears quickly. Medium = balanced. Hard = slow but lasts. Most races need a pit stop, and your engineer recommends a plan you can follow or change. Tyres, Fuel and Energy have separate controls. Each can stay on Auto or follow your manual choice. Pushing costs resources; hot or worn tyres increase spin risk. Boost spends the same battery as Deploy.'],
   'wk:result': ['After the race', 'Points go to the standings and XP to your driver. The press conference answer changes morale, fame and your relationship with the team.']
 };
 function onbCtx() {
@@ -106,7 +108,7 @@ function onbTip() {
   host.insertAdjacentHTML('afterbegin', '<div class="card tipc" data-k="' + k + '"><div><small>Tip</small><b>' + T[0] + '</b><p>' + T[1] + '</p></div><div class="row"><button class="btn sm pri" data-act="tip-ok" data-k="' + k + '">Got it</button><button class="btn sm" data-act="glossary">Glossary</button><button class="btn sm" data-act="tip-off">Hide all tips</button></div></div>');
 }
 A['tip-ok'] = function (d) { S.tips = S.tips || {}; S.tips[d.k] = 1; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); };
-A['tip-off'] = function () { S.settings.tips = false; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); toast('Tips hidden. Turn them back on in Me › Settings.'); };
+A['tip-off'] = function () { S.settings.tips = false; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); toast('Tips hidden. Turn them back on in Driver › Settings.'); };
 A['tips-toggle'] = function () { S.settings.tips = S.settings.tips === false; if (S.settings.tips) S.tips = {}; save(); render(); };
 
 /* ---------- 3. glosari ---------- */
@@ -115,7 +117,7 @@ var GLOSS = [
   ['Soft / Medium / Hard', 'Tyre types. Soft is fastest but wears quickly. Hard lasts longest but is slower.'],
   ['Inter / Wet', 'Tyres for damp and rainy conditions.'], ['Pit stop', 'A trip into the pit lane to change tyres. It costs time, but fresh tyres are faster.'],
   ['Undercut', 'Pitting earlier than a rival so fresh tyres gain you time on them.'], ['Safety car (SC)', 'A slow pace car after an incident. Everyone bunches up and a pit stop costs less time.'],
-  ['VSC', 'Virtual safety car: everyone slows to a set pace without a pace car.'], ['Energy', 'Charge for your Boost button. It recovers over time.'],
+  ['VSC', 'Virtual safety car: everyone slows to a set pace without a pace car.'], ['Energy', 'Battery charge shared by Deploy and Boost. Harvest recharges it at a pace cost.'],
   ['Boost', 'A short burst of speed for overtaking. It costs energy.'], ['DRS', 'A rear wing flap that opens in detection zones to help you pass on straights.'],
   ['Aero / Engine / Chassis / Reliability', 'The four car parts: grip, power, tyre care and fewer breakdowns.'], ['OVR / Rating', 'A driver\'s overall ability from 45 to 99, combining pace, consistency, racecraft, wet skill and tyre care.'],
   ['XP', 'Experience points to improve your driver. Earned after each race.'], ['Constructors\'', 'The team championship, scored from both drivers\' points.'],
@@ -127,7 +129,7 @@ A['glossary'] = function () {
 
 /* ---------- 4. pilihan gaya main (karier baru sahaja) ---------- */
 function onbStyleHTML() {
-  return '<div class="stack"><h2 style="margin:0">How do you want to play?</h2><p class="dim" style="margin:0">You can change this anytime in Me › Settings.</p>' +
+  return '<div class="stack"><h2 style="margin:0">How do you want to play?</h2><p class="dim" style="margin:0">You can change this anytime in Driver › Settings.</p>' +
     '<button class="opt press-o" data-act="onb-style" data-v="guided"><div class="t"><b>Guided</b> (recommended)</div><div class="s">You make the calls, with tips, a glossary and an engineer who recommends. Mini-games on.</div></button>' +
     '<button class="opt press-o" data-act="onb-style" data-v="casual"><div class="t"><b>Casual</b></div><div class="s">Your engineer handles pit stops and strategy. No mini-games. Just watch the race and manage your career.</div></button>' +
     '<button class="opt press-o" data-act="onb-style" data-v="expert"><div class="t"><b>Expert</b></div><div class="s">All decisions and mini-games, no tips. For players who know F1.</div></button></div>';

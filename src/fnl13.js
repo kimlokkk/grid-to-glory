@@ -1,5 +1,5 @@
 /* ===== Penutup musim: radio sebelum race terakhir, radio selepas bendera berkotak, dan skrin Season review. ===== */
-function fnlFinal() { return !!(S && !S.sit && S.round === 9); }
+function fnlFinal() { return !!(S && !S.sit && S.round === seasonRounds(S) - 1); }
 function fnlOrd(n) { return n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : n + 'th'; }
 function fnlCtx() {
   var p = me(), t = myTeam(), ds = driverStandings(S), ts = teamStandings(S), dp = ds.indexOf(p) + 1, tp = ts.indexOf(t) + 1, tgt = t.dev && t.dev.target ? t.dev.target : null;
@@ -14,8 +14,11 @@ function fnlMet(c) {
 /* radio sebelum lampu merah race terakhir */
 function fnlPreText() {
   var c = fnlCtx(), s = 'This is it, the final race of the season. ';
-  if (c.dp === 1 && c.gapL === 0 && c.ds[1] && c.p.pts - c.ds[1].pts <= 25) s += 'You lead the championship by ' + (c.p.pts - c.ds[1].pts) + ' points. Bring it home and we are champions.';
-  else if (c.dp <= 2 && c.gapL <= 26) s += 'The title is still on. You are ' + c.gapL + ' points behind ' + c.lead.name.split(' ').slice(-1)[0] + '. Win it and anything can happen.';
+  if (c.dp === 1 && c.ds[1]) {
+    var margin = c.p.pts - c.ds[1].pts;
+    s += margin > 26 ? 'You have already secured the drivers\' title. Let us finish the season strongly.' : margin === 0 ? 'You are level on points at the top. The final result and countback will decide the title.' : 'You lead the championship by ' + margin + ' points. The title depends on today\'s results; make every point count.';
+  }
+  else if (c.dp > 1 && c.gapL <= 26) s += 'You are P' + c.dp + ', ' + c.gapL + ' points behind ' + c.lead.name.split(' ').slice(-1)[0] + '. Chase the maximum score; the other results and countback matter too.';
   else if (c.dp <= 3) s += 'You are P' + c.dp + ' in the standings. A strong finish today and the season ends on a high.';
   else if (c.dp <= 10) s += 'You are P' + c.dp + ' in the championship' + (c.ahead && c.gapA <= 12 ? (c.gapA === 0 ? ', level on points with ' : ', only ' + c.gapA + ' points behind ') + c.ahead.name.split(' ').slice(-1)[0] : '') + '. Finish as high as you can.';
   else s += 'Nothing to lose today. A clean race and a good finish are all we want.';
@@ -42,7 +45,7 @@ function fnlPostText(P) {
   return s;
 }
 function fnlPostHTML(P) {
-  if (S.sit || S.round < 10) return '';
+  if (S.sit || S.round < seasonRounds(S)) return '';
   var c = fnlCtx(), good = c.dp <= 3 || fnlMet(c) === true;
   return radioCard({ t: '“' + (c.dp === 1 ? 'You are the champion!' : good ? 'Good job. That is the season.' : 'That is the season. Chin up.') + '”', sub: esc(fnlPostText(P)), lap: 0, big: true, live: true, col: c.dp === 1 ? '#f0b429' : null });
 }
@@ -83,23 +86,50 @@ function vReview() {
 if (typeof A !== 'undefined') {
   var fnlSE = A['season-end'], fnlRN = A['r-next'];
   A['season-end'] = function () {
-    if (!S.sit && S.revSeen !== S.season && S.round >= 10 && !S.lastSummary && typeof vReview === 'function') { UI.screen = 'review'; render(); return; }
+    if (!S.sit && S.revSeen !== S.season && S.round >= seasonRounds(S) && !S.lastSummary && typeof vReview === 'function') { UI.screen = 'review'; render(); return; }
     fnlSE();
   };
   A['rev-done'] = function () { S.revSeen = S.season; fnlSE(); };
-  A['r-next'] = function () { fnlRN(); if (!S.sit && S.round >= 10 && !S.lastSummary && S.revSeen !== S.season) { UI.screen = 'review'; render(); } };
+  A['r-next'] = function () { fnlRN(); if (!S.sit && S.round >= seasonRounds(S) && !S.lastSummary && S.revSeen !== S.season) { UI.screen = 'review'; render(); } };
 }
 /* ---- keluar semasa race: keputusan dikunci ----
    Lampu padam menanda S.live. Kalau pemain keluar atau muat semula sebelum bendera berkotak, jurutera menamatkan race dengan autopilot
    (tiada bonus minigame atau objektif, moral -6). Tiada kelebihan mengulang race yang berjalan buruk. */
+/* Keep physics state without duplicating driver/team histories in every car. */
+function liveCheckpoint(R) {
+  if (!S || !S.live || !R || R.done || S.live.r !== S.round || S.live.ci !== R.ci) return;
+  var snap = {};
+  Object.keys(R).forEach(function (key) { if (key !== 'c' && key !== 'p' && key !== 'cars') snap[key] = R[key]; });
+  snap.cars = R.cars.map(function (f) {
+    var car = {}; Object.keys(f).forEach(function (key) { if (key !== 'd' && key !== 't') car[key] = f[key]; }); return car;
+  });
+  S.live.race = snap; S.live.seed = _s; S.live.lap = R.p.lap;
+}
+function liveRestore(S, lv) {
+  if (!lv.race || lv.race.v !== 2 || lv.race.ci !== lv.ci || !lv.race.cars || !lv.race.cars.length) return null;
+  var R = JSON.parse(JSON.stringify(lv.race)); R.c = circuitFor(S, R.ci);
+  if (!R.c || !R.cars.every(function (f) { return S.drivers[f.di] && S.teams[f.team]; })) return null;
+  R.cars.forEach(function (f) { f.d = S.drivers[f.di]; f.t = S.teams[f.team]; });
+  R.p = R.cars.filter(function (f) { return f.isP; })[0];
+  if (!R.p) return null;
+  if (lv.seed != null) seedRnd(lv.seed);
+  while (!R.done) tick2(R);
+  R.cls = R.cars.slice().sort(function (a, b) { var ta = a.dnf ? 1e9 - a.dnfS : a.tFin + (a.pen || 0), tb = b.dnf ? 1e9 - b.dnfS : b.tFin + (b.pen || 0); return ta - tb; });
+  R.cls.forEach(function (f, i) { f.pos = i + 1; });
+  return R;
+}
+/* Reload/page close saves the current race, including an open pit/mini-game decision. */
+window.addEventListener('pagehide', function () {
+  if (typeof RUN !== 'undefined' && RUN && S && S.live) { liveCheckpoint(RUN.R); save(); }
+});
 function liveSettle() {
   if (!S || !S.live || S.sit) { if (S) S.live = null; return; }
   var lv = S.live; S.live = null;
-  if (lv.r !== S.round || S.round >= 10) return;
-  var ci = S.cal[S.round], R = runRace2(S, ci, qualiGrid2(S, ci), {}), fl = null;
+  if (lv.r !== S.round || S.round >= seasonRounds(S)) return;
+  var ci = S.cal[S.round], R = liveRestore(S, lv) || runRace2(S, ci, qualiGrid2(S, ci), {}), fl = null;
   R.cars.forEach(function (f) { if (!f.dnf && f.best < 900 && (!fl || f.best < fl.best)) fl = f; });
   R.fl = { di: fl ? fl.di : -1, t: fl ? fl.best : 0 };
-  var rep = finishRace(S, { ci: R.ci, c: R.c, fl: R.fl, cls: R.cls.map(function (f) { return { car: { d: f.d, di: f.di, isP: f.isP, grid: f.grid, dnf: f.dnf }, pos: f.pos, dnf: !!f.dnf }; }) }, 0);
+  var rep = finishRace(S, { ci: R.ci, c: R.c, wetRace: R.w && R.w.type !== 'kering', fl: R.fl, cls: R.cls.map(function (f) { return { car: { d: f.d, di: f.di, isP: f.isP, grid: f.grid, dnf: f.dnf, evalOrder: !!f.evalOrder, evalOrderCredit: f.evalOrderCredit || 0, evalSpins: f.evalSpins || 0, pen: f.pen || 0 }, pos: f.pos, dnf: !!f.dnf }; }) }, 0);
   S.morale = clamp((S.morale == null ? 50 : S.morale) - 6, 0, 100);
   save();
   try { toast('You left mid-race. Your engineer finished it on autopilot: ' + (rep.P.dnf ? 'DNF' : 'P' + rep.P.pos) + ', morale -6.'); } catch (e) { }
@@ -107,7 +137,7 @@ function liveSettle() {
 /* ---- peringatan XP: pemain yang tak belanja XP tak akan bertambah baik ---- */
 function xpNudgeHTML(cls) {
   if (!S || S.sit) return '';
-  var p = me(), cheap = Math.min.apply(null, ['pace', 'cons', 'race', 'wet', 'tyre'].filter(function (k) { return p[k] < 99; }).map(function (k) { return skillCost(p[k], S); }));
+  var p = me(), cheap = Math.min.apply(null, PROGRESSION.stats.filter(function (k) { return p[k] < statCap(S, k); }).map(function (k) { return skillCost(p[k], S, k); }));
   if (!isFinite(cheap) || S.xp < cheap) return '';
-  return '<div class="' + (cls || '') + ' card spon-b"><div><b>' + S.xp + ' XP to spend</b><span>Training is the only way your driver improves. Spend it on the Me tab.</span></div><button class="btn sm pri" data-act="tab" data-v="saya">Train</button></div>';
+  return '<div class="' + (cls || '') + ' card spon-b"><div><b>' + S.xp + ' XP to spend</b><span>Training is the only way your driver improves. Spend it on the Driver tab.</span></div><button class="btn sm pri" data-act="tab" data-v="aku">Train</button></div>';
 }

@@ -7,10 +7,10 @@ var A = {};
 var $app = document.getElementById('app');
 var $modal = document.getElementById('modal');
 
-function save() { try { if (typeof APEX !== 'undefined' && S && S.drivers) { S.saveVer = APEX.save; S.appVer = APEX.ver; } localStorage.setItem(KEY, JSON.stringify(S)); UI.saveWarn = 0; return true; } catch (e) { if (!UI.saveWarn) { UI.saveWarn = 1; try { toast('Could not save: browser storage is full or blocked. Progress may be lost if you close the page.'); } catch (e2) { } } return false; } }
+function save() { try { if (S && S.drivers) { foundationInit(S); S.meta.rng = _s; } if (typeof APEX !== 'undefined' && S && S.drivers) { S.saveVer = APEX.save; S.appVer = APEX.ver; } localStorage.setItem(KEY, JSON.stringify(S)); UI.saveWarn = 0; return true; } catch (e) { if (!UI.saveWarn) { UI.saveWarn = 1; try { toast('Could not save: browser storage is full or blocked. Progress may be lost if you close the page.'); } catch (e2) { } } return false; } }
 function loadSave() { try { var j = localStorage.getItem(KEY); return j ? JSON.parse(j) : null; } catch (e) { return null; } }
 function toast(m) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600); }
-function migrate(o) { o.settings = o.settings || {}; if (o.settings.v !== 3) { o.settings.mini = true; o.settings.ask = true; o.settings.v = 3; }
+function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requires a newer game build'); o.settings = o.settings || {}; if (o.settings.v !== 3) { o.settings.mini = true; o.settings.ask = true; o.settings.v = 3; }
   /* versi English: buang teks lama Bahasa Melayu yang tersimpan */
   if (o.drivers && typeof drvInit === 'function') drvInit(o);
   if (o.news) o.news = o.news.filter(function (n) { return n && typeof n === 'object'; });
@@ -48,11 +48,12 @@ function applyTheme() {
   r.setProperty('--acc', th.acc); r.setProperty('--accDeep', th.accDeep); r.setProperty('--onAcc', th.onAcc); r.setProperty('--accSoft', th.accSoft); r.setProperty('--a2', th.a2); r.setProperty('--onA2', th.onA2);
 }
 function render() {
+  if (S && S.mode === 'pro' && S.playerRetired && ['hub', 'wk', 'season'].indexOf(UI.screen) >= 0) UI.screen = 'retire';
   applyTheme();
   var h = '';
   if (UI.screen === 'menu') h = vMenu();
   else if (UI.screen === 'new') h = vNew();
-  else if (UI.screen === 'hub') h = (S && S.sit && typeof vSit === 'function') ? vSit() : vHub();
+  else if (UI.screen === 'hub') h = vHub();
   else if (UI.screen === 'wk') h = vWk();
   else if (UI.screen === 'season') h = vSeason();
   else if (UI.screen === 'review') h = vReview();
@@ -104,7 +105,7 @@ function vMenu() {
   h += '<div class="row"><button class="btn ' + (sv ? '' : 'pri') + '" data-act="new">New career</button><button class="btn" data-act="import">Import save</button></div></div>';
   return h;
 }
-A['continue'] = function () { var sv = loadSave(); if (!sv) return; S = migrate(sv); UI.screen = 'hub'; UI.tab = 'musim'; UI.wk = null; if (typeof liveSettle === 'function') liveSettle(); render(); };
+A['continue'] = function () { var sv = loadSave(); if (!sv) return; S = migrate(sv); UI.screen = 'hub'; UI.tab = 'utama'; UI.wk = null; if (typeof liveSettle === 'function') liveSettle(); render(); };
 A['new'] = function () { UI.screen = 'new'; render(); };
 A['menu'] = function () { stopRun(); UI.screen = 'menu'; UI.wk = null; render(); };
 A['import'] = function () {
@@ -115,7 +116,7 @@ A['import-go'] = function () {
     var v = document.getElementById('imp').value.trim();
     var o = JSON.parse(decodeURIComponent(escape(atob(v))));
     if (!o.drivers || !o.teams) throw 0;
-    S = migrate(o); save(); closeModal(); UI.screen = 'hub'; UI.tab = 'musim'; render(); toast('Save imported.');
+    S = migrate(o); save(); closeModal(); UI.screen = 'hub'; UI.tab = 'utama'; render(); toast('Save imported.');
   } catch (e) { toast('Invalid code.'); }
 };
 A['mclose'] = function () { closeModal(); };
@@ -140,7 +141,7 @@ A['d-team'] = function (d) { UI.draft.team = +d.v; render(); };
 A['new-go'] = function () {
   var nm = (UI.draft.name || '').trim() || 'Driver';
   S = newCareer(nm, UI.draft.arch, UI.draft.team);
-  save(); UI.screen = 'hub'; UI.tab = 'musim'; render();
+  save(); UI.screen = 'hub'; UI.tab = 'utama'; render();
 };
 
 /* ---------- hab ---------- */
@@ -152,7 +153,7 @@ function circuitChips(c) {
 }
 function vHub() {
   var p = me(), t = myTeam(), ds = driverStandings(S), pos = ds.indexOf(p) + 1;
-  var h = '<div class="top"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>Season ' + S.season + ' · ' + Math.min(S.round + 1, 10) + '/10</span><button class="btn sm" data-act="menu">Menu</button></div></div>';
+  var h = '<div class="top"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>Season ' + S.season + ' · ' + Math.min(S.round + 1, seasonRounds(S)) + '/' + seasonRounds(S) + '</span><button class="btn sm" data-act="menu">Menu</button></div></div>';
   h += '<div class="card row sp" style="margin-bottom:14px"><div class="row"><span class="numb" style="--tc:' + t.color + '">' + p.num + '</span><div><h2>' + esc(p.name) + '</h2><p class="dim">' + t.name + ' · age ' + p.age + ' · contract ' + S.contract + (S.contract === 1 ? ' season' : ' seasons') + ' · ' + payTxt(conOf(S, p).pay) + '</p></div></div>' +
     '<div class="row">' + chip('Standing', 'P' + pos) + chip('Points', p.pts) + chip('XP', S.xp) + chip('Morale', (S.morale == null ? 50 : S.morale) + '%') + '</div></div>';
   var tabs = [['musim', 'Season'], ['kej', 'Championship'], ['pemandu', 'Driver'], ['kereta', 'Car'], ['kerjaya', 'Career']];
@@ -164,8 +165,8 @@ A['tab'] = function (d) { UI.tab = d.v; UI.wipe = false; render(); };
 
 function tMusim() {
   var h = '<div class="cols two"><div class="stack">';
-  if (S.round < 10) {
-    var ci = S.cal[S.round], c = CIRCUITS[ci];
+  if (S.round < seasonRounds(S)) {
+    var ci = S.cal[S.round], c = circuitFor(S, ci);
     h += '<div class="card nextc stack"><h3>Round ' + (S.round + 1) + ' · next up</h3><h2>' + c.name + '</h2><p class="dim">' + c.loc + '</p><div class="row">' + circuitChips(c) + '</div>' +
       '<p class="dim">Weekend: qualifying, strategy, start, race.</p><button class="btn pri wide" data-act="wk-start">Start race weekend</button></div>';
     if (S.rival && S.rival.season === S.season) { var rvd = S.drivers[S.rival.di]; h += '<div class="card row sp"><div><h3>Rival</h3><p style="margin-top:6px">' + tagD(rvd) + ' ' + esc(rvd.name) + '</p></div><div class="mono" style="font-size:20px">' + S.rival.w + ' – ' + S.rival.l + '</div></div>'; }
@@ -174,8 +175,8 @@ function tMusim() {
     h += '<div class="card stack"><h3>Season ' + S.season + '</h3><h2>Season over</h2><p class="dim">All 10 rounds done. See the final standings and what\'s next for your contract.</p><button class="btn pri wide" data-act="season-end">Season results</button></div>';
   }
   h += '<div class="card"><h3 style="margin-bottom:8px">Calendar</h3><table class="t"><tbody>';
-  for (var i = 0; i < 10; i++) {
-    var cc = CIRCUITS[S.cal[i]], r = S.results[i];
+  for (var i = 0; i < seasonRounds(S); i++) {
+    var cc = circuitFor(S, S.cal[i]), r = S.results[i];
     var res = r ? (r.dnf ? '<span class="bad">DNF</span>' : 'P' + r.pos) + (r.pts ? ' <span class="dim">· ' + r.pts + ' pts</span>' : '') : (i === S.round ? '<span class="pur">Next</span>' : '<span class="dim">–</span>');
     h += '<tr><td class="mono dim" style="width:30px">' + (i + 1) + '</td><td>' + cc.name + '</td><td class="r mono">' + res + '</td></tr>';
   }
@@ -199,11 +200,12 @@ function tKej() {
 }
 function tPemandu() {
   var p = me(), h = '<div class="card"><div class="row sp"><div><h3>Experience points</h3><div class="big" style="text-align:left;margin-top:6px">' + S.xp + ' <span class="dim" style="font-size:16px">XP</span></div></div><p class="dim" style="max-width:36ch">XP is earned after every race. Beating what your car should be capable of earns more XP.</p></div>';
+  if (S.mode === 'pro') h += '<p class="dim">Overall: ' + baseOverall(p).toFixed(1) + ' · Average of all six stats. ' + esc(ARCHS[S.arch] ? ARCHS[S.arch].n : 'Driver') + ' caps are shown beside each stat. Costs rise near the cap. No age gate.</p><p class="dim">Annual race XP: ' + PROGRESSION.annual[leagueOf(S)] + ' base, up to ' + PROGRESSION.bonuses.performance + ' performance, ' + PROGRESSION.bonuses.objectives + ' objectives, ' + PROGRESSION.bonuses.manual + ' manual and ' + PROGRESSION.bonuses.facilities + ' simulator XP. Auto earns the same base XP. Unspent XP carries over.</p>';
   SKILLS.forEach(function (s) {
-    var v = p[s[0]], cost = skillCost(v, S);
-    h += '<div class="skill"><div><div class="nm">' + s[1] + '</div><div class="dim" style="font-size:12.5px">' + s[2] + '</div></div>' + bar(v, v >= 85 ? 'g' : '') + '<div class="mono">' + v + '</div><button class="btn sm" data-act="buy" data-k="' + s[0] + '" ' + (S.xp < cost || v >= 99 ? 'disabled' : '') + '>+1 · ' + cost + ' XP</button></div>';
+    var v = p[s[0]], cost = skillCost(v, S, s[0]), cap = statCap(S, s[0]);
+    h += '<div class="skill"><div><div class="nm">' + s[1] + '</div><div class="dim" style="font-size:12.5px">' + s[2] + '</div></div>' + bar(v, v >= 85 ? 'g' : '') + '<div class="mono">' + v + (S.mode === 'pro' ? '/' + cap : '') + '</div><button class="btn sm" data-act="buy" data-k="' + s[0] + '" ' + (S.xp < cost || v >= cap ? 'disabled' : '') + '>' + (v >= cap ? 'At cap' : '+1 · ' + cost + ' XP') + '</button></div>';
   });
-  return h + '</div>';
+  return h + '</div>' + bodyCardHTML();
 }
 A['buy'] = function (d) { if (buySkill(S, d.k)) { save(); render(); } };
 
@@ -238,13 +240,15 @@ function tKerjaya() {
   h += '</div></div>';
   if (S.hist.length) {
     h += '<div class="card"><h3 style="margin-bottom:8px">Season history</h3><div class="scroll"><table class="t"><thead><tr><th>Season</th><th>Team</th><th class="r">Pos</th><th class="r">Pts</th><th>Champion</th></tr></thead><tbody>';
-    S.hist.forEach(function (r) { h += '<tr><td class="mono">' + r.season + '</td><td><span class="tag" style="--tc:' + r.tcol + '">' + r.team + '</span></td><td class="r mono">P' + r.pos + '</td><td class="r mono">' + r.pts + '</td><td class="dim">' + esc(r.champ) + '</td></tr>'; });
+    S.hist.forEach(function (r) { h += '<tr><td class="mono">' + r.season + '</td><td><span class="tag" style="--tc:' + r.tcol + '">' + r.team + '</span></td><td class="r mono">' + (r.inactive ? 'Inactive' : 'P' + r.pos) + '</td><td class="r mono">' + r.pts + '</td><td class="dim">' + esc(r.inactive ? 'No races' : r.champ || '') + '</td></tr>'; });
     h += '</tbody></table></div></div>';
   }
-  h += '<div class="card stack"><h3>Settings</h3><div class="row"><button class="btn sm ' + (S.settings.ask ? 'on' : '') + '" data-act="ask">Race decisions: ' + (S.settings.ask ? 'I decide' : 'Auto (watch)') + '</button><button class="btn sm ' + (S.settings.mini ? 'on' : '') + '" data-act="mini">Mini game: ' + (S.settings.mini ? 'On' : 'Off') + '</button><button class="btn sm ' + ((typeof SND !== 'undefined' && SND.on) ? 'on' : '') + '" data-act="snd-toggle">Sound: ' + ((typeof SND !== 'undefined' && SND.on) ? 'On' : 'Off') + '</button><button class="btn sm ' + (S.settings.tips === false ? '' : 'on') + '" data-act="tips-toggle">Tips: ' + (S.settings.tips === false ? 'Off' : 'On') + '</button><button class="btn sm" data-act="glossary">Glossary</button><button class="btn sm" data-act="calib">Touch calibration (' + Math.round(MGT.lat) + ' ms)</button><button class="btn sm" data-act="export">Export save</button>' +
-    (UI.wipe ? '<button class="btn sm bad" data-act="wipe-go">Yes, delete career</button><button class="btn sm" data-act="tab" data-v="kerjaya">Cancel</button>' : '<button class="btn sm bad" data-act="wipe">Delete career</button>') +
-    '<button class="btn sm" data-act="retire">Retire</button></div><p class="dim">Your career auto-saves after every race in this browser. Use Export to move to another device.</p></div></div>';
-  return h;
+  return h + '</div>';
+}
+function tSettings() {
+  return '<div class="card stack" id="career-settings"><h3>Settings</h3><div class="row"><button class="btn sm ' + (S.settings.ask ? 'on' : '') + '" data-act="ask">Race decisions: ' + (S.settings.ask ? 'I decide' : 'Auto (watch)') + '</button><button class="btn sm ' + (S.settings.mini ? 'on' : '') + '" data-act="mini">Mini game: ' + (S.settings.mini ? 'On' : 'Off') + '</button><button class="btn sm ' + ((typeof SND !== 'undefined' && SND.on) ? 'on' : '') + '" data-act="snd-toggle">Sound: ' + ((typeof SND !== 'undefined' && SND.on) ? 'On' : 'Off') + '</button><button class="btn sm ' + (S.settings.tips === false ? '' : 'on') + '" data-act="tips-toggle">Tips: ' + (S.settings.tips === false ? 'Off' : 'On') + '</button><button class="btn sm" data-act="glossary">Glossary</button><button class="btn sm" data-act="calib">Touch calibration (' + Math.round(MGT.lat) + ' ms)</button><button class="btn sm" data-act="export">Export save</button><button class="btn sm" data-act="import">Import save</button>' +
+    (UI.wipe ? '<button class="btn sm bad" data-act="wipe-go">Yes, delete career</button><button class="btn sm" data-act="tab" data-v="aku">Cancel</button>' : '<button class="btn sm bad" data-act="wipe">Delete career</button>') +
+    '<button class="btn sm" data-act="retire">Retire</button></div><p class="dim">Your career auto-saves after every race in this browser. Use Export to move to another device.</p></div>';
 }
 A['ask'] = function () { S.settings.ask = !S.settings.ask; save(); render(); };
 A['mini'] = function () { S.settings.mini = !S.settings.mini; save(); render(); };
@@ -260,4 +264,4 @@ A['copy'] = function () {
 };
 A['wipe'] = function () { UI.wipe = true; render(); };
 A['wipe-go'] = function () { try { localStorage.removeItem(KEY); } catch (e) { } S = null; UI.wipe = false; UI.screen = 'menu'; render(); };
-A['retire'] = function () { UI.screen = 'retire'; render(); };
+A['retire'] = function () { if (S.mode === 'pro') { S.playerRetired = true; save(); } UI.screen = 'retire'; render(); };

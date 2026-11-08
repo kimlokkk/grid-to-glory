@@ -1,5 +1,5 @@
 /* ===== Skrin tajuk + cipta pemandu (4 langkah) ===== */
-var NATS = [['GB', 'United Kingdom'], ['DE', 'Germany'], ['FR', 'France'], ['IT', 'Italy'], ['ES', 'Spain'], ['NL', 'Netherlands'], ['BE', 'Belgium'], ['AT', 'Austria'], ['CH', 'Switzerland'], ['FI', 'Finland'], ['SE', 'Sweden'], ['DK', 'Denmark'], ['MC', 'Monaco'], ['PT', 'Portugal'], ['IE', 'Ireland'], ['PL', 'Poland'], ['BR', 'Brazil'], ['AR', 'Argentina'], ['MX', 'Mexico'], ['US', 'United States'], ['CA', 'Canada'], ['AU', 'Australia'], ['NZ', 'New Zealand'], ['JP', 'Japan'], ['CN', 'China'], ['TH', 'Thailand'], ['MY', 'Malaysia'], ['IN', 'India'], ['ID', 'Indonesia'], ['ZA', 'South Africa'], ['AE', 'United Arab Emirates']];
+var NATS = [['GB', 'United Kingdom'], ['DE', 'Germany'], ['FR', 'France'], ['IT', 'Italy'], ['ES', 'Spain'], ['NL', 'Netherlands'], ['BE', 'Belgium'], ['AT', 'Austria'], ['CH', 'Switzerland'], ['FI', 'Finland'], ['SE', 'Sweden'], ['DK', 'Denmark'], ['MC', 'Monaco'], ['PT', 'Portugal'], ['IE', 'Ireland'], ['PL', 'Poland'], ['BR', 'Brazil'], ['AR', 'Argentina'], ['MX', 'Mexico'], ['US', 'United States'], ['CA', 'Canada'], ['AU', 'Australia'], ['NZ', 'New Zealand'], ['JP', 'Japan'], ['CN', 'China'], ['TH', 'Thailand'], ['MY', 'Malaysia'], ['IN', 'India'], ['ID', 'Indonesia'], ['ZA', 'South Africa'], ['AE', 'United Arab Emirates'], ['NO','Norway'], ['BG','Bulgaria'], ['CO','Colombia'], ['LK','Sri Lanka'], ['SG','Singapore'], ['KR','South Korea'], ['TR','Turkey']];
 function flagE(c) { c = String(c || '').toUpperCase(); if (c.length !== 2) return ''; return String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65, 0x1F1E6 + c.charCodeAt(1) - 65); }
 function natName(c) { for (var i = 0; i < NATS.length; i++) if (NATS[i][0] === c) return NATS[i][1]; return c; }
 function draft() {
@@ -23,7 +23,7 @@ function vMenu() {
     '<div class="t8-car">' + carSVG(hero, 520) + '</div>';
   if (sv && sv.drivers) {
     var p = sv.drivers[sv.pi], t = sv.teams[p.team];
-    h += '<div class="t8-save" style="--tc:' + t.color + '"><div class="t8-hl">' + helmetSVG(Object.assign({}, p, { team: null }), 58, false) + '</div><div class="t8-si"><small>Continue career</small><b>' + esc(p.name) + '</b><span>' + esc(t.name) + ' · Season ' + sv.season + ' · Round ' + Math.min(sv.round + 1, 10) + '/10</span></div><button class="btn pri" data-act="continue">Continue →</button></div>';
+    h += '<div class="t8-save" style="--tc:' + t.color + '"><div class="t8-hl">' + helmetSVG(Object.assign({}, p, { team: null }), 58, false) + '</div><div class="t8-si"><small>Continue career</small><b>' + esc(p.name) + '</b><span>' + esc(t.name) + ' · Season ' + sv.season + ' · Round ' + Math.min(sv.round + 1, seasonRounds(sv)) + '/' + seasonRounds(sv) + '</span></div><button class="btn pri" data-act="continue">Continue →</button></div>';
   }
   h += '<div class="t8-btns' + (sv && sv.drivers ? ' t8-b3' : '') + '"><button class="btn ' + (sv ? '' : 'pri') + ' wide" data-act="new">New career</button>' + (sv && sv.drivers ? '<button class="btn wide ghost8" data-act="export">Export save</button>' : '') + '<button class="btn wide ghost8" data-act="import">Import save</button></div>' +
     '<p class="t8-foot">All teams, drivers and circuits are fictional.<br><button class="t8-ver" data-act="chlog">v' + APEX.ver + ' · What\'s new</button></p></div></div>';
@@ -49,7 +49,7 @@ function w8Driver(d) {
   var h = '<div class="card stack"><h3>Your name</h3><div class="w8-2"><input type="text" id="w8f" maxlength="14" placeholder="First name" value="' + esc(d.first) + '" autocomplete="off"><input type="text" id="w8l" maxlength="16" placeholder="Last name" value="' + esc(d.last) + '" autocomplete="off"></div>' +
     '<p class="dim" style="font-size:12.5px;margin:0">Your 3-letter code comes from your last name (or first name if you leave it empty).</p></div>';
   h += '<div class="card stack"><div class="w8-2"><div><h3>Nationality</h3><select id="w8n" class="w8-sel">' + NATS.slice().sort(function (a, b) { return a[1] < b[1] ? -1 : 1; }).map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === d.nat ? ' selected' : '') + '>' + flagE(x[0]) + ' ' + x[1] + '</option>'; }).join('') + '</select></div>' +
-    '<div><h3>Age</h3><div class="w8-age">' + [18, 19, 20, 21, 22].map(function (a) { return '<button class="' + (d.age === a ? 'on' : '') + '" data-act="w8-age" data-v="' + a + '">' + a + '</button>'; }).join('') + '</div></div></div></div>';
+    '<div><h3>Age</h3><div class="w8-age">' + (d.careerMode === 'pro' ? [d.protege ? d.age : 16] : [18, 19, 20, 21, 22]).map(function (a) { return '<button class="' + (d.age === a ? 'on' : '') + '" data-act="w8-age" data-v="' + a + '">' + a + '</button>'; }).join('') + '</div></div></div></div>';
   h += '<div class="card stack"><div class="row sp"><h3>Race number</h3><span class="w8-bignum">#' + d.num + '</span></div><div class="w8-nums">' + nums + '</div><p class="dim" style="font-size:12px;margin:0">Numbers already used by other drivers are hidden.</p></div>';
   h += '<div class="card stack"><h3>Driving style</h3><div class="pick">';
   Object.keys(ARCHS).forEach(function (k) { h += '<button class="opt ' + (d.arch === k ? 'on' : '') + '" data-act="d-arch" data-v="' + k + '"><div class="t">' + ARCHS[k].n + '</div><div class="s">' + ARCHS[k].d + '</div></button>'; });
@@ -106,6 +106,6 @@ A['new-go'] = function () {
   S = newCareer(nm, d.arch, d.team);
   var p = S.drivers[S.pi]; p.nat = d.nat; p.age = d.age; p.num = d.num; p.helm = Object.assign({}, d.helm);
   UI.draft.v8 = 0;
-  save(); UI.screen = 'hub'; UI.tab = 'musim'; render();
+  save(); UI.screen = 'hub'; UI.tab = 'utama'; render();
 };
 render();

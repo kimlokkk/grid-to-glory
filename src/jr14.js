@@ -16,6 +16,7 @@ A['w8-start'] = function (d) { draft().start = d.v; render(); };
 function jrTeamName(n) { return n.replace(/ (Motorsport|Racing|F1 Team)$/, '') + ' Junior'; }
 function jrCar(v) { return Math.round((62 + (v - 62) * 0.3) * 10) / 10; }
 function jrBuild(S) {
+  if (S.mode === 'pro') { worldEnterJunior(S); return; }
   var p = S.drivers[S.pi], home = p.team, used = {};
   S.jr = { on: true, yr: 1, home: home };
   S.teams.forEach(function (t) {
@@ -38,6 +39,7 @@ function jrBuild(S) {
   S.drivers.forEach(function (d) { d.con = null; d.cs = null; d.sh = null; d.rh = null; d.pa = null; });
   drvInit(S);
   S.contract = 1; p.con = { len: 1, end: S.season, pay: 0.5 };
+  if (S.mode === 'pro') { S.league = 'f2'; S.cal = seasonCalendar(S); }
   S.rival = null; S.news = []; S.rr = [];
   pushNews(S, { k: 'season', s: 1, r: 0 });
   return S;
@@ -66,23 +68,40 @@ function jrOffers(S) {
 var endSeason0 = endSeason;
 endSeason = function (S) {
   var r = endSeason0(S);
-  if (S.jr && S.jr.on) { S.offers = jrOffers(S); S.fired = null; }
+  if (S.jr && S.jr.on) { S.offers = S.mode === 'pro' && careerRetirementDue(S) ? [] : jrOffers(S); S.fired = null; }
   return r;
 };
 
 /* ---------- naik ke F1: bina dunia F1 dan pindahkan pemandu ---------- */
 function jrPromote(d) {
+  if (S.mode === 'pro') { worldPromotePlayer(S, +d.t, +d.y, +d.p); return; }
+  if (S.mode === 'pro') {
+    if (S.playerRetired || S.round < seasonRounds(S)) return false;
+    if (applyAnnualChange(S).retire) { save(); UI.screen = 'retire'; render(); return false; }
+  }
   var o = S, p0 = o.drivers[o.pi], teamId = +d.t, yrs = +d.y, pay = +d.p;
-  var F = newCareer(p0.name, o.arch, teamId), p = F.drivers[F.pi];
+  if (o.mode === 'pro') yrs = Math.min(yrs, AGEING.retireAt - p0.age);
+  var F = newCareer(p0.name, o.arch, teamId, { mode: o.mode, nextPersonId: o.meta && o.meta.nextPersonId }), p = F.drivers[F.pi];
   ['nat', 'age', 'helm', 'pace', 'cons', 'race', 'wet', 'tyre', 'fb', 'pot', 'pk'].forEach(function (k) { if (p0[k] != null) p[k] = p0[k]; });
+  if (p0.abilities) p.abilities = JSON.parse(JSON.stringify(p0.abilities));
+  if (p0.evaluation) { p.evaluation = JSON.parse(JSON.stringify(p0.evaluation)); p.evaluation.tier = 0; p.evaluation.weakSeasons = 0; p.evaluation.capture = null; p.evaluation.review = null; }
+  if (p0.training) p.training = JSON.parse(JSON.stringify(p0.training));
+  if (p0.mind) p.mind = JSON.parse(JSON.stringify(p0.mind));
+  if (p0.body) p.body = JSON.parse(JSON.stringify(p0.body));
+  if (p0.growthCaps) p.growthCaps = Object.assign({}, p0.growthCaps);
+  if (p0.capBreakers) p.capBreakers = Object.assign({}, p0.capBreakers);
   var taken = {}; F.drivers.forEach(function (x) { if (x !== p) taken[x.num] = 1; }); (F.reserves || []).forEach(function (x) { taken[x.num] = 1; });
   p.num = !taken[p0.num] ? p0.num : (shuffle([7, 8, 9, 11, 12, 14, 15, 16, 18, 19, 20, 21].filter(function (n) { return !taken[n]; }))[0] || 99);
   p.bio = 'Graduate of the ' + JR_NAME + '.'; p.cs = null; drvInit(F);
   F.season = o.season + 1; F.xp = o.xp; F.morale = o.morale; F.fame = o.fame; F.settings = o.settings; F.tips = o.tips; F.tut = o.tut; F.errs = o.errs; F.arch = o.arch;
   F.career = o.career; F.hist = o.hist.map(function (r) { return Object.assign({}, r, { jr: true }); }); F.rr = o.rr || [];
+  delete F.people[p.uid];
+  var archive = JSON.parse(JSON.stringify(o.people || {}));
+  Object.keys(archive).forEach(function (uid) { if (archive[uid].role === 'active') archive[uid].role = 'archived'; });
+  p.uid = p0.uid; F.people = Object.assign(archive, F.people);
   F.news = []; F.contract = yrs; p.con = { len: yrs, end: F.season + yrs - 1, pay: pay };
   var from = o.drivers[o.pi].name;
-  S = F; save(); UI.screen = 'hub'; UI.tab = 'musim'; render();
+  S = F; save(); UI.screen = 'hub'; UI.tab = 'utama'; render();
   pushNews(S, { k: 'psign', n: from, t: teamId, f: teamId, y: yrs, mv: true, s: S.season, r: 0 });
   ceremonyModal(S.teams[teamId], from, true, false, yrs, pay, S.season);
   snd('sign');
@@ -92,4 +111,4 @@ A['sign'] = function (d) { if (+d.f1 === 1) { jrPromote(d); return; } return sig
 
 /* hitung tahun junior bila kekal */
 var sns0 = startNewSeason;
-startNewSeason = function (S, a, b, c, d) { var r = sns0(S, a, b, c, d); if (S.jr && S.jr.on) S.jr.yr++; return r; };
+startNewSeason = function (S, a, b, c, d) { var r = sns0(S, a, b, c, d); if (r !== false && S.jr && S.jr.on) S.jr.yr++; return r; };

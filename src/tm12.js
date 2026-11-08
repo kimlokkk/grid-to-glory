@@ -12,13 +12,14 @@ function tmAdd(S, d) { var t = tmInit(S); t.rel = clamp(t.rel + d, -10, 10); }
 function tmRace(S) {
   var t = tmInit(S);
   t.rel *= 0.97;
-  if (t.rel >= 4) { S.morale = clamp((S.morale == null ? 50 : S.morale) + 1, 0, 100); S.xp += 1; }
-  else if (t.rel <= -4) { S.morale = clamp((S.morale == null ? 50 : S.morale) - 1, 0, 100); S.xp = Math.max(0, S.xp - 1); }
+  if (t.rel >= 4) { S.morale = clamp((S.morale == null ? 50 : S.morale) + 1, 0, 100); if (S.mode !== 'pro') S.xp += 1; }
+  else if (t.rel <= -4) { S.morale = clamp((S.morale == null ? 50 : S.morale) - 1, 0, 100); if (S.mode !== 'pro') S.xp = Math.max(0, S.xp - 1); }
 }
 function tmCardHTML() {
   var p = me(), m = mateOf(S, p); if (!m) return '';
   var t = tmInit(S), pct = Math.round((t.rel + 10) * 5), role = typeof roleOf === 'function' ? roleOf(S, p) : 'equal';
   var eff = t.rel >= 4 ? 'The garage is relaxed: +1 morale and +1 XP every race.' : t.rel <= -4 ? 'The garage is divided: -1 morale and -1 XP every race.' : 'Relations are workable, no side effects.';
+  if (S.mode === 'pro') eff = eff.replace(' and +1 XP', '').replace(' and -1 XP', '');
   return '<div class="card stack tmc"><div class="row sp"><h3>Teammate</h3><span class="mono dim">' + tmLabel(t.rel) + '</span></div>' +
     '<div class="row sp" style="flex-wrap:nowrap"><div><b>' + esc(m.name) + '</b><div class="dim" style="font-size:12.5px">' + flagE(m.nat) + ' ' + ovr(m) + ' OVR · age ' + m.age + ' · you are ' + (ROLEN[role] || 'a driver').toLowerCase() + '</div></div></div>' +
     '<div class="fame"><i style="width:' + pct + '%;background:' + (t.rel >= 0 ? 'linear-gradient(90deg,#8b5cf6,#1f9d55)' : 'linear-gradient(90deg,#d64545,#8b5cf6)') + '"></i></div>' +
@@ -26,7 +27,7 @@ function tmCardHTML() {
 }
 /* ---- team order dalam race ---- */
 function toMate(R, m) { var c = null; R.cars.forEach(function (f) { if (f.di === m.id) c = f; }); return c; }
-function toSwap(a, b) { var s = a.s; a.s = b.s; b.s = s; var q = a.sPrev; a.sPrev = b.sPrev; b.sPrev = q; }
+function toSwap(a, b) { var credit = a.s > b.s ? 1 : -1; a.evalOrder = b.evalOrder = true; a.evalOrderCredit = clamp((a.evalOrderCredit || 0) + credit, -1, 1); b.evalOrderCredit = clamp((b.evalOrderCredit || 0) - credit, -1, 1); var s = a.s; a.s = b.s; b.s = s; var q = a.sPrev; a.sPrev = b.sPrev; b.sPrev = q; }
 function toCheck(R, p) {
   if (RUN.to || RUN.fast || RUN.wait || p.fin || p.dnf || p.hold > 0 || R.sc) return;
   var P = S.drivers[S.pi], m = mateOf(S, P); if (!m) return;

@@ -16,7 +16,7 @@ var OBJT = {
   tamat: { n: 'Finish without a DNF', xp: 3 }, rival: { n: 'Finish ahead of your rival', xp: 5 }
 };
 var HEAD2 = {
-  rivalW: ['{n} Beats {r} Again. {r}: "My Tyres Were Cold"', 'THE RIVALRY HEATS UP: {n} Ahead of {r}, Fans Go Wild', '{r} Hunts for New Excuses After Losing to {n}'],
+  rivalW: ['{n} Beats {r}. The Paddock Is Talking', 'THE RIVALRY HEATS UP: {n} Ahead of {r}, Fans Go Wild', '{r} Hunts for New Excuses After Losing to {n}'],
   rivalL: ['{r} Laughs Last, {n} Plots Revenge', '{n} Loses to {r}: "Wait Till Next Race"']
 };
 function fmtR(s, o) { return s.replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); }
@@ -37,14 +37,15 @@ function powerRankSafe(S) { var l = S.teams.slice().sort(function (a, b) { retur
 
 /* objektif: dua sasaran ikut jangkaan kereta */
 function makeObjectives(S) {
-  var p = S.drivers[S.pi], E = teamRank(S, p.team) * 2 - 0.5, pool = [];
+  var p = S.drivers[S.pi], E = S.mode === 'pro' ? evaluationExpected(S, S.cal[S.round], p).expected : teamRank(S, p.team) * 2 - 0.5, pool = [];
   if (E <= 3) pool.push('menang', 'podium'); else if (E <= 7) pool.push('podium', 'mata'); else if (E <= 13) pool.push('mata', 'naik'); else pool.push('naik', 'tamat');
   var q = E <= 9 ? 'q3' : E <= 15 ? 'q2' : null;
   var out = [pool[Math.floor(rnd() * pool.length)]];
   var extra = ['mate', 'rival', q].filter(Boolean); extra.push(pool[0] === out[0] ? pool[1] : pool[0]);
   var k2 = pick(extra); if (k2 === out[0]) k2 = 'mate';
   out.push(k2);
-  return out.map(function (k) { return { k: k, n: OBJT[k].n, xp: OBJT[k].xp, ok: null }; });
+  if (S.mode === 'pro') progressionInit(S);
+  return out.map(function (k) { return { k: k, n: OBJT[k].n, xp: S.mode === 'pro' ? ((S.progression.earned.objectives || 0) < PROGRESSION.bonuses.objectives ? 1 : 0) : OBJT[k].xp, ok: null }; });
 }
 function judgeQuali(wk) {
   var mine = wk.q.filter(function (r) { return r.di === S.pi; })[0];
@@ -63,17 +64,25 @@ function judgeRace(wk, R) {
     else if (o.k === 'rival') o.ok = !rv || P.pos < rv.pos;
   });
   var xp = 0, mor = 0;
-  wk.obj.forEach(function (o) { if (o.ok) { xp += o.xp; mor += 6; } else mor -= 4; });
+  if (S.mode === 'pro') wk.obj.forEach(function (o) {
+    var raceExcluded = mechanicalDNF(P) && ['q3', 'q2'].indexOf(o.k) < 0;
+    var mateExcluded = o.k === 'mate' && (P.evalOrder || mate && (mate.evalOrder || mechanicalDNF(mate)));
+    var rivalExcluded = o.k === 'rival' && (P.evalOrder || rv && (rv.evalOrder || mechanicalDNF(rv)));
+    if (raceExcluded || mateExcluded || rivalExcluded) { o.protected = true; o.ok = null; }
+  });
+  wk.obj.forEach(function (o) { if (o.protected) return; if (o.ok) { xp += o.xp; mor += 6; } else mor -= 4; });
   S.morale = clamp((S.morale == null ? 50 : S.morale) + mor, 0, 100);
   /* rival H2H */
   var rmsg = null;
-  if (rv) {
+  if (rv && S.mode === 'pro' && (mechanicalDNF(P) || mechanicalDNF(rv) || P.evalOrder || rv.evalOrder)) rmsg = 'Rival comparison excluded: mechanical retirement or team order.';
+  else if (rv) {
     var won = P.pos < rv.pos; if (won) S.rival.w++; else S.rival.l++;
-    rmsg = fmtR(pick(S.round >= 9 ? (won ? RIV.lastWin : RIV.lastLose) : (won ? RIV.win : RIV.lose)), { r: rv.d.name.split(' ').slice(-1)[0], w: S.rival.w, l: S.rival.l });
+    rmsg = fmtR(pick(S.round >= seasonRounds(S) - 1 ? (won ? RIV.lastWin : RIV.lastLose) : (won ? RIV.win : RIV.lose)), { r: rv.d.name.split(' ').slice(-1)[0], w: S.rival.w, l: S.rival.l });
   }
+  if (S.mode === 'pro') xp = progressionXP(S, 'objectives', xp);
   return { xp: xp, mor: mor, rmsg: rmsg };
 }
 function objHTML(obj) {
-  return obj.map(function (o) { return '<div class="row sp" style="padding:6px 0;border-bottom:1px solid #1d242d"><span>' + (o.ok === true ? '<b class="good">✓</b> ' : o.ok === false ? '<b class="bad">✗</b> ' : '<span class="dim">○</span> ') + esc(o.n) + '</span><span class="mono dim">+' + o.xp + ' XP</span></div>'; }).join('');
+  return obj.map(function (o) { return '<div class="row sp" style="padding:6px 0;border-bottom:1px solid #1d242d"><span>' + (o.protected ? '<span class="dim">Exempt</span> ' : o.ok === true ? '<b class="good">✓</b> ' : o.ok === false ? '<b class="bad">✗</b> ' : '<span class="dim">○</span> ') + esc(o.n) + '</span><span class="mono dim">+' + o.xp + ' XP</span></div>'; }).join('');
 }
 function moraleTxt(m) { return m >= 75 ? 'The team absolutely loves you' : m >= 55 ? 'The team is happy' : m >= 35 ? 'The team is watching closely' : 'The boss is browsing other drivers\' CVs'; }

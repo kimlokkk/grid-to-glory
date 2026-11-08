@@ -21,7 +21,7 @@ function estStint(d, k, c, rem) {
 function bestWetCost(w) {
   return Math.min(wetPen(COMP.S, w), wetPen(COMP.I, w) + COMP.I.off, wetPen(COMP.W, w) + COMP.W.off);
 }
-function crewTime(car) { return clamp(2.35 + Math.abs(gauss()) * 0.45 - car.t.prestige * 0.025 + (rnd() < 0.07 ? rr(2, 6) : 0), 1.9, 9); }
+function crewTime(car) { return clamp(2.35 + Math.abs(gauss()) * 0.45 - (car.t.spec && car.t.ops ? car.t.ops.crew * 0.25 : car.t.prestige * 0.025) + (rnd() < 0.07 ? rr(2, 6) : 0), 1.9, 9); }
 
 function genWeather(c) {
   var r = rnd();
@@ -115,7 +115,7 @@ function aiMode(car, R, gA, gB) {
 }
 function makeRace(S, ci, gridIds, w, o) {
   o = o || {};
-  var c = CIRCUITS[ci];
+  var c = circuitFor(S, ci);
   var R = { manual: !!o.manual, c: c, ci: ci, lap: 0, sc: 0, w: w, wet: w.start < 0 ? w.int * 0.9 : 0, cars: [], order: [], out: [], log: [], fl: { t: 999, di: -1, lap: 0 }, done: false, overtakes: 0, scLaps: 0, scCount: 0, lastImp: 0, cls: null };
   gridIds.forEach(function (di, i) {
     var d = S.drivers[di], team = S.teams[d.team];

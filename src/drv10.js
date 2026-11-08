@@ -1,5 +1,5 @@
 /* ===== Fasa B: perkembangan pemandu, siri junior, sejarah & profil ===== */
-var ATTRS = ['pace', 'cons', 'race', 'wet', 'tyre'], ATTRN = { pace: 'Pace', cons: 'Consistency', race: 'Racecraft', wet: 'Wet weather', tyre: 'Tyre management' };
+var ATTRS = ['pace', 'cons', 'race', 'wet', 'tyre'], ATTRN = { pace: 'Pace', cons: 'Consistency', race: 'Racecraft', wet: 'Wet weather', tyre: 'Tyre management', fb: 'Feedback' };
 var JR_NAME = 'Apex Junior Series';
 /* jenis bakat: bentuk atribut + atribut yang berkembang paling laju */
 var DTYPES = {
@@ -53,16 +53,16 @@ var NAMEGEN = {
 };
 var NATW = [['GB', 18], ['FR', 9], ['DE', 8], ['IT', 8], ['NL', 6], ['ES', 6], ['BR', 6], ['AU', 5], ['US', 5], ['JP', 5], ['BE', 3], ['DK', 3], ['FI', 3], ['AT', 3], ['MX', 3], ['CA', 3], ['CN', 2], ['AR', 2], ['NZ', 2], ['SE', 2], ['CH', 2], ['MY', 1], ['TH', 1], ['IN', 1]];
 function pickNat() { var t = 0; NATW.forEach(function (x) { t += x[1]; }); var r = rnd() * t; for (var i = 0; i < NATW.length; i++) { r -= NATW[i][1]; if (r <= 0) return NATW[i][0]; } return 'GB'; }
-function allNames(S) { var u = {}; (S.drivers || []).concat(S.reserves || [], S.juniors || [], S.retired || []).forEach(function (d) { u[d.name] = 1; }); return u; }
-function genName(S, nat) { var g = NAMEGEN[nat] || NAMEGEN.GB, u = allNames(S); for (var k = 0; k < 30; k++) { var n = pick(g[0]) + ' ' + pick(g[1]); if (!u[n]) return n; } return pick(g[0]) + ' ' + pick(g[1]) + ' Jr'; }
+function allNames(S) { var u = Object.assign({}, S.world && S.world.names || {}); Object.keys(S.people || {}).forEach(function (id) { u[S.people[id].name] = 1; }); (S.drivers || []).concat(S.reserves || [], S.juniors || [], S.retired || [], worldPeople(S)).forEach(function (d) { u[d.name] = 1; }); return u; }
+function genName(S, nat) { var g = NAMEGEN[nat] || WORLD_NAMES[nat] || NAMEGEN.GB, u = allNames(S); for (var k = 0; k < 30; k++) { var n = pick(g[0]) + ' ' + pick(g[1]); if (!u[n]) return n; } var root = pick(g[0]) + ' ' + pick(g[1]), suffix = 2; while (u[root + ' ' + suffix]) suffix++; return root + ' ' + suffix; }
 function ovr(d) { return Math.round(rating(d)); }
 
 function newJunior(S, age, opt) {
-  var nat = pickNat(), r = rnd(), pot = opt && opt.pot ? opt.pot : Math.round(r < 0.04 ? rr(89, 94) : r < 0.22 ? rr(83, 89) : rr(72, 83)), base = rr(58, 66) + (age - 16) * 2.5;
+  var nat = S.mode === 'pro' ? worldPickNation() : pickNat(), r = rnd(), pot = opt && opt.pot ? opt.pot : Math.round(r < 0.04 ? rr(89, 94) : r < 0.22 ? rr(83, 89) : rr(72, 83)), base = rr(58, 66) + (age - 16) * 2.5;
   var tys = ['speed', 'speed', 'rain', 'tyre', 'racer', 'racer', 'calc', 'all', 'all'], ty = pick(tys);
   var j = { name: genName(S, nat), nat: nat, age: age, pot: pot, pk: Math.round(rr(25, 30)), ty: ty, jr: { pts: 0, wins: 0, titles: 0, seasons: 0 }, fb: 55 + Math.round(rnd() * 25), hy: gauss() * 4, acad: pickAcad(S) };
   ATTRS.forEach(function (k) { j[k] = Math.round(clamp(base + DTYPES[ty].off[k] + gauss() * 2.2 + (pot - 85) * 0.15, 50, 82)); });
-  return j;
+  personId(S, j); return j;
 }
 function drvInit(S) {
   (S.drivers || []).concat(S.reserves || []).forEach(function (d) {
@@ -82,6 +82,10 @@ function drvInit(S) {
 }
 /* prestasi berbanding jangkaan kereta, setiap race (bukan berbanding rakan sepasukan) */
 function drvPerf(S, d, x) {
+  if (S.mode === 'pro' && !S.sit && d.id === S.pi) {
+    var r = d.evaluation.latest; if (!r || r.excluded) return;
+    d.perf = d.perf || { n: 0, s: 0 }; d.perf.n++; d.perf.s += (r.performance - 50) / 50; return;
+  }
   var exp = teamRank(S, d.team) * 1.4 + 1.7, sc;       /* purata posisi sebenar ikut kedudukan kereta (diukur dari simulasi) */
   if (x.dnf) sc = /mechanical/i.test(String(x.car.dnf || '')) ? 0 : -0.6;     /* rosak bukan salah dia */
   else sc = clamp((exp - x.pos) / 6, -1, 1.5);
@@ -102,8 +106,9 @@ function drvRecord(S) {
   ds.forEach(function (d, i) {
     var t = S.teams[d.team];
     d.sh.push({ s: S.season, t: t ? t.short : '–', tc: t ? t.color : '#888', pos: i + 1, pts: d.pts, wins: d.wins, pods: d.pods });
-    d.cs.wins += d.wins; d.cs.pods += d.pods; if (i === 0) d.cs.titles++; d.cs.rec = S.season;
+    d.cs.wins += d.wins; d.cs.pods += d.pods; if (i === 0 && (S.mode !== 'pro' || leagueOf(S) === 'f1')) d.cs.titles++; d.cs.rec = S.season;
   });
+  syncPeople(S);
   if (typeof objEval === 'function') objEval(S);
 }
 /* satu pemandu tua/muda satu tahun */
@@ -125,7 +130,7 @@ function drvGrow(d, mult) {
 /* siri junior: satu musim + perkembangan + budak baru */
 function juniorSeason(S, log) {
   var J = S.juniors; J.forEach(function (j) { j.jr.pts = 0; j.jr.w = 0; });
-  for (var r = 0; r < 10; r++) {
+  for (var r = 0; r < (S.mode === 'pro' ? GTG_LEAGUES.f2.rounds : 10); r++) {
     var o = J.map(function (j) { return { j: j, v: rating(j) + gauss() * 3.5 }; }).sort(function (a, b) { return b.v - a.v; });
     o.forEach(function (x, i) { if (i < 10) x.j.jr.pts += PTS[i]; if (i === 0) { x.j.jr.wins++; x.j.jr.w++; } });
   }
@@ -141,13 +146,14 @@ function drvRetire(S, log) {
     if (d.id === S.pi) return;
     var o = rating(d), pr = d.age >= 42 ? 1 : d.age >= 33 ? (d.age - 33) * 0.1 + (o < 80 ? 0.15 : 0) + (d.age >= 40 ? 0.35 : 0) : 0;
     if (rnd() >= pr) return;
-    S.retired.push({ name: d.name, nat: d.nat, age: d.age, cs: d.cs, sh: d.sh, num: d.num, code: d.code, s: S.season });
+    S.retired.push({ uid: d.uid, name: d.name, nat: d.nat, age: d.age, cs: d.cs, sh: d.sh, num: d.num, code: d.code, s: S.season });
     d.vac = true;                                     /* kerusi kosong: diisi dalam musim transfer (mkt12.js) */
     if (log) log.push({ retire: d.name, age: d.age, t: d.team, wins: d.cs.wins + d.wins, titles: d.cs.titles });
   });
 }
 /* dipanggil dari startNewSeason */
 function drvNewSeason(S, log) {
+  if (S.mode === 'pro') { worldNewSeason(S, log); return; }
   drvInit(S);
   juniorSeason(S, log);
   S.drivers.forEach(function (d) {
@@ -170,7 +176,7 @@ function careerOf(d) {
 }
 function pfTiles(arr) { return '<div class="pf-tiles">' + arr.map(function (x) { return '<div><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('') + '</div>'; }
 function pfAttrs(d) {
-  return '<div class="pf-att">' + ATTRS.map(function (k) {
+  return '<div class="pf-att">' + PROGRESSION.stats.map(function (k) {
     var v = d[k], p = d.pa && d.pa[k] != null ? d.pa[k] : v, dl = v - p;
     return '<div><span>' + ATTRN[k] + '</span><i><u style="width:' + clamp((v - 45) / 54 * 100, 0, 100) + '%"></u></i><b>' + v + '</b><em class="' + (dl > 0 ? 'up' : dl < 0 ? 'dn' : '') + '">' + (dl > 0 ? '▲' + dl : dl < 0 ? '▼' + (-dl) : '') + '</em></div>';
   }).join('') + '</div>';
@@ -182,7 +188,8 @@ function profileHTML(kind, i) {
   var h = '<div class="pf" style="--tc:' + col + '"><div class="pf-h"><div class="pf-helm">' + helmetSVG(jr ? Object.assign({}, d, { team: null, id: 500 + i }) : d, 84, false) + '</div><div class="pf-id"><small>' + (jr ? JR_NAME : '<a class="pf-tl" data-act="tprof" data-v="' + t.id + '">' + esc(t.name) + ' ›</a>') + '</small><b>' + esc(d.name) + '</b><span>' + flagE(d.nat) + ' ' + esc(natName(d.nat)) + ' · age ' + d.age + (d.num ? ' · #' + d.num : '') + '</span></div>' +
     '<div class="pf-ovr"><b>' + o + '</b><small>OVR</small></div></div>' + potH;
   h += '<div class="pf-chips"><span class="pf-ty">' + DTYPES[typeOf(d)].n + '</span>' + (!jr && d.lastPerf && d.lastPerf.n ? '<span>Last season: ' + (d.lastPerf.avg > 0.25 ? 'beat expectations' : d.lastPerf.avg < -0.25 ? 'below expectations' : 'as expected') + '</span>' : '') + (!jr && !mine && envMult(S, d) >= 1.05 ? '<span>Strong team environment</span>' : '') + '</div>';
-  if (d.bio) h += '<p class="pf-bio">' + esc(d.bio) + '</p>'; else if (jr) h += '<p class="pf-bio">' + DTYPES[typeOf(d)].bio + '</p>';
+  if (S.mode === 'pro') h += '<p class="pf-bio">' + esc(worldDriverBio(d)) + '</p>';
+  else if (d.bio) h += '<p class="pf-bio">' + esc(d.bio) + '</p>'; else if (jr) h += '<p class="pf-bio">' + DTYPES[typeOf(d)].bio + '</p>';
   h += '<h4>Attributes</h4>' + pfAttrs(d);
   if (jr) {
     h += '<h4>' + JR_NAME + '</h4>' + pfTiles([['Seasons', d.jr.seasons], ['Titles', d.jr.titles], ['Wins', d.jr.wins], ['Last year', d.jr.last ? 'P' + d.jr.last : '–']]);
@@ -196,6 +203,7 @@ function profileHTML(kind, i) {
     if (rh.length >= 2) h += '<h4>Rating trend</h4><div class="pf-spark">' + rateSpark(rh, d.rh || []) + '</div>';
     if (d.sh && d.sh.length) h += '<h4>History</h4><table class="t pf-hist"><thead><tr><th>Season</th><th>Team</th><th class="r">Pos</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>' + d.sh.slice().reverse().map(function (r) { return '<tr><td class="mono">S' + r.s + '</td><td><span class="tag" style="--tc:' + r.tc + '">' + r.t + '</span></td><td class="r mono">P' + r.pos + '</td><td class="r mono">' + r.wins + '</td><td class="r mono">' + r.pts + '</td></tr>'; }).join('') + '</tbody></table>';
   }
+  if (S.mode === 'pro' && d.worldHistory && d.worldHistory.length) h += worldDriverHistoryHTML(d);
   return h + '<button class="btn wide" data-act="mclose">Close</button></div>';
 }
 if (typeof A !== 'undefined') A['prof'] = function (x) { var p = String(x.v).split(':'); showModal(profileHTML(p[0], +p[1])); var m = document.querySelector('#modal .mbox'); if (m) m.classList.add('mbpf'); };

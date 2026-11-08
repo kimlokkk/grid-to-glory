@@ -31,14 +31,19 @@ function setTargets(S) { var pr = powerRank(S); S.teams.forEach(function (t) { t
 function leagueMean(S, k) { var s = 0; S.teams.forEach(function (t) { s += t.car[k]; }); return s / S.teams.length; }
 
 function initDev(S) {
+  if (S.mode === 'pro' && S.teams[0].spec) {
+    S.teams.forEach(function (t) { t.dev = t.dev || { td: 1, phil: { aero: 1, engine: 1, chassis: 1, rel: 1 }, rank: t.id + 1 }; t.dev.staff = 0.8 + t.ops.coaching * 0.4; t.dev.tp = t.dev.tp || { name: 'Team operations', skill: 1, amb: 0 }; });
+    setTargets(S); S.target = worldSpec(leagueOf(S)); S.regYear = S.world.era.next; return;
+  }
   S.teams.forEach(function (t) {
     t.dev = t.dev || { td: 1 + gauss() * 0.05, phil: { aero: rr(0.8, 1.2), engine: rr(0.8, 1.2), chassis: rr(0.8, 1.2), rel: rr(0.8, 1.2) }, rank: t.id + 1 };
+    if (!t.dev.phil) t.dev.phil = { aero: 1, engine: 1, chassis: 1, rel: 1 };
     if (t.dev.staff == null) t.dev.staff = clamp(0.86 + 0.028 * t.prestige + gauss() * 0.04, 0.8, 1.2);
     if (!t.dev.tp) t.dev.tp = (TEAMS[t.id] && TEAMS[t.id].tp && S.season === 1) ? Object.assign({}, TEAMS[t.id].tp) : newTP(t);
   });
   setTargets(S);
   S.target = S.target || {}; PARTS.forEach(function (k) { S.target[k] = leagueMean(S, k); });
-  S.regYear = S.season + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
+  S.regYear = S.mode === 'pro' && S.world ? S.world.era.next : S.season + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
 }
 
 /* kedudukan semasa ikut mata (jika belum ada mata, ikut kekuatan kereta) */
@@ -72,7 +77,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
   else gain = size * bud * t.dev.td * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
-  if (mine && gain > 0) gain *= 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
+  if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
   if (k === 'engine' && typeof engShare === 'function') engShare(S, t, gain);
   if (log) log.push({ t: t.id, k: k, g: gain, mode: mode, rush: !!(opt && opt.rush), big: !!(opt && opt.big) });
@@ -104,14 +109,14 @@ function devThreshold(S, t, rk, nextC) {
 }
 function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-'round' (1..) siap */
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
-  var nextC = S.cal && round < S.cal.length ? CIRCUITS[S.cal[round]] : null, last = round >= 10;
+  var nextC = S.cal && round < S.cal.length ? circuitFor(S, S.cal[round]) : null, last = round >= seasonRounds(S);
   S.teams.forEach(function (t) {
     var d = t.dev;
     if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * 0.2; }
     if (d.banked) return;
     d.prog = (d.prog || 0) + DEV.rate * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
     /* TP bijak tutup projek musim ni bila jauh dari sasaran, simpan untuk kereta tahun depan */
-    if (round >= 7 && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
+    if (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
     if (last) return;                                                          /* pusingan akhir: baki dibawa ke musim sejuk */
     var th = devThreshold(S, t, ranks[t.id], nextC);
     if (d.prog >= th) {

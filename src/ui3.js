@@ -117,8 +117,8 @@ function vSeason() {
   sm.ts.slice(0, 5).forEach(function (id, i) { var t = S.teams[id]; h += '<tr><td class="mono dim" style="width:28px">' + (i + 1) + '</td><td>' + tagT(t) + ' ' + t.name + '</td><td class="r mono">' + t.pts + '</td></tr>'; });
   h += '</tbody></table></div></div>';
   if (sm.obj) {
-    var okk = sm.obj.res === 'met';
-    h += '<div class="card stack"><h3>Contract review</h3><div class="objres ' + (okk ? 'ok' : 'bad') + '"><b>' + (okk ? 'Objective met' : 'Objective missed') + '</b><span>' + esc(sm.obj.txt) + ' · you finished P' + sm.obj.pos + '.</span></div>' +
+    var okk = sm.obj.res === 'met', protectedReview = sm.obj.res === 'protected';
+    h += '<div class="card stack"><h3>Contract review</h3><div class="objres ' + (okk || protectedReview ? 'ok' : 'bad') + '"><b>' + (protectedReview ? 'Performance review protected' : okk ? 'Objective met' : 'Objective missed') + '</b><span>' + esc(sm.obj.txt) + ' · you finished P' + sm.obj.pos + '.' + (protectedReview ? ' ' + esc(sm.obj.reason || '') : '') + '</span></div>' +
       (sm.opt ? '<p class="pf-note' + (sm.opt.x ? '' : ' warn') + '">' + (sm.opt.x ? 'Your team took up its option: you are signed for one more season, now on ' + payTxt(sm.opt.pay) + '.' : 'Your team did not take up its option for an extra year.') + '</p>' : '') +
       (sm.warn ? '<p class="pf-note warn">The team is not happy: this is a repeat. Another miss and your seat is on the line.</p>' : '') +
       (S.fired ? '<div class="firedb"><b>' + (S.fired.term ? 'Your contract has been terminated' : 'The team will not renew your contract') + '</b><span>' + (S.fired.why === 'budget' ? 'Budget cuts: the team can no longer carry your salary. It is not personal.' : 'Targets were missed too often. The team is moving on.') + '</span></div>' : '') + '</div>';
@@ -126,8 +126,11 @@ function vSeason() {
   if (sm.spon && sm.spon.length) h += '<div class="card stack"><h3>Sponsors</h3>' + sm.spon.map(function (x) { return '<div class="objres ' + (x.ok ? 'ok' : 'bad') + '"><b>' + esc(x.n) + ': ' + (x.ok ? 'happy with your season' : 'unhappy with your season') + '</b><span>' + (x.ended ? (x.why === 'unhappy' ? 'They are walking away.' : 'The deal has run its course.') : 'The deal continues.') + '</span></div>'; }).join('') + '</div>';
   if (typeof facTestHTML === 'function') h += facTestHTML(sm.test);
   if (S.offers && typeof repCardHTML === 'function') h += repCardHTML(S);
-  if (p.age >= 42 && !S.sit) {
-    h += '<div class="card stack"><h3>The end of the road</h3><p class="dim" style="margin:0">At ' + p.age + ' the reflexes are not what they were and no team will sign you for another year. It is time to hang up the helmet.</p><button class="btn pri wide" data-act="retire">Retire from racing</button></div>';
+  h += evaluationCardHTML(true) + abilitiesHTML(true) + annualPreviewHTML();
+  if (S.mode === 'pro' ? careerRetirementDue(S) : p.age >= 42 && !S.sit) {
+    h += '<div class="card stack"><h3>The end of the road</h3><p class="dim" style="margin:0">' + (S.mode === 'pro' ? 'Age 44 is your final racing season. You must retire before starting a season at 45.' : 'At ' + p.age + ' the reflexes are not what they were and no team will sign you for another year. It is time to hang up the helmet.') + '</p><button class="btn pri wide" data-act="retire">Retire from racing</button></div>';
+  } else if (S.mode === 'pro' && S.market8 && S.market8.window && S.market8.window.season === S.season && !S.market8.window.signed) {
+    /* The persisted market panel is appended by the phase 8 view. */
   } else if (S.offers) {
     h += '<div class="card stack"><h3>' + (S.fired ? 'Looking for a seat' : 'Contract offers') + '</h3><p class="dim">' + (S.fired ? 'Time to find a new team. Stronger teams only make an offer if your results and skills are good enough.' : 'Your contract is up. Pick a team for next season. Stronger teams only make an offer if your results and skills are good enough.') + '</p><div class="pick">';
     S.offers.forEach(function (o) {
@@ -136,15 +139,15 @@ function vSeason() {
     });
     h += '</div></div>';
   } else h += '<button class="btn pri wide" data-act="next-season">Start season ' + (S.season + 1) + '</button>';
-  if (p.age >= 38 && p.age < 42) h += '<button class="btn wide" data-act="retire">Retire from racing</button>';
+  if (p.age >= 38 && p.age < (S.mode === 'pro' ? 44 : 42)) h += '<button class="btn wide" data-act="retire">Retire from racing</button>';
   return h + '</div>';
 }
-A['sign'] = function (d) { var sit = +d.sit === 1; startNewSeason(S, +d.t, +d.y, d.b != null ? +d.b : null, sit ? { sit: true } : null); var c = sit ? null : me().con; if (d.p != null && c) { c.pay = +d.p; c.wb = +d.w || 0; c.opt = +d.o ? { by: 'team', used: false } : null; } save(); UI.screen = 'hub'; UI.tab = 'musim'; render(); };
-A['next-season'] = function () { startNewSeason(S, null, null); save(); UI.screen = 'hub'; UI.tab = 'musim'; render(); };
+A['sign'] = function (d) { var sit = +d.sit === 1; var advanced = startNewSeason(S, +d.t, +d.y, d.b != null ? +d.b : null, sit ? { sit: true } : null); if (advanced === false) { save(); UI.screen = S.playerRetired ? 'retire' : 'hub'; render(); return false; } var c = sit ? null : me().con; if (d.p != null && c) { c.pay = +d.p; c.wb = +d.w || 0; c.opt = +d.o ? { by: 'team', used: false } : null; } save(); UI.screen = 'hub'; UI.tab = 'utama'; render(); };
+A['next-season'] = function () { startNewSeason(S, null, null); save(); UI.screen = S.playerRetired ? 'retire' : 'hub'; UI.tab = 'utama'; render(); };
 function vRetire() {
   var c = S.career, p = me(), h = '<div class="top"><div class="brand">Grid to <b>Glory</b></div></div><div class="stack"><div class="card stack"><h3>Retirement</h3><h2>' + esc(p.name) + '</h2><p class="dim">Age ' + p.age + ' · ' + S.hist.length + ' complete seasons</p><div class="grid3">';
   [['Races', c.starts], ['Wins', c.wins], ['Podium', c.pods], ['Pole', c.poles], ['Points', c.pts], ['World titles', c.titles]].forEach(function (x) { h += '<div class="card" style="background:var(--panel2)"><div class="dim" style="font-size:12px">' + x[0] + '</div><div class="num" style="font-size:24px;font-weight:600">' + x[1] + '</div></div>'; });
-  h += '</div></div><div class="row"><button class="btn pri" data-act="wipe-go">New career</button><button class="btn" data-act="tab" data-v="kerjaya" ' + '>Back</button></div></div>';
+  h += '</div></div><div class="row"><button class="btn pri" data-act="wipe-go">New career</button><button class="btn" ' + (S.mode === 'pro' ? 'data-act="menu">Menu' : 'data-act="tab" data-v="kerjaya">Back') + '</button></div></div>';
   return h;
 }
 A['tab'] = function (d) { UI.tab = d.v; UI.wipe = false; if (UI.screen !== 'hub') UI.screen = 'hub'; render(); };

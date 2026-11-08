@@ -102,10 +102,11 @@ var SKILLS = [
   ['fb', 'Feedback', 'Speeds up your team\'s car development.']
 ];
 var ARCHS = {
-  pace: { n: 'The Speedster', d: 'Raw pace. A little shaky in the rain.', b: { pace: 10, race: 3, tyre: 3 } },
-  cons: { n: 'The Ice Man', d: 'Rarely makes mistakes and looks after the tyres.', b: { cons: 10, tyre: 8, wet: 2 } },
+  pace: { n: 'Qualifier', d: 'Raw pace. A little shaky in the rain.', b: { pace: 10, race: 3, tyre: 3 } },
+  cons: { n: 'Strategist', d: 'Rarely makes mistakes and looks after the tyres.', b: { cons: 10, tyre: 8, wet: 2 } },
   wet: { n: 'Rain Master', d: 'Shines when the track is wet.', b: { wet: 16, cons: 4 } },
-  race: { n: 'The Overtaker', d: 'Fearless wheel-to-wheel.', b: { race: 12, pace: 4 } }
+  race: { n: 'Racer', d: 'Fearless wheel-to-wheel.', b: { race: 12, pace: 4 } },
+  tech: { n: 'Technical', d: 'Strong feedback and methodical development.', b: { fb: 12, cons: 4 } }
 };
 
 function mkCode(name, used) {
@@ -117,10 +118,11 @@ function mkCode(name, used) {
   used[c] = 1; return c;
 }
 
-function newCareer(name, arch, teamId) {
+function newCareer(name, arch, teamId, options) {
+  options = options || {};
   var used = {};
   var S = {
-    v: 2, season: 1, round: 0, pi: 19, contract: 2, xp: 8, rd: 'aero', results: [], rdLog: [], hist: [],
+    v: 2, mode: options.mode || 'classic', league: options.league || 'f1', meta: { nextPersonId: options.nextPersonId || 1 }, season: 1, round: 0, pi: 19, contract: 2, xp: 8, rd: 'aero', results: [], rdLog: [], hist: [],
     settings: { mini: true, ask: true, v: 3 }, cal: shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
     career: { starts: 0, wins: 0, pods: 0, poles: 0, pts: 0, fl: 0, titles: 0, dnf: 0 }, arch: arch, reserves: []
   };
@@ -147,8 +149,10 @@ function newCareer(name, arch, teamId) {
   var bonus = ARCHS[arch].b;
   for (var k in bonus) p[k] += bonus[k];
   S.drivers.push(p);
+  S.cal = S.mode === 'pro' ? seasonCalendar(S) : S.cal;
   if (typeof drvInit === 'function') drvInit(S);
-  return S;
+  if (S.mode === 'pro') { worldInit(S, true); if (leagueOf(S) !== 'f1') S.contract = 1; }
+  return foundationInit(S);
 }
 
 /* Radio jurutera dan tajuk akhbar (rekaan, ringan, loghat harian) */
@@ -166,9 +170,9 @@ var RADIO = {
   fastpit: ['Engineer: Lovely stop! Pizza for the crew tonight.', 'Engineer: Mega stop! Crew, you\'ve all earned a raise.']
 };
 var HEAD = {
-  win: ['HOMETOWN GOES WILD: {n} WINS, BUYS PIZZA FOR THE WHOLE STREET', '{n} IS CHAMPION! ENGINEER SPOTTED CRYING ON THE PIT WALL', 'TRACK KING: {n} GIVES THE REST NO CHANCE'],
-  pod: ['{n} Takes the Podium, Mum Already Planning the Party', '{n} on the Podium: "Champagne Is for Spraying, Not Drinking"', 'Podium Again! {n} Starts Building a Fan Club'],
-  pts: ['{n} Scores Points, Boss Almost Smiles', '{n} Cracks the Top Ten: "Not Bad at All"', 'First Points of the Season? {n} Says "Patience"'],
+  win: ['HOMETOWN GOES WILD: {n} WINS, BUYS PIZZA FOR THE WHOLE STREET', '{n} WINS THE RACE! ENGINEER SPOTTED CRYING ON THE PIT WALL', 'TRACK KING: {n} GIVES THE REST NO CHANCE'],
+  pod: ['{n} Takes the Podium, Mum Already Planning the Party', '{n} on the Podium: "Champagne Is for Spraying, Not Drinking"', 'Podium! {n} Starts Building a Fan Club'],
+  pts: ['{n} Scores Points, Boss Almost Smiles', '{n} Cracks the Top Ten: "Not Bad at All"', 'Points Secured: {n} Says "Patience"'],
   mid: ['{n} Finishes Mid-Pack: "We\'re Still Hungry"', '{n} Comfortable in the Midfield, Points Not So Much', '{n}: "Car Was Fine, Luck Wasn\'t"'],
   back: ['{n} Brings Up the Rear: "Wrong Tyres, Not Me"', '{n} Races Alone. Lovely View From the Back', '{n} Learns Patience. Lots of It'],
   dnf: ['{n} Out Early: Car Decides to Take a Nap', '{n} Stranded. Crew Didn\'t Even Get Lunch', 'That\'s All, Folks: {n} Pushed Back to the Garage']

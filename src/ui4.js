@@ -13,7 +13,10 @@ function posAt(T, f) {
 }
 function buildTrack(ci) {
   if (TRK[ci]) return TRK[ci];
-  var g = lcg(4242 + ci * 7919), N = 240, ks = [2, 3, 4, 5, 7], am = [0.20, 0.15, 0.10, 0.07, 0.04], ph = [], ap = [], pts = [], x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, i;
+  var pts, N;
+  if (typeof GTG_LAYOUTS !== 'undefined' && GTG_LAYOUTS[ci]) { pts = GTG_LAYOUTS[ci].map(function (p) { return p.slice(); }); N = pts.length; }
+  else {
+    var g = lcg(4242 + ci * 7919), N = 240, ks = [2, 3, 4, 5, 7], am = [0.20, 0.15, 0.10, 0.07, 0.04], ph = [], ap = [], pts = [], x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, i;
   ks.forEach(function (k, j) { ph.push(g() * 6.2832); ap.push(am[j] * (0.6 + g() * 0.9)); });
   for (i = 0; i < N; i++) {
     var th = i / N * 6.2832, r = 1;
@@ -24,6 +27,7 @@ function buildTrack(ci) {
   }
   var sc = Math.min(340 / (x1 - x0), 180 / (y1 - y0)), ox = 200 - (x0 + x1) / 2 * sc, oy = 120 - (y0 + y1) / 2 * sc;
   pts = pts.map(function (q) { return [q[0] * sc + ox, q[1] * sc + oy]; });
+  }
   var cum = [0];
   for (i = 1; i <= N; i++) { var a = pts[i - 1], b = pts[i % N]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); }
   var d = 'M' + pts.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join('L') + 'Z';

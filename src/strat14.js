@@ -8,7 +8,7 @@ function stratBase(f, R) {
 }
 /* semua strategi kering yang munasabah dari lap 1: 1 dan 2 pit, setiap kombinasi tayar */
 function stratEnum(f, R) {
-  var L = R.L, pw = P2.planWear, pitC = pitLossOf(f, R) + P2.stopTraffic, cum = {}, out = [];
+  var L = R.L, pw = plannedWear(f, R), pitC = pitLossOf(f, R) + P2.stopTraffic, cum = {}, out = [];
   KS.forEach(function (k) { var a = [0], s = 0; for (var m = 0; m < L; m++) { s += lossAt(f, R, k, (m + 0.5) * pw); a.push(s); } cum[k] = a; });
   var minStint = 5;
   KS.forEach(function (s0) {
@@ -46,6 +46,24 @@ function stratEnum(f, R) {
   pick.forEach(function (o) { o.delta = o.cost - top; o.est = base + o.cost; });
   return pick;
 }
+/* Reprice the displayed plans without silently replacing the player's selected pit plan. */
+function refreshStratOptions() {
+  var wk = UI.wk, R = wk.R, f = R.p, opts = wk.opts;
+  if (!opts || !opts.length) return;
+  var selected = opts[wk.sel], pw = plannedWear(f, R), base = stratBase(f, R);
+  opts.forEach(function (o) {
+    var start = 0, comp = o.comp, cost = 0;
+    o.stops.concat([{ lap: R.L }]).forEach(function (stop) {
+      for (var n = 0; n < stop.lap - start; n++) cost += lossAt(f, R, comp, (n + 0.5) * pw);
+      if (stop.comp) { cost += pitLossOf(f, R) + P2.stopTraffic; comp = stop.comp; }
+      start = stop.lap;
+    });
+    o.cost = cost; o.est = base + cost;
+  });
+  opts.sort(function (a, b) { return a.cost - b.cost; });
+  opts.forEach(function (o) { o.delta = o.cost - opts[0].cost; });
+  wk.sel = opts.indexOf(selected);
+}
 function fmtRace(s) { var h = Math.floor(s / 3600), m = Math.floor((s - h * 3600) / 60), r = s - h * 3600 - m * 60; return h + ':' + (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); }
 function stratName(o) { return (o.n === 1 ? '1-stop' : '2-stop') + ' · ' + [o.comp].concat(o.stops.map(function (s) { return s.comp; })).map(function (k) { return TYN[k]; }).join(' → '); }
 function stratWhy(o, best) {
@@ -56,17 +74,18 @@ function stratWhy(o, best) {
 }
 
 /* ---------- skrin strategi ---------- */
+function dryStrategy(R) { return R.w.type === 'kering' && R.wet <= 0.04; }
 var vStrat0 = vStrat;
 vStrat = function () {
   var wk = UI.wk, R = wk.R, p = R.p;
-  if (R.wet > 0.28 || !SLICK[p.comp] && !wk.opts) return vStrat0();
+  if (!dryStrategy(R) || !SLICK[p.comp]) return vStrat0();
   if (!wk.opts) {
     wk.opts = stratEnum(p, R);
     if (wk.opts.length) { wk.sel = 0; applyStrat(0, false); }
   }
   var base = vStrat0(), o = wk.opts;
   if (!o || !o.length) return base;
-  var cards = '<div class="card stack"><h3>Choose your strategy</h3><p class="dim" style="margin:0">Your engineer ran every sensible plan for this track. Estimated finish times assume a clean race. The engineer recommends one, but you decide.</p><div class="strats">' +
+  var cards = '<div class="card stack"><h3>Choose your strategy</h3><p class="dim" style="margin:0">Your engineer ran every sensible plan for this track. Estimates use your tyre setting (Auto uses typical wear), balanced fuel/energy and a clean race. Heat and setting changes can alter the result. The engineer recommends one, but you decide.</p><div class="strats">' +
     o.map(function (x, i) {
       var tyres = [x.comp].concat(x.stops.map(function (s) { return s.comp; })).map(function (k) { return '<i class="sdot" style="background:' + COMP[k].col + '">' + k + '</i>'; }).join('<em>›</em>');
       return '<button class="strat ' + (wk.sel === i ? 'on' : '') + '" data-act="s-plan" data-v="' + i + '"><div class="sh"><span class="sd">' + tyres + '</span>' + (i === 0 ? '<span class="srec">Engineer\'s pick</span>' : '') + '</div>' +
@@ -79,7 +98,7 @@ vStrat = function () {
 };
 function applyStrat(i, lock) {
   var wk = UI.wk, p = wk.R.p, x = wk.opts[i]; if (!x) return;
-  p.comp = x.comp; p.used = {}; p.used[x.comp] = 1; p.eff = 0;
+  p.comp = x.comp; p.used = {}; p.used[x.comp] = 1; p.eff = 0; p.tyreTemp = 0.3;
   p.plan = x.stops.map(function (s) { return { lap: s.lap, comp: s.comp }; }); p.lock = lock ? 1 : 0; wk.sel = i;
 }
 A['s-plan'] = function (d) { applyStrat(+d.v, +d.v !== 0); render(); };
@@ -95,7 +114,7 @@ brainPlan = function (R, f, rem) {
 /* ---------- panggilan pit: tunjuk anggaran masa setiap pilihan ---------- */
 function pitCosts(R, p) {
   var rem = R.L - p.lap + 1, mand = mandOf(p), pf = pitLossOf(p, R), pitC = pf + P2.stopTraffic, fac = R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1, out = {};
-  if (R.wet > 0.28 || !SLICK[p.comp]) return null;
+  if (!dryStrategy(R) || !SLICK[p.comp]) return null;
   out.stay = planFrom(p, R, p.comp, p.eff, rem, mand, pitC).cost;
   KS.forEach(function (k) { out[k] = pf * fac + planFrom(p, R, k, 0, rem, mand && k === p.comp, pitC).cost; });
   var min = Math.min(out.stay, out.S, out.M, out.H);

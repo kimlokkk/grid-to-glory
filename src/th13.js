@@ -18,7 +18,7 @@ function thStats(ci) {
   return { a: a, best: best, wins: wins, pods: pods, top: top, lap: lap };
 }
 function thHTML(ci) {
-  var c = CIRCUITS[ci], st = thStats(ci), mine = st.a.filter(function (r) { return r.me; }).length;
+  var c = circuitFor(S, ci), st = thStats(ci), mine = st.a.filter(function (r) { return r.me; }).length;
   var h = '<div><span class="badge">Circuit history</span></div><div class="row" style="gap:10px;flex-wrap:nowrap;margin:8px 0">' + flagSVG(ci, 34) + '<div><h2 style="margin:0">' + esc(c.name) + '</h2><small class="dim">' + esc(c.loc) + ' · ' + laps2(c) + ' laps · rain ' + Math.round(c.rain * 100) + '%</small></div></div>';
   if (!st.a.length) return h + '<p class="dim">No race has been held here in your career yet. The history fills in as you play.</p><button class="btn wide" data-act="mclose">Close</button>';
   h += pfTiles([['Races', st.a.length], ['Your best', st.best ? 'P' + st.best : mine ? 'DNF' : '–'], ['Your wins', st.wins], ['Podiums', st.pods]]);

@@ -72,9 +72,10 @@ function drawTrain(R, p, ahead, behind) {
   var tr = document.getElementById('dtrk'); if (!tr) return;
   trainEnsure(R, tr);
   var now = performance.now(), dt = UI.tLast ? Math.min(0.1, (now - UI.tLast) / 1000) : 0.016; UI.tLast = now;
-  var W = tr.clientWidth || 300, k = 1 - Math.exp(-dt * 7);
+  // Paused playback has no animation frames to complete a fade-in.
+  var W = tr.clientWidth || 300, k = RUN && RUN.pause ? 1 : 1 - Math.exp(-dt * 7);
   ahead.sort(function (a, b) { return a.g - b.g; }); behind.sort(function (a, b) { return a.g - b.g; });
-  var out = p.fin || p.dnf; if (out) { ahead = []; behind = []; }
+  var out = R.done || p.fin || p.dnf; if (out) { ahead = []; behind = []; }
   tr.classList.toggle('out', !!out);
   ahead = ahead.slice(0, TRN); behind = behind.slice(0, TRN);
   var oa = trainPlace(ahead), ob = trainPlace(behind), want = {};
@@ -85,6 +86,7 @@ function drawTrain(R, p, ahead, behind) {
   R.cars.forEach(function (f) {
     var el = document.getElementById('tc' + f.di); if (!el) return;
     var st = T[f.di] || (T[f.di] = { x: null, o: 0, g: 0 }), w = want[f.di];
+    if (out && !f.isP) { st.o = 0; st.x = null; el.style.display = 'none'; el.style.opacity = '0'; return; }
     if (w) {
       if (st.x == null || st.o < 0.05) st.x = w.x + (w.g > 0 ? -6 : w.g < 0 ? 6 : 0);   /* masuk dari tepi */
       st.x += (w.x - st.x) * k; st.o += (1 - st.o) * k; st.g += (w.g - st.g) * k;

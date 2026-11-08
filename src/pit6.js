@@ -1,6 +1,6 @@
 /* ===== Pit stop dengan kereta atas: roda ditekan terus pada kereta ===== */
 /* kereta menghala kanan: atas = sisi kiri kereta. k: 0 depan kiri, 1 depan kanan, 2 belakang kiri, 3 belakang kanan */
-var PTY = [[71, 4], [71, 79.6], [10, 4], [10, 79.6]], PTYS = ['DK', 'DKN', 'BK', 'BKN'];
+var PTY = [[71, 4], [71, 79.6], [10, 4], [10, 79.6]], PTYS = ['FL', 'FR', 'RL', 'RR'];
 function pitCarH(cls, tap) {
   var h = '<div class="pcar" id="pcar">' + carSVG(myTeam(), 700);
   for (var k = 0; k < 4; k++) h += '<i class="pty ' + (cls[k] || '') + '" style="left:' + PTY[k][0] + '%;top:' + PTY[k][1] + '%">' + PTYS[k] + '</i>';

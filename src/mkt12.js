@@ -24,7 +24,7 @@ function mktNum(S) {
 }
 function juniorToDriver(S, j, id, team) {
   var nd = {
-    id: id, name: j.name, nat: j.nat, age: j.age, team: team, num: mktNum(S), pot: j.pot, pk: j.pk, fb: j.fb, ty: j.ty, hy: j.hy, acad: j.acad,
+    id: id, uid: personId(S, j), name: j.name, nat: j.nat, age: j.age, team: team, num: mktNum(S), pot: j.pot, pk: j.pk, fb: j.fb, ty: j.ty, hy: j.hy, acad: j.acad,
     bio: (j.jr && j.jr.titles ? JR_NAME + ' champion' : 'Graduate of the ' + JR_NAME) + '. ' + DTYPES[j.ty || 'all'].bio + ' ' + (scoutPot(j) >= 92 ? 'Tipped as a future star.' : scoutPot(j) >= 86 ? 'Highly rated by the paddock.' : 'Will need to prove himself quickly.'),
     pts: 0, wins: 0, pods: 0, poles: 0, starts: 0, dnf: 0, fl: 0, cs: { starts: 0, wins: 0, pods: 0, poles: 0, titles: 0 }, sh: [], rh: [], pa: {}, jr: j.jr
   };
@@ -52,7 +52,7 @@ function mktPlans(S) {
 }
 /* nilai calon di mata sesebuah team */
 function mktScore(S, t, c, N, wPot) {
-  var d = c.d, o = ovr(d) + hgauss(t.id + '|o|' + d.name + '|' + N) * 0.8, sc = o, PL = PLAN[t.plan] || PLAN.build;
+  var d = c.d, o = ovr(d) + hgauss(t.id + '|o|' + d.name + '|' + N) * 0.8, sc = o + evaluationMarketBonus(S, d), PL = PLAN[t.plan] || PLAN.build;
   if (d.age < (d.pk || 28)) { var pe = estPot(t, d, N); sc += wPot * PL.pot * Math.max(0, pe - ovr(d)) * clamp((28 - d.age) / 6, 0.3, 1.2); }
   if (c.from === t.id) sc += d.sk ? -9 : (d.miss || 0) >= 2 ? -4 : d.obj && d.obj.res === 'met' ? 4.5 : 3;
   if (c.k === 'jr' || c.k === 'new') { if (d.acad === t.id) sc += (1.5 + 4 * (t.dev.acad || 0.5)) * (0.6 + 0.4 * PL.ac); else if (d.acad != null) sc -= 5; }
@@ -64,7 +64,7 @@ var MKTCTX = null;
 function mktPay(c) { var d = c.d; return payFor(ovr(d), (c.k === 'jr' || c.k === 'new' || (d.cs && d.cs.starts < 20)) ? 0.35 : 1); }
 function mktLog(S, e) { S.mkt.moves.push(e); }
 function retirePerson(S, d, reason) {
-  S.retired.push({ name: d.name, nat: d.nat, age: d.age, cs: d.cs, sh: d.sh, num: d.num, code: d.code, s: S.season, r: reason });
+  S.retired.push({ uid: personId(S, d), name: d.name, nat: d.nat, age: d.age, cs: d.cs, sh: d.sh, num: d.num, code: d.code, s: S.season, r: reason });
 }
 
 /* opsyen tahun tambahan: kontrak yang tamat musim ini disambung setahun kalau pihak pemegang opsyen mahu */
@@ -95,6 +95,7 @@ function mktSack(S, N) {
   });
 }
 function mktRun(S, dlog) {
+  if (S.mode === 'pro') { worldNewSeason(S, dlog); return; }
   var N = S.season + 1, P = S.pi;
   mktInit(S);
   S.mkt = { s: N, moves: [], staff: [], gold: null, seen: false };
@@ -259,9 +260,9 @@ function mktRumours(S, rd) {
   var rank = {}; S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }).forEach(function (t, i) { rank[t.id] = i; });
   if (!S.rm || S.rm.s !== S.season) S.rm = { s: S.season, n: {} };
   var byO = exp.slice().sort(function (a, b) { return ovr(b) - ovr(a); });
-  if (rd === 3 && byO.length) byO.slice(0, 2).forEach(function (d) { S.rm.n[d.name] = 1; pushNews(S, { k: 'cexp', n: d.name, t: d.team }); });
-  if ((rd === 5 || rd === 8) && byO.length) {
-    var cand = byO.filter(function (x) { return !S.rm.n[x.name] || rd === 8 && S.rm.n[x.name] === 1; }).slice(0, 4), d = cand[Math.floor(rnd() * Math.min(cand.length, 3))], best = null, bs = -1e9;
+  if (rd === seasonMilestone(S, 3) && byO.length) byO.slice(0, 2).forEach(function (d) { S.rm.n[d.name] = 1; pushNews(S, { k: 'cexp', n: d.name, t: d.team }); });
+  if ((rd === seasonMilestone(S, 5) || rd === seasonMilestone(S, 8)) && byO.length) {
+    var cand = byO.filter(function (x) { return !S.rm.n[x.name] || rd === seasonMilestone(S, 8) && S.rm.n[x.name] === 1; }).slice(0, 4), d = cand[Math.floor(rnd() * Math.min(cand.length, 3))], best = null, bs = -1e9;
     if (!d) return;
     S.teams.forEach(function (t) {
       if (t.id === d.team) return;
@@ -272,11 +273,11 @@ function mktRumours(S, rd) {
     });
     if (best && ovr(d) >= 72) { S.rm.n[d.name] = 2; pushNews(S, { k: 'rumd', n: d.name, t: best.id, f: d.team }); }
   }
-  if (rd === 10) {
+  if (rd === seasonMilestone(S, 10)) {
     var ts = S.teams.filter(function (t) { return S.drivers.some(function (x) { return x.team === t.id && x.id !== P && x.con && x.con.end <= S.season; }); }).map(function (t) { return t.id; });
     pushNews(S, { k: 'seats', c: exp.length + (S.contract === 1 ? 1 : 0), ts: ts.slice(0, 5) });
   }
-  if (S.contract === 1 && !S.sit && (rd === 5 || rd === 9)) {
+  if (S.contract === 1 && !S.sit && (rd === seasonMilestone(S, 5) || rd === seasonMilestone(S, 9))) {
     var ds = driverStandings(S), pos = ds.indexOf(S.drivers[P]) + 1, offs = typeof makeOffers === 'function' ? makeOffers(S, pos) : [];
     pushNews(S, { k: 'mine', ts: offs.filter(function (o) { return !o.renew; }).map(function (o) { return o.team; }) });
   }

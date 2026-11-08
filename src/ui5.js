@@ -1,34 +1,38 @@
 'use strict';
 /* ===== Hujung minggu v2: enjin baru masa nyata, radio Ya/Tak, mini game semula jadi ===== */
 var TYN = { S: 'Soft', M: 'Medium', H: 'Hard', I: 'Inter', W: 'Wet' };
-var PUSHN = ['Save', 'Balanced', 'Attack'];
+var PUSHN = ['Save', 'Balanced', 'Push'];
 function wetLabel(w) { return w < 0.08 ? 'Dry' : w < 0.28 ? 'Damp' : w < 0.6 ? 'Wet' : 'Very wet'; }
 function wkHead(quit) {
-  return '<div class="top"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>' + UI.wk.c.name + '</span>' + (quit ? '<button class="btn sm" data-act="wk-quit">Exit</button>' : '') + '</div></div>';
+  return '<div class="top"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>' + UI.wk.c.name + (S.mode === 'pro' && !S.sit && UI.wk.R && UI.wk.R.p ? ' · Focus ' + (UI.wk.R.p.focus == null ? 50 : UI.wk.R.p.focus) : '') + '</span>' + (quit ? '<button class="btn sm" data-act="wk-quit">Exit</button>' : '') + '</div></div>';
 }
 function lastName(d) { return d.name.split(' ').slice(-1)[0]; }
-function fc2(c, w, L) {
-  var lie = rnd() < 0.15;
-  if (w.type === 'basah' && !lie) return 'Wet track at the start, expected to dry within the first few laps.';
-  if (w.type === 'hujan' && !lie) { var a = Math.max(2, Math.round(w.start + gauss() * 1.5)); return 'Rain expected around lap ' + a + '–' + Math.min(L, a + 6) + '. Exact timing may vary.'; }
-  if (w.type === 'kering' && lie) return 'Mostly dry, but there are dark clouds out there.';
-  return 'Dry for the whole race.';
+function fc2(c, w, L, error) {
+  var err = error || 0, end = w.end + err * 0.7;
+  function range(lap) { var lo = clamp(Math.floor(lap) - 1, 1, L), hi = clamp(Math.ceil(lap) + 1, lo, L); return lo + '–' + hi; }
+  if (w.type === 'basah') return 'Wet track at the start. ' + (end >= L ? 'Rain is expected to continue through the race; the track should remain wet.' : 'Rain should ease around lap ' + range(end) + '; the track will take longer to dry. Timing may vary.');
+  if (w.type === 'hujan') return 'Rain expected around lap ' + range(w.start + err) + (end >= L ? ' and may continue through the finish.' : ', easing around lap ' + range(end) + '.') + ' The track may remain wet after the rain eases. Timing may vary.';
+  return 'Dry conditions expected for the race.';
 }
 function vWk() { return ({ quali: vQuali, strat: vStrat, race: vRace, result: vResult })[UI.wk.step](); }
 A['wk-start'] = function () {
-  var ci = S.cal[S.round], c = CIRCUITS[ci], L = laps2(c), w = genWeather2(c, L);
+  if (S.mode === 'pro' && (S.playerRetired || progressionPlayer(S).age >= AGEING.retireAt)) { UI.screen = 'retire'; render(); return; }
+  trainingPrepare(S);
+  evaluationPrepare(S, S.cal[S.round]);
+  if (S.mode === 'pro') save();
+  var ci = S.cal[S.round], c = circuitFor(S, ci), L = laps2(c), w = genWeather2(c, L);
   if (typeof ensureDev === 'function') ensureDev(S);
-  var rv = ensureRival(S);
-  UI.wk = { ci: ci, c: c, L: L, w: w, fc: fc2(c, w, L), step: 'quali', q: null, qq: null, mg: { q: 0.5, s: 0.5, pn: [], bq: [] }, R: null, rep: null, obj: makeObjectives(S) };
+  var rv = ensureRival(S), fcErr = gauss() * P2.fcErrEng;
+  UI.wk = { ci: ci, c: c, L: L, w: w, fcErr: fcErr, fc: fc2(c, w, L, fcErr), step: 'quali', q: null, qq: null, mg: { q: 0.5, s: 0.5, pn: [], bq: [] }, R: null, rep: null, obj: makeObjectives(S) };
   if (!rv.intro) { rv.intro = true; UI.wk.rivIntro = fmtR(pick(RIV.pick), { r: S.drivers[rv.di].name }); }
   UI.screen = 'wk'; render();
 };
-A['wk-quit'] = function () { stopRace(); UI.wk = null; UI.screen = 'hub'; if (typeof liveSettle === 'function') liveSettle(); RUN = null; render(); };
+A['wk-quit'] = function () { stopRace(); if (RUN && S.live) liveCheckpoint(RUN.R); UI.wk = null; UI.screen = 'hub'; if (typeof liveSettle === 'function') liveSettle(); RUN = null; render(); };
 
 /* ---------- kelayakan ---------- */
 function vQuali() {
   var wk = UI.wk, c = wk.c, h = wkHead(true), Q = wk.Q || (wk.Q = qkInit(S, wk.ci, qualiWet(wk.w)));
-  h += '<div class="stack"><div class="card stack"><h3>Round ' + (S.round + 1) + ' · Qualifying</h3><h2>' + c.name + ' · ' + wk.L + ' laps</h2><div class="row">' + circuitChips(c) + '</div><p>' + esc(wk.fc) + '</p>' + (Q.wq > 0.1 ? '<p class="warn">Wet qualifying. Rain skill matters.</p>' : '') + '</div>' + objCard(wk);
+  h += '<div class="stack"><div class="card stack"><h3>Round ' + (S.round + 1) + ' · Qualifying</h3><h2>' + c.name + ' · ' + wk.L + ' laps</h2><div class="row">' + circuitChips(c) + '</div><p>' + esc(wk.fc) + '</p>' + (Q.wq > 0.1 ? '<p class="warn">Wet qualifying. Rain skill matters.</p>' : '') + '</div>' + focusHTML() + objCard(wk);
   if (wk.q) {
     var mine = wk.q.filter(function (r) { return r.di === S.pi; })[0], pole = wk.q[0], mate = wk.q.filter(function (r) { return r.di !== S.pi && S.drivers[r.di].team === me().team; })[0];
     h += '<div class="card stack"><h2>You start P' + mine.pos + '</h2><p class="dim">' + (mine.pos === 1 ? 'POLE! The engineer is in tears on the pit wall.' : (mine.sess < 2 ? 'Knocked out in ' + QNAME[mine.sess] + '. ' : '') + '+' + (mine.t - pole.t).toFixed(3) + 's off pole') + (mate ? ' · teammate P' + mate.pos : '') + '</p></div>';
@@ -80,7 +84,7 @@ A['q-fin'] = function () {
 };
 A['q-next'] = function () {
   var wk = UI.wk; P2._q = wk.qq;
-  var R = makeRace2(S, wk.ci, wk.q.map(function (r) { return r.di; }), { weather: wk.w });
+  var R = makeRace2(S, wk.ci, wk.q.map(function (r) { return r.di; }), { weather: wk.w, fcErr: wk.fcErr });
   R.p = R.cars.filter(function (f) { return f.isP; })[0];
   wk.R = R; wk.step = 'strat'; render();
 };
@@ -93,38 +97,54 @@ function objCard(wk) {
 /* ---------- strategi ---------- */
 function planText(R, p) {
   if (!p.plan.length) return (p.comp === 'I' || p.comp === 'W') ? 'Weather-dependent, your engineer will call it when the track changes.' : 'No stop planned.';
-  return p.plan.map(function (s) { return 'pit lap ' + s.lap + ' → ' + TYN[s.comp]; }).join(', ');
+  var plan = p.plan.map(function (s) { return 'pit lap ' + s.lap + ' → ' + TYN[s.comp]; }).join(', ');
+  return R.w.type !== 'kering' || R.wet > 0.04 ? 'dry baseline: ' + plan + '. Weather may change the stops and tyres' : plan;
 }
 function vStrat() {
   var wk = UI.wk, R = wk.R, p = R.p, c = wk.c, h = wkHead(true);
   h += '<div class="stack">' + (typeof fnlPreHTML === 'function' ? fnlPreHTML() : '') + '<div class="card stack"><h3>Strategy</h3><h2>' + c.name + ' · ' + R.L + ' laps · start P' + p.grid + '</h2><p>' + esc(wk.fc) + '</p>' +
     '<p class="dim">Dry race: you must use two different dry compounds. If you run Inters or Wets, this rule doesn\'t apply.</p>' + (R.wet > 0.28 ? '<p class="warn">Wet grid. Slicks will be painfully slow.</p>' : '') + (typeof thStrip === 'function' ? '<div>' + thStrip(R.ci) + '</div>' : '') + '</div>' + objCard(wk);
-  h += '<div class="card stack"><h3>Engineer\'s plan</h3><p>Start <b>' + TYN[p.comp] + '</b>, ' + planText(R, p) + '.</p><p class="dim">Your engineer recalculates the plan every lap. When he wants to pit, he\'ll ask you first.</p><div class="pick">';
+  h += focusHTML();
+  h += '<div class="card stack"><h3>Engineer\'s plan</h3><p>Start <b>' + TYN[p.comp] + '</b>, ' + planText(R, p) + '.</p><p class="dim">Your engineer reviews the plan every lap. ' + (S.settings.ask ? 'Pit calls pause for your decision.' : 'Pit calls are automatic in Just watch mode.') + '</p><div class="pick">';
   ['S', 'M', 'H', 'I', 'W'].forEach(function (k) {
-    var life = tyreLife(p, R, k), dry = !!SLICK[k];
-    h += '<button class="opt ' + (p.comp === k ? 'on' : '') + '" data-act="s-start" data-v="' + k + '"><div class="t">' + tyc(k) + TYN[k] + '</div><div class="s">' + (dry ? '≈ ' + Math.round(life) + ' laps · ' + (COMP2[k].off === 0 ? 'fastest' : '+' + COMP2[k].off.toFixed(2) + 's/lap') : (k === 'I' ? 'Damp/wet track' : 'Heavy rain')) + '</div></button>';
+    var life = tyreLife(p, R, k) / raceDistance(R), dry = !!SLICK[k];
+    h += '<button class="opt ' + (p.comp === k ? 'on' : '') + '" data-act="s-start" data-v="' + k + '"><div class="t">' + tyc(k) + TYN[k] + '</div><div class="s">' + (dry ? '≈ ' + Math.round(life) + ' laps · ' + (COMP2[k].off === 0 ? 'fastest' : '+' + COMP2[k].off.toFixed(2) + 's/lap') + ' in the dry' : (k === 'I' ? 'Damp/wet track' : 'Heavy rain')) + '</div></button>';
   });
-  h += '</div></div><div class="card stack"><h3>Race mode</h3><div class="pick">';
-  var pm = p.bot && p.bot.push != null ? p.bot.push : -1;
-  [[-1, 'Engineer', 'Engineer switches between save and push as needed.'], [0, 'Save', 'Tyres and fuel last longer, slower pace.'], [1, 'Balanced', 'Normal pace.'], [2, 'Attack', 'Fast, but burns through tyres, fuel and energy.']].forEach(function (x) {
-    h += '<button class="opt ' + (pm === x[0] ? 'on' : '') + '" data-act="s-push" data-v="' + x[0] + '"><div class="t">' + x[1] + '</div><div class="s">' + x[2] + '</div></button>';
-  });
-  h += '</div><div class="row"><button class="btn sm ' + (S.settings.ask ? 'on' : '') + '" data-act="s-ask">Decisions: ' + (S.settings.ask ? 'I decide' : 'Just watch') + '</button><button class="btn sm ' + (S.settings.mini ? 'on' : '') + '" data-act="s-mini">Mini game: ' + (S.settings.mini ? 'On' : 'Off') + '</button></div>' +
-    '<p class="dim">' + (S.settings.ask ? 'The race pauses when your engineer wants to pit, when the safety car comes out, and when there\'s a battle (mini game).' : 'You just watch. Your engineer makes every call. Hit Pause any time to take over.') + '</p></div>';
+  h += '</div></div><div class="card stack"><h3>Race mode</h3>' + raceControlsHTML(R, 's') +
+    '<p class="dim">Auto lets your engineer manage that control. Picking a setting makes only that control Manual until you choose Auto again. You can ignore advice. Tyre Push trades wear, heat and spin risk for pace. Fuel Push burns more fuel; Deploy spends battery. Fuel margin estimates the finish at your current setting and conditions.</p>' +
+    '<div class="row"><button class="btn sm ' + (S.settings.ask ? 'on' : '') + '" data-act="s-ask">Pit decisions: ' + (S.settings.ask ? 'I decide' : 'Auto') + '</button><button class="btn sm ' + (S.settings.mini ? 'on' : '') + '" data-act="s-mini">Mini game: ' + (S.settings.mini ? 'On' : 'Off') + '</button></div>' +
+    '<p class="dim">' + (S.settings.ask ? 'Pit and safety-car calls pause for your decision.' : 'Pit calls are automatic. Take over any race control at any time.') + '</p></div>';
   return h + '<button class="btn pri wide" data-act="s-go">To the grid</button></div>';
 }
 A['s-start'] = function (d) {
-  var R = UI.wk.R, p = R.p; p.comp = d.v; p.used = {}; p.used[d.v] = 1; p.eff = 0;
+  var R = UI.wk.R, p = R.p; p.comp = d.v; p.used = {}; p.used[d.v] = 1; p.eff = 0; p.tyreTemp = 0.3;
+  p.lock = 0; UI.wk.sel = null;
   p.plan = []; if (SLICK[d.v]) brainPlan(R, p, R.L);
   render();
 };
-A['s-push'] = function (d) { var p = UI.wk.R.p, v = +d.v; if (v < 0) p.bot = null; else { p.bot = p.bot || {}; p.bot.push = v; p.push = v; } render(); };
+function raceControlsHTML(R, prefix, only) {
+  var p = R.p;
+  return [['push', 'Tyres', PUSHN], ['fuelMode', 'Fuel', PUSHN], ['energyMode', 'Energy', ['Harvest', 'Balanced', 'Deploy']]].filter(function (x) { return !only || x[0] === only; }).map(function (x) {
+    var manual = p.bot && p.bot[x[0]] != null, mode = raceMode(p, x[0]), heat = tyreHeat(p);
+    var margin = fuelMargin(R, p);
+    var detail = x[0] === 'push' ? ' · ' + Math.round(tyreHealth(p, R) * 100) + '% · ' + (heat < 0.35 ? 'Cold' : heat > 0.78 ? 'Hot' : 'Optimal') : x[0] === 'fuelMode' ? ' · ' + (margin < 0 ? '' : '+') + margin.toFixed(1) + 'L' : ' · ' + Math.round(p.en * 100) + '%';
+    return '<div class="race-control"><div class="row sp"><b>' + x[1] + detail + '</b><small>' + (manual ? 'Manual' : 'Auto') + ' · ' + x[2][mode] + '</small></div><div class="seg">' + [-1, 0, 1, 2].map(function (v) {
+      return '<button class="' + ((manual ? mode : -1) === v ? 'on' : '') + '" data-act="' + prefix + '-mode" data-k="' + x[0] + '" data-v="' + v + '" aria-pressed="' + ((manual ? mode : -1) === v) + '" aria-label="' + x[1] + ': ' + (v < 0 ? 'Auto' : x[2][v]) + '">' + (v < 0 ? 'Auto' : x[2][v]) + '</button>';
+    }).join('') + '</div></div>';
+  }).join('');
+}
+A['s-mode'] = function (d) {
+  var R = UI.wk.R;
+  if (!setRaceMode(R, R.p, d.k, +d.v)) return;
+  if (d.k === 'push' && typeof refreshStratOptions === 'function') refreshStratOptions();
+  render();
+};
 A['s-ask'] = function () { S.settings.ask = !S.settings.ask; save(); render(); };
 A['s-mini'] = function () { S.settings.mini = !S.settings.mini; save(); render(); };
 A['s-go'] = function () {
   var wk = UI.wk; wk.step = 'race'; render(); initRun();
   if (typeof fnlFinal === 'function' && fnlFinal()) radio(wk.R, 'Final race of the season. Make it count.', 'e', 1);
-  S.live = { r: S.round, ci: wk.R.ci }; save();
+  S.live = { r: S.round, ci: wk.R.ci }; liveCheckpoint(wk.R); save();
   UI.mgCtx = { k: 'start', pos: posOf(wk.R, wk.R.p) };
   if (S.settings.mini && S.settings.ask) startAny(function (react, jump, q) { applyStart(react, jump, q); goRun(); });
   else { applyStart(clamp(0.235 + gauss() * 0.035 - (me().race - 70) / 2500, 0.17, 0.4), false, 0.5); goRun(); }
@@ -140,7 +160,7 @@ function applyStart(react, jump, q) {
 var RUN = null;
 function initRun() {
   var R = UI.wk.R;
-  RUN = { R: R, acc: 0, last: 0, spd: UI.spd2 || 2, pause: true, fast: false, wait: false, logI: 0, radio: R.radio || [], mgCd: 0, sig: '', tSig: 0, fin: false };
+  RUN = { R: R, acc: 0, last: 0, spd: UI.spd2 || 2, pause: true, fast: false, highlights: false, highlightUntil: 0, wait: false, logI: 0, radio: R.radio || [], mgCd: 0, sig: '', tSig: 0, fin: false };
   R.radio = RUN.radio; RUN.stops = R.p.stops;
   R.cars.forEach(function (f) { f.sPrev = f.s; });
   setupMap(R); drawCars(R, 0); paintPanels(true);
@@ -153,7 +173,7 @@ function loop(now) {
   var wk = UI.wk; if (!wk || !RUN || wk.R !== RUN.R || UI.screen !== 'wk' || wk.step !== 'race') return;
   var R = RUN.R, dt = RUN.last ? Math.min(0.1, (now - RUN.last) / 1000) : 0; RUN.last = now;
   if (!RUN.pause && !RUN.wait && !R.done) {
-    if (RUN.fast) { for (var n = 0; n < 60 && !RUN.wait && !R.done; n++) stepOne(R); RUN.acc = 0; }
+    if (RUN.fast && !(RUN.highlights && now < RUN.highlightUntil)) { for (var n = 0; n < 60 && !RUN.wait && !R.done; n++) { var logStart = R.log.length; stepOne(R); if (RUN.highlights && highlightMoment(R, logStart)) { RUN.highlightUntil = now + 1600; break; } } RUN.acc = 0; }
     else { RUN.acc += dt * 3 * RUN.spd; while (RUN.acc >= 1 && !RUN.wait && !R.done) { stepOne(R); RUN.acc -= 1; } }
   }
   if (R.done && !RUN.fin) finishRun(R);
@@ -161,10 +181,13 @@ function loop(now) {
   paintPanels(false);
   if (!RUN.pause && !R.done) UI.raf = requestAnimationFrame(loop);
 }
+function highlightMoment(R, from) { return R.log.slice(from).some(function (e) { return ['pass','pit','dnf','sc','vsc','restart','spin','contact','wx','finish'].indexOf(e.k) >= 0; }); }
+A['r-highlights'] = function () { if (!RUN || RUN.R.done) return; RUN.highlights = !RUN.highlights; RUN.fast = RUN.highlights; RUN.highlightUntil = 0; cap(''); paintPanels(true); };
 function asking() { return S.settings.ask && !RUN.auto; }
 function stepOne(R) {
   var p = R.p;
   if (!p.fin && asking() && S.settings.mini && !RUN.fast) { if (miniCheck(R, p)) return; }
+  p.bot = p.bot || {}; p.bot.noAttack = p.bot.energyMode != null;
   tick2(R);
   readLog(R);
   mgWatch(R, p);
@@ -176,6 +199,7 @@ function stepOne(R) {
     else p.pitOk = true;
   }
   if (typeof toCheck === 'function' && !RUN.wait) toCheck(R, p);
+  if (S.live && S.live.lap !== p.lap && !R.done) { liveCheckpoint(R); save(); }
 }
 
 /* log enjin → radio dan kapsyen */
@@ -208,7 +232,7 @@ function trackOrder(R) {
 function posOf(R, f) { return trackOrder(R).indexOf(f) + 1; }
 function posOfDi(R, di) { var o = trackOrder(R); for (var i = 0; i < o.length; i++) if (o[i].di === di) return i + 1; return 99; }
 var capT = 0;
-function cap(t, cls) { var el = document.getElementById('cap'); if (!el || RUN.fast) return; el.textContent = t; el.className = 'cap show ' + (cls || ''); clearTimeout(capT); capT = setTimeout(function () { var e = document.getElementById('cap'); if (e) e.className = 'cap'; }, 2000); }
+function cap(t, cls) { var el = document.getElementById('cap'); if (!el || (RUN.fast && t)) return; el.textContent = t; el.className = t ? 'cap show ' + (cls || '') : 'cap'; clearTimeout(capT); if (t) capT = setTimeout(function () { var e = document.getElementById('cap'); if (e) e.className = 'cap'; }, 2000); }
 
 /* ---------- kad radio Ya/Tak ---------- */
 var WHYS = { sc: 'safety car', 'sc+cuaca': 'safety car + weather', cuaca: 'weather', pelan: 'planned', undercut: 'undercut' };
@@ -352,16 +376,16 @@ function drawCars(R, al) {
   });
   drawTrain(R, p, aheadL, behindL);
   var bc = document.getElementById('btchip');
-  var hot = (near < 1 && !R.sc) || !!R.sc;
+  var out = R.done || p.fin || p.dnf, hot = !out && ((near < 1 && !R.sc) || !!R.sc);
   if (UI.phone && hot && !RUN.hot && UI.rtab && UI.rtab !== 'trek' && (!UI.rtabT || performance.now() - UI.rtabT > 6000)) A['rtab']({ v: 'trek' });
   RUN.hot = hot;
-  if (bc) { var on = near < 1 && !R.sc; bc.className = 'btchip' + (on ? ' on' : ''); bc.textContent = R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : on ? 'BATTLE' : near < 3 ? 'CLOSE' : 'CLEAN AIR'; }
+  if (bc) { var on = !out && near < 1 && !R.sc; bc.className = 'btchip' + (on ? ' on' : ''); bc.textContent = R.done ? 'CHEQUERED FLAG' : p.dnf ? 'DNF' : p.fin ? 'FINISHED' : R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : on ? 'BATTLE' : near < 3 ? 'CLOSE' : 'CLEAN AIR'; }
 }
 
 /* ---------- panel ---------- */
 function gapTxt(R, f, ref) {
   if (f.dnf) return '<span class="bad">DNF</span>';
-  if (f.fin && ref.fin) return '+' + Math.max(0, f.tFin - ref.tFin).toFixed(1);
+  if (f.fin && ref.fin) return '+' + Math.max(0, f.tFin + (f.pen || 0) - ref.tFin - (ref.pen || 0)).toFixed(1);
   var ds = ref.s - f.s; if (ref.fin) ds = R.L - f.s;
   if (ds >= 1) return '+' + Math.floor(ds) + (Math.floor(ds) > 1 ? ' laps' : ' lap');
   return '+' + Math.max(0, ds * (f.pA || R.c.base)).toFixed(1);
@@ -384,34 +408,39 @@ function cockpitHTML(R) {
   if (R.done) return '<div class="card stack"><h2>Chequered flag</h2><p class="dim">Race over.</p><button class="btn pri wide" data-act="r-done">View results</button></div>';
   if (p.dnf) return '<div class="card stack"><h2 class="bad">You\'re out of the race</h2><p class="dim">' + esc(p.dnf) + '.</p><button class="btn wide" data-act="r-ff">Skip to the finish</button></div>';
   if (p.fin) return '<div class="card stack"><h2>You\'ve finished</h2><p class="dim">Waiting for the others to finish.</p><button class="btn wide" data-act="r-ff">Skip to the finish</button></div>';
-  var o = trackOrder(R), i = o.indexOf(p), ah = i > 0 ? o[i - 1] : null, bh = o[i + 1] && !o[i + 1].dnf ? o[i + 1] : null, hp = tyreHealth(p, R), spare = p.fuel - (R.L - p.s);
+  var o = trackOrder(R), i = o.indexOf(p), ah = i > 0 ? o[i - 1] : null, bh = o[i + 1] && !o[i + 1].dnf ? o[i + 1] : null, hp = tyreHealth(p, R), spare = fuelMargin(R, p);
   var rv = S.rival ? S.rival.di : -1;
   if (!UI.phone) h += posHTML(R);
   h += '<div class="rings">' + ringH(hp * 100, hp > 0.5 ? 'var(--good)' : hp > 0.2 ? 'var(--a2)' : 'var(--bad)', Math.round(hp * 100) + '%', 'Tyre ' + p.comp + ' · ' + Math.floor(p.eff) + 'L') +
-    ringH(clamp(p.fuel / (R.L * P2.fuel0) * 100, 0, 100), spare < 0 ? 'var(--bad)' : spare < 0.3 ? 'var(--a2)' : 'var(--good)', (spare < 0 ? '' : '+') + spare.toFixed(1), 'Fuel') +
+    ringH(clamp(p.fuel / (R.L * raceDistance(R) * P2.fuel0) * 100, 0, 100), spare < 0 ? 'var(--bad)' : spare < 0.3 ? 'var(--a2)' : 'var(--good)', (spare < 0 ? '' : '+') + spare.toFixed(1), 'Fuel margin · ' + PUSHN[raceMode(p, 'fuelMode')]) +
     ringH(p.en * 100, 'var(--acc)', Math.round(p.en * 100) + '%', 'Energy') + '</div>';
   if (false) h += '<div class="posl"><div class="bigp">P' + (i + 1) + '</div><div class="gp">' +
     (ah ? '▲ ' + esc(lastName(ah.d)) + ' <b>' + Math.max(0, (Math.min(ah.s, R.L) - p.s) * p.pA).toFixed(1) + 's</b>' + (ah.di === rv ? ' · <span class="warn">rival</span>' : '') : '<b>You\'re leading!</b>') + '<br>' +
     (bh ? '▼ ' + esc(lastName(bh.d)) + ' <b>' + Math.max(0, (p.s - bh.s) * p.pA).toFixed(1) + 's</b>' + (bh.di === rv ? ' · <span class="warn">rival</span>' : '') : '<span class="dim">Last place</span>') + '</div></div>';
 
-  var pm = p.bot && p.bot.push != null ? p.bot.push : -1;
-  h += '<div class="seg">' + [[-1, 'Auto'], [0, 'Save'], [1, 'Balanced'], [2, 'Attack']].map(function (x) { return '<button class="' + (pm === x[0] ? 'on' : '') + '" data-act="r-push" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>';
-  var noB = p.en < 0.2 || p.atkCd > 0 || p.atk > 0 || R.sc || p.lap < 2;
+  h += '<div class="race-summary">' + [['push', 'Tyres', Math.round(hp * 100) + '%', PUSHN], ['fuelMode', 'Fuel', (spare < 0 ? '' : '+') + spare.toFixed(1) + 'L', PUSHN], ['energyMode', 'Energy', Math.round(p.en * 100) + '%', ['Harvest', 'Balanced', 'Deploy']]].map(function (x) {
+    var manual = p.bot && p.bot[x[0]] != null;
+    return '<button data-act="r-control" data-k="' + x[0] + '" aria-label="Adjust ' + x[1] + ' control"><b>' + x[1] + ' ' + x[2] + '</b><span>' + (manual ? 'Manual' : 'Auto') + ' · ' + x[3][raceMode(p, x[0])] + '</span>' + (x[0] === 'push' ? '<small>' + (tyreHeat(p) < 0.35 ? 'Cold' : tyreHeat(p) > 0.78 ? 'Hot' : 'Optimal') + '</small>' : '<small>Tap to adjust</small>') + '</button>';
+  }).join('') + '</div><div class="race-controls">' + raceControlsHTML(R, 'r') + '</div>';
+  var advice = raceAdvice(R, p);
+  if (advice) h += '<p class="control-advice">ENG: ' + esc(advice) + '</p>';
+  var noB = !canBoost(R, p);
   if (p.pitReq && p.pitOk) h += '<div class="pitnote"><span>Boxing this lap: ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</span><button class="btn sm" data-act="r-pitx">Cancel</button></div>';
   h += '<div class="acts"><button class="btn boost" data-act="r-atk"' + (noB ? ' disabled' : '') + '>' + (p.atk > 0 ? 'Boost!' : 'Boost') + '</button><button class="btn pitb" data-act="r-pitm">' + (UI.pitOpen ? 'Close' : 'Pit') + '</button></div>';
   if (UI.pitOpen && !(p.pitReq && p.pitOk)) h += '<div class="tyrow">' + ['S', 'M', 'H', 'I', 'W'].map(function (k) { return '<button class="btn" data-act="r-pit" data-v="' + k + '">' + tyc(k) + TYN[k] + '</button>'; }).join('') + '</div>';
   if (!UI.phone) h += '<p class="dim" style="font-size:12.5px">Engineer\'s plan: ' + planText(R, p) + '</p>';
   h += '<div class="ctlrow">' + (RUN.pause ? '<button class="btn pri" data-act="r-go">' + (R.t > 0 ? 'Resume' : 'Start') + '</button>' : '<button class="btn" data-act="r-pause">Pause</button>') +
+    (UI.phone ? '<button class="btn sm" data-act="r-playback" aria-label="Choose race playback speed">Playback · ' + (RUN.highlights ? 'Highlights' : RUN.fast ? 'Fast' : RUN.spd + '×') + '</button>' :
     [1, 2, 4].map(function (v) { return '<button class="btn sm ' + (RUN.spd === v && !RUN.fast ? 'on' : '') + '" data-act="r-spd" data-v="' + v + '">' + v + '×</button>'; }).join('') +
-    '<button class="btn sm ' + (RUN.fast ? 'on' : '') + '" data-act="r-fast">Fast</button></div>';
+    '<button class="btn sm ' + (RUN.fast && !RUN.highlights ? 'on' : '') + '" data-act="r-fast" aria-label="Fast race playback">Fast</button><button class="btn sm ' + (RUN.highlights ? 'on' : '') + '" data-act="r-highlights" aria-pressed="' + !!RUN.highlights + '">Highlights</button>') + '</div>';
   return UI.phone ? h : '<div class="card stack">' + h + '</div>';
 }
 function posHTML(R) {
   var p = R.p; if (p.dnf) return '<div class="posl"><div class="bigp">DNF</div></div>';
   var o = trackOrder(R), i = o.indexOf(p), ah = i > 0 ? o[i - 1] : null, bh = o[i + 1] && !o[i + 1].dnf ? o[i + 1] : null, rv = S.rival ? S.rival.di : -1;
   return '<div class="posl"><div class="bigp">P' + (i + 1) + '</div><div class="gp">' +
-    (ah ? '▲ ' + esc(lastName(ah.d)) + ' <b>' + Math.max(0, (Math.min(ah.s, R.L) - p.s) * p.pA).toFixed(1) + 's</b>' + (ah.di === rv ? ' · <span class="warn">rival</span>' : '') : '<b>You\'re leading!</b>') + '<br>' +
-    (bh ? '▼ ' + esc(lastName(bh.d)) + ' <b>' + Math.max(0, (p.s - bh.s) * p.pA).toFixed(1) + 's</b>' + (bh.di === rv ? ' · <span class="warn">rival</span>' : '') : '<span class="dim">Last place</span>') + '</div></div>';
+    (ah ? '▲ ' + esc(lastName(ah.d)) + ' <b>' + (p.fin && ah.fin ? gapTxt(R, p, ah) : Math.max(0, (Math.min(ah.s, R.L) - p.s) * p.pA).toFixed(1)) + 's</b>' + (ah.di === rv ? ' · <span class="warn">rival</span>' : '') : '<b>You\'re leading!</b>') + '<br>' +
+    (bh ? '▼ ' + esc(lastName(bh.d)) + ' <b>' + (p.fin && bh.fin ? gapTxt(R, bh, p) : Math.max(0, (p.s - bh.s) * p.pA).toFixed(1)) + 's</b>' + (bh.di === rv ? ' · <span class="warn">rival</span>' : '') : '<span class="dim">Last place</span>') + '</div></div>';
 }
 function stripHTML(R) {
   return '<div class="lapno">LAP ' + Math.max(1, Math.min(R.lap, R.L)) + '<span class="dim" style="font-size:15px;font-style:normal"> / ' + R.L + '</span></div><div class="row" style="gap:6px">' + (R.sc ? '<span class="badge sc">' + (R.sc === 'SC' ? 'Safety car' : 'VSC') + '</span>' : '') + '<span class="badge ' + (R.wet > 0.12 ? 'wet' : '') + '">' + wetLabel(R.wet) + '</span>' + (R.p.pen ? '<span class="badge sc">+' + R.p.pen + 's</span>' : '') + '</div>';
@@ -468,12 +497,17 @@ A['tw2'] = function (d) { UI.tw = d.v; render(); };
 A['tw-full'] = function () { UI.twFull = !UI.twFull; render(); };
 A['r-pitm'] = function () { UI.pitOpen = !UI.pitOpen; paintPanels(true); };
 A['r-go'] = function () { RUN.pause = false; resume(); };
-A['r-pause'] = function () { RUN.pause = true; RUN.fast = false; paintPanels(true); };
-A['r-spd'] = function (d) { RUN.spd = +d.v; UI.spd2 = RUN.spd; RUN.fast = false; paintPanels(true); };
-A['r-fast'] = function () { RUN.fast = !RUN.fast; paintPanels(true); };
-A['r-ff'] = function () { RUN.auto = true; RUN.fast = true; RUN.pause = false; resume(); };
-A['r-push'] = function (d) { var p = RUN.R.p, v = +d.v; if (v < 0) { if (p.bot) p.bot.push = null; } else { p.bot = p.bot || {}; p.bot.push = v; p.push = v; } paintPanels(true); };
-A['r-atk'] = function () { var p = RUN.R.p; if (p.en < 0.2 || p.atkCd > 0 || p.atk > 0 || RUN.R.sc) return; p.atk = P2.atk.dur * p.pA; p.atkCd = P2.atk.cd * p.pA; p.en -= P2.atk.en; cap('Boost!', 'pass'); paintPanels(true); };
+A['r-pause'] = function () { RUN.pause = true; RUN.fast = false; RUN.highlights = false; paintPanels(true); };
+A['r-spd'] = function (d) { RUN.spd = +d.v; UI.spd2 = RUN.spd; RUN.fast = false; RUN.highlights = false; paintPanels(true); };
+A['r-fast'] = function () { RUN.fast = !RUN.fast || RUN.highlights; RUN.highlights = false; if (RUN.fast) cap(''); paintPanels(true); };
+A['r-ff'] = function () { RUN.auto = true; RUN.fast = true; RUN.highlights = false; RUN.pause = false; cap(''); resume(); };
+A['r-control'] = function (d) {
+  if (['push', 'fuelMode', 'energyMode'].indexOf(d.k) < 0) return;
+  stopRace(); paintPanels(true);
+  showModal('<div id="resource-control"><h3>Race control</h3>' + raceControlsHTML(RUN.R, 'r', d.k) + '<p class="dim">Race paused. Choose a setting for Manual control, or Auto for your engineer.</p><button class="btn wide" data-act="mclose">Close</button></div>');
+};
+A['r-mode'] = function (d) { var R = RUN.R; if (setRaceMode(R, R.p, d.k, +d.v)) { if (document.getElementById('resource-control')) closeModal(); paintPanels(true); } };
+A['r-atk'] = function () { var R = RUN.R; if (!activateBoost(R, R.p)) return; cap('Boost!', 'pass'); paintPanels(true); };
 A['r-pit'] = function (d) { var R = RUN.R, p = R.p; if (p.fin || p.dnf) return; UI.pitOpen = false; RUN.wait = true; p.pitReq = d.v; p.why = 'manual'; pitResolve(d.v); };
 A['r-pitx'] = function () { var p = RUN.R.p; p.pitReq = null; p.pitOk = false; p.noPitUntil = p.lap + 1; p.crewT = null; paintPanels(true); };
 
@@ -485,14 +519,14 @@ function finishRun(R) {
   var fl = null; R.cars.forEach(function (f) { if (!f.dnf && f.best < 900 && (!fl || f.best < fl.best)) fl = f; });
   R.fl = fl ? { di: fl.di, t: fl.best } : { di: -1, t: 0 };
   var P = R.p; radio(R, P.dnf ? 'Not our day.' : P.pos === 1 ? 'WE WON! Get in there!' : P.pos <= 3 ? 'Podium! P' + P.pos + '. Brilliant!' : 'Finished P' + P.pos + '. ' + (P.pos < P.grid ? 'Gained ' + (P.grid - P.pos) + ' places.' : 'We learn and come back stronger.'), P.pos <= 3 && !P.dnf ? 'me' : 'e', 1);
-  paintPanels(true);
+  cap(''); paintPanels(true);
   if (UI.wk && !UI.wk.rep) commitRace(UI.wk);
 }
 function oldShape(R) {
   var w = R.cls[0], wt = w.tFin + (w.pen || 0);
   return {
-    ci: R.ci, c: R.c, fl: R.fl, overtakes: R.nClean, scCount: R.nSC,
-    cls: R.cls.map(function (f) { return { car: { d: f.d, di: f.di, isP: f.isP, grid: f.grid, dnf: f.dnf, fin: f.tFin, pen: f.pen || 0, comp: f.comp, stops: f.stops, t: f.t }, pos: f.pos, dnf: !!f.dnf, gap: f.dnf ? 0 : f.tFin + (f.pen || 0) - wt }; }),
+    ci: R.ci, c: R.c, wetRace: R.w && R.w.type !== 'kering', fl: R.fl, overtakes: R.nClean, scCount: R.nSC,
+    cls: R.cls.map(function (f) { return { car: { d: f.d, di: f.di, isP: f.isP, grid: f.grid, dnf: f.dnf, evalOrder: !!f.evalOrder, evalOrderCredit: f.evalOrderCredit || 0, evalSpins: f.evalSpins || 0, fin: f.tFin, pen: f.pen || 0, comp: f.comp, stops: f.stops, t: f.t }, pos: f.pos, dnf: !!f.dnf, gap: f.dnf ? 0 : f.tFin + (f.pen || 0) - wt }; }),
     log: R.radio
   };
 }
@@ -501,7 +535,10 @@ function commitRace(wk) {
   if (wk.rep) return;
   var avg = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : 0.5; };
   var bonus = wk.mg.q * 2 + wk.mg.s * 2 + avg(wk.mg.pn) * 2 + avg(wk.mg.bq) * 2;
-  wk.old = oldShape(wk.R); wk.jr = judgeRace(wk, wk.R); wk.rep = finishRace(S, wk.old, bonus); S.xp += wk.jr.xp; save();
+  if (S.mode === 'pro') bonus = proManualBonus(wk.mg);
+  wk.old = oldShape(wk.R); wk.jr = judgeRace(wk, wk.R);
+  if (wk.press === undefined) wk.press = typeof pressMake === 'function' ? pressMake(S, wk.old.cls.filter(function (x) { return x.car.isP; })[0], wk.R.ci) : null;
+  wk.rep = finishRace(S, wk.old, bonus); S.xp += wk.jr.xp; save();
 }
 A['r-done'] = function () {
   var wk = UI.wk; if (wk.step === 'result') return; stopRace();
@@ -513,7 +550,7 @@ function vResult() {
   if (!P.dnf && P.pos === 1) note = 'Win!'; else if (!P.dnf && P.pos <= 3) note = 'Podium! ' + note;
   h += '<div class="stack">' + (typeof fnlPostHTML === 'function' ? fnlPostHTML(P) : '') + '<div class="card stack"><h3>Results · ' + c.name + '</h3><div class="row sp"><div class="lapno" style="font-size:68px">' + (P.dnf ? 'DNF' : 'P' + P.pos) + '</div><div class="mono dim" style="text-align:right">Start P' + P.car.grid + '<br><b style="color:var(--fg)">' + P.pts + ' pts</b><br><span class="good">XP +' + rep.xp + '</span></div></div><p>' + note + '</p>';
   if (rep.rd && rep.rd.length) h += '<p class="dim">Team upgrades: ' + rep.rd.join(', ') + '</p>';
-  h += '</div><div class="card"><div class="row sp" style="margin-bottom:8px"><h3>Classification</h3><button class="btn sm" data-act="cls-all">' + (UI.clsAll ? 'Top 10' : 'Full result') + '</button></div><div class="scroll"><table class="t"><thead><tr><th>#</th><th>Driver</th><th>Tyre · stops</th><th class="r">Time / gap</th><th class="r">Pts</th></tr></thead><tbody>';
+  h += '</div>' + evaluationCardHTML(false) + '<div class="card"><div class="row sp" style="margin-bottom:8px"><h3>Classification</h3><button class="btn sm" data-act="cls-all">' + (UI.clsAll ? 'Top 10' : 'Full result') + '</button></div><div class="scroll"><table class="t"><thead><tr><th>#</th><th>Driver</th><th>Tyre · stops</th><th class="r">Time / gap</th><th class="r">Pts</th></tr></thead><tbody>';
   R.cls.forEach(function (x) {
     var d = x.car.d; if (!UI.clsAll && x.pos > 10 && !x.car.isP) return;
     var tm = x.dnf ? '<span class="bad">DNF</span>' : x.pos === 1 ? fmtT(x.car.fin + x.car.pen) : '+' + x.gap.toFixed(1);
@@ -524,14 +561,18 @@ function vResult() {
   if (wk.press === undefined) wk.press = typeof pressMake === 'function' ? pressMake(S, P, R.ci) : null;
   if (wk.press) h += pressHTML(wk.press);
   var hb = P.dnf ? HEAD.dnf : P.pos === 1 ? HEAD.win : P.pos <= 3 ? HEAD.pod : P.pos <= 10 ? HEAD.pts : P.pos <= 15 ? HEAD.mid : HEAD.back;
-  var rvd = S.rival ? S.drivers[S.rival.di] : null, rvf = rvd ? R.cls.filter(function (x) { return x.car.di === rvd.id; })[0] : null, hd = pick(hb);
-  if (rvf && rnd() < 0.5 && !P.dnf) hd = pick(P.pos < rvf.pos ? HEAD2.rivalW : HEAD2.rivalL);
+  var rvd = S.rival ? S.drivers[S.rival.di] : null, rvf = rvd ? R.cls.filter(function (x) { return x.car.di === rvd.id; })[0] : null, hd = wk.headline;
+  if (!hd) {
+    hd = pick(hb);
+    if (rvf && rnd() < 0.5 && !P.dnf) hd = pick(P.pos < rvf.pos ? HEAD2.rivalW : HEAD2.rivalL);
+    wk.headline = hd;
+  }
   h += '<div class="card nw"><div class="nw-bar"><span class="nw-brand">PADDOCK<b>WIRE</b></span><span class="nw-live"><i></i>JUST IN</span></div><div class="nw-top" style="--tc:' + myTeam().color + '"><div class="nw-tx"><span class="nw-k k-race">' + esc(c.name.toUpperCase()) + '</span><h4>' + esc(fmtR(hd, { n: me().name.split(' ')[0], r: rvd ? rvd.name.split(' ').slice(-1)[0] : '' })) + '</h4><small>S' + S.season + ' · Round ' + S.round + '</small></div><div class="nw-img">' + helmetSVG(me(), 64, false) + '</div></div></div>';
   var hl = (R.log || []).filter(function (l) { return l.imp; });
   if (hl.length) { h += '<div class="card"><h3 style="margin-bottom:8px">Key moments</h3><div class="radio" style="max-height:none">'; hl.slice(0, 16).forEach(function (l) { h += '<div><span class="l">L' + l.lap + '</span><span class="' + l.k + '">' + esc(l.t.replace(/^Engineer:\s*/, '')) + '</span></div>'; }); h += '</div></div>'; }
-  return h + '<button class="btn pri wide" data-act="r-next">' + (S.round >= 10 && !S.sit ? 'Season review' : 'Continue') + '</button></div>';
+  return h + '<button class="btn pri wide" data-act="r-next">' + (S.round >= seasonRounds(S) && !S.sit ? 'Season review' : 'Continue') + '</button></div>';
 }
-A['r-next'] = function () { RUN = null; UI.wk = null; UI.screen = 'hub'; UI.tab = 'musim'; save(); render(); };
+A['r-next'] = function () { RUN = null; UI.wk = null; UI.screen = 'hub'; UI.tab = 'utama'; save(); render(); };
 
 /* ---------- mini game Fasa 6: restart, kereta lambat, grip hujan ---------- */
 function restartGame(R, p) {
@@ -601,7 +642,7 @@ function wetGo(R, p) {
   function fin(q) {
     done = true; cancelAnimationFrame(raf); UI.mkeyDown = null; UI.mkeyUp = null; UI.wk.mg.bq.push(q);
     var spin = q < 0.3;
-    if (spin) { p.hold += 2.5; radio(R, 'Rear end let go. Little spin, but we kissed nothing.', 'x', 1); }
+    if (spin) { p.evalSpins = (p.evalSpins || 0) + 1; p.hold += 2.5; radio(R, 'Rear end let go. Little spin, but we kissed nothing.', 'x', 1); }
     else if (q > 0.75) { p.s += 0.3 / p.pA; radio(R, 'Throttle like silk. You\'re flying in the rain!', 'me'); }
     showModal('<h2 class="' + (spin ? 'bad' : q > 0.75 ? 'pur' : 'good') + '">' + (spin ? 'Lost the rear!' : q > 0.75 ? 'Smooth as silk' : 'Safe') + '</h2>');
     setTimeout(function () { closeModal(); RUN.wait = false; resume(); }, 650);
@@ -661,6 +702,7 @@ function gapTrend(R, f, g, ps) {
 }
 function trainInfo(R, p, a, b) {
   var el = document.getElementById('tinfo'); if (!el) return;
+  if (R.done || p.fin || p.dnf) { el.innerHTML = ''; return; }
   if (UI.tinfoT && performance.now() - UI.tinfoT < 400) return; UI.tinfoT = performance.now();
   var ps = p.s;
   function cell(o, ahead) {

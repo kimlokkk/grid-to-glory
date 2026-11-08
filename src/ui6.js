@@ -44,7 +44,7 @@ function circuitSVG(ci, w, col) {
 }
 function spark(arr, w, h) {
   if (arr.length < 2) return '<svg width="' + w + '" height="' + h + '"></svg>';
-  var mx = 20, pts = arr.map(function (v, i) { return [(i / (arr.length - 1)) * (w - 8) + 4, 4 + (v - 1) / (mx - 1) * (h - 8)]; });
+  var mx = Math.max(20, S && S.drivers ? S.drivers.length : 20), pts = arr.map(function (v, i) { return [(i / (arr.length - 1)) * (w - 8) + 4, 4 + (v - 1) / (mx - 1) * (h - 8)]; });
   return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><polyline points="' + pts.map(function (p) { return p.join(','); }).join(' ') + '" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linejoin="round"/>' +
     pts.map(function (p, i) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + (i === pts.length - 1 ? 4 : 2.5) + '" fill="' + (i === pts.length - 1 ? 'var(--acc)' : 'var(--panel)') + '" stroke="var(--acc)" stroke-width="2"/>'; }).join('') + '</svg>';
 }
@@ -59,16 +59,16 @@ var ICO = {
   saya: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>'
 };
 function ico(k) { return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>'; }
-var NAV = [['musim', 'Home'], ['news', 'News'], ['kal', 'Races'], ['kej', 'Standings'], ['kereta', 'Team'], ['saya', 'Me']];
+ICO.utama = ICO.musim; ICO.musim = ICO.kal; ICO.aku = ICO.saya; ICO.team = ICO.kereta; ICO.kerjaya = ICO.kej;
+var NAV = [['utama', 'Home'], ['musim', 'Season'], ['aku', 'Driver'], ['team', 'Team'], ['kerjaya', 'Career']];
 
 function vHub() {
-  if (UI.tab === 'pemandu' || UI.tab === 'kerjaya') UI.tab = 'saya';
-  if (!NAV.some(function (x) { return x[0] === UI.tab; })) UI.tab = 'musim';
+  selectHubTab(UI.tab);
   if (typeof ensureDev === 'function') ensureDev(S);
   var nav = NAV.map(function (x) { return '<button class="' + (UI.tab === x[0] ? 'on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + ico(x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
-  var body = ({ musim: hUtama, news: hNews, kal: hKalX, kej: hKed, kereta: hPasukan, saya: hSaya })[UI.tab]();
+  var body = ({ utama: function () { return S.sit ? vSit(true) : hUtama(); }, musim: hMusim, aku: hAku, team: hTeam, kerjaya: hKerjaya })[UI.tab]();
   return '<div class="hub6"><aside class="snav"><div class="brand">Grid to <b>Glory</b></div><nav>' + nav + '</nav><button class="btn sm" data-act="menu">Main menu</button></aside>' +
-    '<main class="hmain"><div class="top htop"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>' + (S.jr && S.jr.on ? 'Junior Series · ' : '') + 'Season ' + S.season + ' · Round ' + Math.min(S.round + 1, 10) + '/10</span><button class="btn sm" data-act="menu">Menu</button></div></div>' + body + '</main>' +
+    '<main class="hmain"><div class="top htop"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>' + hubSeasonHTML() + '</span><button class="btn sm hub-settings" data-act="hub-settings" aria-label="Settings" title="Settings">⚙</button><button class="btn sm" data-act="menu">Menu</button></div></div>' + body + '</main>' +
     '<nav class="bnav">' + nav + '</nav></div>';
 }
 
@@ -80,11 +80,11 @@ function drvCard() {
 function hUtama() {
   var p = me(), t = myTeam(), h = '<div class="grid6' + (S.rival && S.rival.season === S.season ? ' hr' : '') + '">';
   h += '<div class="g-a">' + drvCard() + '</div>';
-  if (S.round < 10) {
-    var ci = S.cal[S.round], c = CIRCUITS[ci];
-    h += '<div class="g-b card nextc stack"><div class="row sp" style="flex-wrap:nowrap;align-items:flex-start"><div class="stack" style="gap:6px;min-width:0"><div class="row" style="gap:8px">' + flagSVG(ci, 30) + '<h3>Round ' + (S.round + 1) + ' / 10 · next up</h3></div><h2 style="font-size:28px">' + c.name + '</h2><p class="dim">' + c.loc + '</p></div><div class="cirwrap">' + circuitSVG(ci, 120) + '</div></div>' +
+  if (S.round < seasonRounds(S)) {
+    var ci = S.cal[S.round], c = circuitFor(S, ci);
+    h += '<div class="g-b card nextc stack"><div class="row sp" style="flex-wrap:nowrap;align-items:flex-start"><div class="stack" style="gap:6px;min-width:0"><div class="row" style="gap:8px">' + flagSVG(ci, 30) + '<h3>Round ' + (S.round + 1) + ' / ' + seasonRounds(S) + ' · next up</h3></div><h2 style="font-size:28px">' + c.name + '</h2><p class="dim">' + c.loc + '</p></div><div class="cirwrap">' + circuitSVG(ci, 120) + '</div></div>' +
       '<div class="row">' + circuitChips(c) + '</div><button class="btn pri wide" data-act="wk-start">Start race weekend →</button></div>';
-  } else h += '<div class="g-b card nextc stack"><h3>Season ' + S.season + '</h3><h2>Season over</h2><p class="dim">All 10 rounds complete.</p><button class="btn pri wide" data-act="season-end">Season results →</button></div>';
+  } else h += '<div class="g-b card nextc stack"><h3>Season ' + S.season + '</h3><h2>Season over</h2><p class="dim">All ' + seasonRounds(S) + ' rounds complete.</p><button class="btn pri wide" data-act="season-end">Season results →</button></div>';
   /* jubin */
   var res = S.results.map(function (r) { return r.dnf ? 20 : r.pos; }), ds = driverStandings(S), pos = ds.indexOf(p) + 1, ts = teamStandings(S), tpos = ts.indexOf(t) + 1;
   h += '<div class="g-c card"><h3>Season standing</h3><div class="row sp" style="flex-wrap:nowrap"><div><div class="bignum">P' + pos + '</div><p class="dim">' + p.pts + ' pts' + (p.wins ? ' · ' + p.wins + ' wins' : '') + '</p></div>' + spark(res.length ? res : [20], 120, 56) + '</div></div>';
@@ -96,16 +96,16 @@ function hUtama() {
     var rv = S.drivers[S.rival.di];
     h += '<div class="g-f card"><h3>Season rival</h3><div class="vs6">' + avatarSVG(p, 48) + '<div class="sc6"><b>' + S.rival.w + ' – ' + S.rival.l + '</b><small>H2H</small></div>' + avatarSVG(rv, 48) + '</div><p class="dim" style="text-align:center">' + esc(p.name.split(' ')[0]) + ' vs ' + esc(rv.name) + ' (' + S.teams[rv.team].short + ')</p></div>';
   }
-  h += '<div class="g-gs stack">' + (typeof xpNudgeHTML === 'function' ? xpNudgeHTML('') : '') + (typeof sponBannerHTML === 'function' ? sponBannerHTML('') : '') + (typeof mktCard === 'function' ? mktCard('') : '') + newsCard('', 4) + '</div>';
+  h += '<div class="g-gs stack">' + (typeof xpNudgeHTML === 'function' ? xpNudgeHTML('') : '') + (typeof sponBannerHTML === 'function' ? sponBannerHTML('') : '') + careerNudgeHTML() + newsCard('', 4) + '</div>';
   /* kalendar mini */
-  var up = ''; for (var i = S.round; i < Math.min(10, S.round + 3); i++) { var cc = CIRCUITS[S.cal[i]]; up += '<div class="krow">' + flagSVG(S.cal[i], 24) + '<span class="mono dim">R' + (i + 1) + '</span><span>' + cc.name + '</span><span class="dim">' + laps2(cc) + ' laps</span></div>'; }
+  var up = ''; for (var i = S.round; i < Math.min(seasonRounds(S), S.round + 3); i++) { var cc = circuitFor(S, S.cal[i]); up += '<div class="krow">' + flagSVG(S.cal[i], 24) + '<span class="mono dim">R' + (i + 1) + '</span><span>' + cc.name + '</span><span class="dim">' + laps2(cc) + ' laps</span></div>'; }
   if (up) h += '<div class="g-h card"><div class="row sp"><h3>Coming up</h3><button class="btn sm" data-act="tab" data-v="kal">Calendar →</button></div>' + up + '</div>';
   return h + '</div>';
 }
 function hKal() {
-  var h = '<div class="card"><div class="row sp" style="margin-bottom:6px"><h3>Season calendar ' + S.season + '</h3><span class="dim">' + S.round + ' / 10 done</span></div><div class="krows">';
-  for (var i = 0; i < 10; i++) {
-    var ci = S.cal[i], c = CIRCUITS[ci], r = S.results[i], cur = i === S.round;
+  var h = '<div class="card"><div class="row sp" style="margin-bottom:6px"><h3>Season calendar ' + S.season + '</h3><span class="dim">' + S.round + ' / ' + seasonRounds(S) + ' done</span></div><div class="krows">';
+  for (var i = 0; i < seasonRounds(S); i++) {
+    var ci = S.cal[i], c = circuitFor(S, ci), r = S.results[i], cur = i === S.round;
     var res = r ? (r.dnf ? '<span class="pill6 bad">DNF</span>' : '<span class="pill6 ' + (r.pos <= 3 ? 'pod' : r.pos <= 10 ? 'pts' : '') + '">P' + r.pos + '</span>') + (r.pts ? ' <span class="dim mono">' + r.pts + ' pts</span>' : '') : cur ? '<span class="pill6 now">Next</span>' : '<span class="dim">–</span>';
     h += '<div class="krow big clk' + (cur ? ' cur' : '') + '" data-act="th" data-v="' + ci + '"><span class="mono dim">R' + (i + 1) + '</span>' + flagSVG(ci, 30) + '<div style="min-width:0"><b>' + c.name + '</b><small class="dim">' + c.loc + ' · ' + laps2(c) + ' laps · rain ' + Math.round(c.rain * 100) + '%</small></div><div class="r6">' + res + '</div></div>';
   }
@@ -144,4 +144,4 @@ function hPasukan() {
   var h = '<div class="card nextc carhero"><div class="chr"><div class="chl"><h3>Your team</h3><h2 style="font-size:26px">' + t.name + '</h2><p class="dim">' + mates.map(function (d) { return esc(d.name); }).join(' · ') + '</p>' + (TEAMS[t.id] && TEAMS[t.id].base && t.name === TEAMS[t.id].name ? '<p class="dim" style="font-size:12.5px;margin-top:2px">' + TEAMS[t.id].base + ' · Est. ' + TEAMS[t.id].founded + ' · ' + TEAMS[t.id].titles + ' titles · ' + TEAMS[t.id].engine + '</p>' : '') + '<button class="btn sm tpbtn" data-act="tprof" data-v="' + t.id + '">Team profile →</button><div class="chm">' + mates.map(function (d) { return '<button class="hbtn" data-act="prof" data-v="d:' + d.id + '">' + helmetSVG(d, 40, false) + '</button>'; }).join('') + '</div></div><div class="carbig">' + carSVG(t, 132, true) + '</div></div></div>';
   return h + tKereta();
 }
-function hSaya() { return '<div class="stack">' + drvCard() + (typeof tmCardHTML === 'function' ? tmCardHTML() : '') + (typeof sponCardHTML === 'function' ? sponCardHTML() : '') + tPemandu() + tKerjaya() + '</div>'; }
+function hSaya() { return hAku(); }

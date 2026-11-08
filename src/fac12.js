@@ -60,6 +60,7 @@ function facLoan(S, t, f, sh) {
 }
 /* ujian pemandu muda di hujung musim; pulang baris untuk team pemain */
 function testRun(S) {
+  if (S.mode === 'pro' && leagueOf(S) !== 'f1') return [];
   facInit(S);
   var out = [], mine = S.drivers[S.pi] ? S.drivers[S.pi].team : -1;
   S.teams.forEach(function (t) {
@@ -80,7 +81,7 @@ function testRun(S) {
 /* XP kecil setiap race kalau kemudahan team pemain maju (simulator) */
 function facRace(S) {
   var p = S.drivers[S.pi], t = p && S.teams[p.team]; if (!t || !t.fac) return;
-  if (t.fac.lvl >= 3.5) S.xp += 1;
+  if (t.fac.lvl >= 3.5) S.xp += S.mode === 'pro' ? progressionXP(S, 'facilities', PROGRESSION.bonuses.facilities / seasonRounds(S)) : 1;
 }
 /* ---- paparan ---- */
 function facSectionHTML(t, mineView) {
@@ -97,7 +98,7 @@ function facCardHTML(t) {
   var f = t.fac, used = S.facLobby === S.season, pct = Math.round((f.lvl - 1) / 4 * 100);
   var h = '<div class="card stack faccard"><div class="row sp"><h3>Facilities</h3><span class="mono dim">' + facName(t) + ' · R&amp;D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%</span></div>' +
     '<div class="fame"><i style="width:' + pct + '%"></i></div>' +
-    '<p class="dim" style="font-size:12.5px;margin:0">Wind tunnel, simulator and factory. They grow with the team\'s income and make every upgrade package a bit better.' + (f.lvl >= 3.5 ? ' Your team\'s simulator earns you +1 XP every race.' : '') + '</p>' +
+    '<p class="dim" style="font-size:12.5px;margin:0">Wind tunnel, simulator and factory. They grow with the team\'s income and make every upgrade package a bit better.' + (f.lvl >= 3.5 ? (S.mode === 'pro' ? ' Your team\'s simulator earns up to 6 XP per season.' : ' Your team\'s simulator earns you +1 XP every race.') : '') + '</p>' +
     '<p class="dim" style="font-size:12.5px;margin:0">Engine: <b>' + esc(engLabel(S, t)) + '</b>.' + (t.fin.loan > 0.5 ? ' Team loan: $' + Math.round(t.fin.loan) + 'M.' : '') + '</p>';
   h += used ? '<button class="btn sm" disabled>You already pushed the board this season</button>' : '<button class="btn sm" data-act="fac-lobby">Push the board for investment</button><p class="dim" style="font-size:12px;margin:0">Costs some goodwill with the team. Facilities get a nudge up next winter.</p>';
   return h + '</div>';

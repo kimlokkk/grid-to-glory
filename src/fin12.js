@@ -15,6 +15,7 @@ function finEff(f) { return f <= FIN.cap ? f : FIN.cap + 0.2 * (f - FIN.cap); }
 function finAcad(S, t) { var n = 0; (S.juniors || []).forEach(function (j) { if (j.acad === t.id) n++; }); return n * FIN.acad; }
 function finPayroll(S, t) { var p = typeof teamPayroll === 'function' ? teamPayroll(S, t) : { dr: 0, st: 0 }; return p.dr + p.st; }
 function finInit(S) {
+  if (S.mode === 'pro' && S.teams[0].spec && !(S.world && S.world.legacyJunior)) { worldJuniorFinanceInit(S); return; }
   S.teams.forEach(function (t) {
     if (t.fin) return;
     var rk = teamRank(S, t.id), pz = FIN.prize[rk - 1], sp = finSponBase(t), pay = finPayroll(S, t);

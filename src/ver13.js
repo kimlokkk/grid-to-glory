@@ -1,5 +1,5 @@
 /* ===== v1.0: nombor versi, changelog, versi dalam save ===== */
-var APEX = { ver: '1.0.0', date: '2 Nov 2026', save: 1 };
+var APEX = { ver: '1.0.0', date: '2 Nov 2026', save: 2 };
 var CHANGELOG = [
   { v: '1.0.0', d: 'Launch', l: [
     'Full career mode: create a driver, race 10 rounds a season, grow your skills with XP and chase the title.',
@@ -13,8 +13,9 @@ var CHANGELOG = [
 ];
 /* nombor versi save: tambah langkah migrasi di sini bila format berubah */
 function verMigrate(o) {
-  var from = o.saveVer || 0;
-  /* save sebelum 1.0 tiada saveVer; semua medan baru sudah diisi oleh init masing-masing */
+  if (o.saveVer > APEX.save) throw new Error('This save requires a newer game build');
+  foundationInit(o);
+  if (o.meta.rng != null) seedRnd(o.meta.rng);
   o.saveVer = APEX.save; o.appVer = APEX.ver;
   return o;
 }

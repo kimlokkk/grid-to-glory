@@ -248,7 +248,7 @@ textarea { width: 100%; min-height: 90px; background: var(--panel2); color: var(
 /* ---------- hab v6 ---------- */
 .hub6 { display: block; }
 .snav { display: none; }
-.bnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(6, 1fr); background: var(--panel); box-shadow: 0 -4px 18px #1b234014, 0 -1px 0 var(--line); padding: 4px max(6px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px)); }
+.bnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--panel); box-shadow: 0 -4px 18px #1b234014, 0 -1px 0 var(--line); padding: 4px max(6px, env(safe-area-inset-right, 0px)) max(6px, env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px)); }
 .bnav button, .snav nav button { border: 0; background: none; color: var(--dim); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; font: 600 10.5px var(--disp); letter-spacing: .04em; text-transform: uppercase; cursor: pointer; border-radius: 12px; }
 .bnav button.on { color: var(--accDeep); }
 .bnav button.on svg { background: var(--accSoft); border-radius: 10px; padding: 2px 10px; box-sizing: content-box; }
@@ -884,3 +884,90 @@ tr.clk { cursor: pointer; } tr.clk:hover td { background: var(--accSoft); }
 .pick:has(> .offer) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px; }
 .pick > .offer { min-width: 0; }
 .of-car svg { max-width: 120px; height: auto; }
+
+/* Independent race controls share the existing segmented-button pattern. */
+.race-control { margin: 3px 0; }
+.race-control > .row { font-size: 12px; margin-bottom: 3px; }
+.race-control small { color: var(--dim); font-size: 11px; }
+.control-advice { font-size: 11px; line-height: 1.3; color: var(--a2); margin: 0; }
+.dock { max-height: 65dvh; overflow-y: auto; }
+.dock .race-control { margin: 0; }
+.dock .race-control .seg button { min-height: 30px; padding: 4px 0; }
+
+.race-summary { display: none; }
+@media (max-width: 899px) and (max-height: 700px) {
+  .dock .race-controls { display: none; }
+  .dock .race-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+  .race-summary button { min-width: 0; min-height: 56px; padding: 5px 2px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); color: var(--fg); cursor: pointer; }
+  .race-summary b, .race-summary span, .race-summary small { display: block; }
+  .race-summary b { font-size: 11px; }
+  .race-summary span { font-size: 9px; margin-top: 3px; }
+  .race-summary small { font-size: 9px; color: var(--dim); margin-top: 2px; }
+  .rfull { gap: 6px; }
+}
+
+/* Five-menu shell: sections wrap on short/narrow phones. */
+.hub-sections { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.hub-sections .btn { min-height: 40px; }
+.bnav button { min-height: 48px; }
+.hub-settings { min-width: 36px; }
+#career-settings { scroll-margin-top: 12px; }
+@media (max-width: 420px) {
+  .htop .meta { gap: 6px; min-width: 0; }
+  .htop .meta > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .htop .brand { font-size: 18px; }
+}
+
+.hub-season-short { display: none; }
+@media (max-width: 420px) { .hub-season-long { display: none; } .hub-season-short { display: inline; } }
+@media (max-width: 699px) { .grid6 > .g-b { order: -1; } }
+@media (max-width: 360px) {
+  .htop .brand { display: none; }
+  .htop .meta { flex: 1; justify-content: space-between; }
+  .htop .meta > span { flex: 1; text-align: left; }
+}
+
+/* Phase 11: readable help, circuit guides and compact phone entry screens. */
+.circuit-brief { margin-bottom: 16px; }
+.circuit-brief > div:first-child { background: var(--panel2); border-radius: 12px; text-align: center; padding: 8px; }
+.circuit-brief svg { width: 100%; max-width: 320px; height: 170px; }
+.mbox details, .scout-entry { border-top: 1px solid var(--line); padding: 10px 0; }
+summary { cursor: pointer; overflow-wrap: anywhere; }
+.mbox summary, .scout-entry summary { font-weight: 600; min-height: 40px; padding: 7px 0; }
+.mbox details p, .scout-entry p { margin-top: 9px; }
+.scout-entry summary span { display: block; font-size: 12px; font-weight: 400; color: var(--dim); }
+#app, .hmain, .mbox, .stack, .w8-team { overflow-wrap: anywhere; }
+.scroll { max-width: 100%; overscroll-behavior: contain; }
+.scroll:focus-visible { outline-offset: -2px; }
+.mbox input[type="text"], #successor-name { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--line2); border-radius: 9px; padding: 10px; font: inherit; }
+@media (max-width: 600px) {
+ .w8-nav { position: static; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+ .w8-team:not(.on) p:not(:first-of-type), .w8-team:not(.on) .chips { display: none; }
+ .w8-team { width: 100%; text-align: left; }
+ .w8-team h3 { line-height: 1.35; }
+ .w8-team > p:first-of-type { font-size: 12px; }
+ .hmain .btn.sm, .mbox .btn.sm { min-height: 40px; }
+ .mbox { max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; }
+ .mbox h2 { font-size: 21px; }
+ .mbox .row > .btn { flex: 1 1 auto; }
+ .ctlrow { gap: 5px; flex-wrap: wrap; }
+ .ctlrow .btn { padding-left: 8px; padding-right: 8px; min-height: 30px; }
+ .hub-sections .btn { flex: 1 0 auto; }
+ .grid3 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+ .ceremony .cm-conf i, .t8-bg i { animation: none !important; }
+ .btn, .card, .w8-team { transition: none !important; }
+}
+
+/* Keep the battle view useful on short phones; full radio remains in its tab. */
+@media (max-width: 899px) and (max-height: 600px) {
+ .rfull { gap: 6px; }
+ .rfull .dock { gap: 5px; padding: 7px; }
+ .race-summary button { min-height: 44px; padding: 6px 3px; }
+ .dock .acts .btn { min-height: 38px; padding: 6px 8px; }
+ .lastr5 { max-height: 38px; overflow: hidden; }
+ .rtabs button { padding: 6px 0; }
+ .rpos .bigp { font-size: 30px; }
+ .rpos .gp { font-size: 11px; line-height: 1.2; }
+}

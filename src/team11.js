@@ -3,6 +3,7 @@ function teamMeta(t) { var m = TEAMS[t.id]; return m && m.name === t.name ? m : 
 function tpStyle(a) { return a >= 2 ? 'Bold' : a <= 0 ? 'Cautious' : 'Balanced'; }
 function pct100(v, lo, hi) { return Math.round(clamp((v - lo) / (hi - lo) * 100, 0, 100)); }
 function teamProfileHTML(id) {
+  if (S.mode === 'pro' && S.teams[id] && S.teams[id].spec) return worldJuniorTeamHTML(S.teams[id]) + '<button class="btn wide" data-act="mclose">Close</button>';
   var t = S.teams[id]; if (!t) return '';
   if (typeof ensureDev === 'function') ensureDev(S);
   var m = teamMeta(t) || {}, ts = teamStandings(S), pos = ts.indexOf(t) + 1, rk = teamRank(S, t.id), dv = t.dev || {};

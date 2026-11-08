@@ -1,0 +1,65 @@
+/* Phase 7 only: roster/identity, actual background racing, migration and population boundaries. */
+const {chromium}=require('playwright');const {assert}=require('./flow');const {pathToFileURL}=require('node:url');const path=require('node:path'),fs=require('node:fs');
+(async()=>{const browser=await chromium.launch(),errors=[];try{
+ const page=await browser.newPage({viewport:{width:320,height:568}});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.text().startsWith('WORLD CHECK'))console.log(m.text());});await page.clock.install();await page.goto(pathToFileURL(path.resolve(__dirname,'../index.html')).href);
+ const dir=path.resolve(__dirname,'../../outputs/baseline/saves'),fixtures=fs.readdirSync(dir).filter(f=>f.endsWith('.json')&&f!=='manifest.json').map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),'utf8')));
+ const legacyPro=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../outputs/phase4/pro-f1-start.json'),'utf8'));
+ const rows=await page.evaluate(({fixtures,legacyPro})=>{
+  const rows=[],check=(name,pass,data)=>{rows.push({name,pass:!!pass,data});console.log('WORLD CHECK '+(pass?'PASS ':'FAIL ')+name+(pass?'':JSON.stringify(data)));};
+  const facts=g=>JSON.stringify([g.season,g.round,g.cal,g.xp,g.career,g.results,g.hist,g.drivers.map(d=>[d.name,d.age,d.team,d.num,...PROGRESSION.stats.map(k=>d[k])])]);
+  const fresh=(league='f1')=>{seedRnd(707007);S=newProCareer('World Test','pace',7,league);return S;};
+  check('10 Classic fixtures retain current roster/progress and existing world rules',fixtures.every(g=>{const before=facts(g);migrate(g);return !g.world&&before===facts(g);}));
+  fresh();check('F1 stays unchanged; each world league has ten teams/league-specific driver counts',worldValidate(S)&&S.teams.map(t=>t.name).join('|')===TEAMS.map(t=>t.name).join('|'));
+  check('both junior leagues use the ten locked organizations and countries', ['f2','f3'].every(l=>worldView(S,l).teams.map(t=>t.name+'|'+t.nat).join(';')===JUNIOR_ORGS.map(o=>o[1]+'|'+o[3]).join(';')));
+  check('spec car performance is equal within each junior league despite different team setup', ['f2','f3'].every(l=>{const ts=worldView(S,l).teams,c=circuitFor(S,0);return new Set(ts.map(t=>JSON.stringify(t.car))).size===1&&new Set(ts.map(t=>carPerf3(t,c,true).r)).size===1&&new Set(ts.map(worldSetup)).size>1;})&&worldView(S,'f2').teams[0].car.engine>worldView(S,'f3').teams[0].car.engine);
+  const snapshot=JSON.stringify(S.world),ids=worldPeople(S).map(d=>d.uid).sort().join('|');save();S=migrate(JSON.parse(JSON.stringify(S)));
+  check('save/reload preserves seeded worlds/UIDs without reseeding',snapshot===JSON.stringify(S.world)&&ids===worldPeople(S).map(d=>d.uid).sort().join('|')&&worldValidate(S));
+  const oldJ=legacyPro.juniors.map(d=>d.uid),old=facts(legacyPro);seedRnd(11);const migrated=migrate(JSON.parse(JSON.stringify(legacyPro)));seedRnd(99);const migrated2=migrate(JSON.parse(JSON.stringify(legacyPro)));
+  check('old Pro keeps active roster/stats/results and moves old junior identities into F2',old===facts(migrated)&&oldJ.every(id=>worldView(migrated,'f2').drivers.some(d=>d.uid===id))&&worldValidate(migrated));
+  check('old-Pro world migration is deterministic from the saved RNG',JSON.stringify(migrated.world)===JSON.stringify(migrated2.world));
+  const weights=Object.fromEntries(WORLD_NATIONS);check('all original nationalities remain possible; rare nations have smaller positive weights',NATW.every(x=>weights[x[0]]>0)&&weights.MY<weights.GB&&weights.LK<weights.IT&&WORLD_NATIONS.every(x=>NAMEGEN[x[0]]||WORLD_NAMES[x[0]]));
+  fresh();const samples={};for(let i=0;i<1500;i++){const n=worldPickNation();samples[n]=(samples[n]||0)+1;}check('weighted generation favours common countries while retaining rare countries',samples.GB>samples.MY&&samples.FR>samples.LK&&samples.MY>0&&samples.LK>0,samples);
+  const held=S.drivers.find(d=>d.uid!==S.playerUid);held.age=25;held.con={len:3,end:S.season+2,pay:2,wb:.2};const heldUid=held.uid,heldContract=JSON.stringify(held.con);
+  S.round=22;endSeason(S);const originalPlayer=me().uid,oldAge=me().age;worldPrepareAnnual(S);const f2=worldView(S,'f2'),f3=worldView(S,'f3'),f3champ=f3.championUid;
+  check('background F2/F3 run real eight-race seasons and retain league history',f2.drivers.every(d=>d.worldHistory.some(r=>r.league==='f2'&&r.starts===8))&&f3.drivers.every(d=>d.worldHistory.some(r=>r.league==='f3'&&r.starts===8))&&f2.drivers.some(d=>d.pts>0));
+  const prepared=JSON.stringify(S.world);worldPrepareAnnual(S);check('background year is simulated once, including repeat review requests',prepared===JSON.stringify(S.world));
+  startNewSeason(S,null,null);check('annual rollover keeps three legal rosters and ages player once',worldValidate(S)&&me().uid===originalPlayer&&me().age===oldAge+1&&S.season===2);
+  check('unexpired F1 driver contract terms survive annual roster assignment',JSON.stringify(S.drivers.find(d=>d.uid===heldUid).con)===heldContract);
+  check('F3 champion moves to F2 with the same UID and real F3 history',worldView(S,'f2').drivers.some(d=>d.uid===f3champ&&d.worldHistory.some(r=>r.league==='f3'&&r.pos===1)));
+  const after=JSON.stringify(S);check('duplicate next-season action cannot age/transfer world twice',startNewSeason(S,null,null)===false&&JSON.stringify(S)===after);
+  // Structural long-run stress reuses finished-season fixtures; it does not claim physics simulation for every year.
+  let sane=true,graduates=0,rookies=0;const initial=new Set(['f1','f2','f3'].flatMap(l=>worldView(S,l).drivers.map(d=>d.uid)));
+  for(let y=0;y<12;y++){
+   S.round=22;const active=worldView(S,'f1');active.drivers.forEach((d,i)=>{d.pts=20-i;d.wins=0;});endSeason(S);
+   ['f3','f2','f1'].forEach(l=>{const v=worldView(S,l);v.drivers.forEach((d,i)=>{d.pts=20-i;d.wins=i===0?1:0;});worldRecord(S,l,v,false);});S.world.prepared=S.season;
+   if(y===0)S.drivers.forEach(d=>{if(d.uid!==S.playerUid)d.age=44;});
+   startNewSeason(S,null,null);sane=sane&&worldValidate(S);worldView(S,'f1').drivers.forEach(d=>{if(!initial.has(d.uid)&&(d.worldHistory||[]).some(r=>r.league==='f2'))graduates++;});
+  }
+  ['f3','f2','f1'].forEach(l=>worldView(S,l).drivers.forEach(d=>{if(d.originLeague==='f3')rookies++;}));
+  check('12 structural years survive mass F1 retirement with legal populations and preserved archives',sane&&S.retired.length>10&&graduates>0&&rookies>0,{retired:S.retired.length,graduates,rookies});
+  check('all post-seed F1 rookies retain prior F2 racing history; regen never spawns directly in F1',worldView(S,'f1').drivers.filter(d=>d.uid!==S.playerUid&&d.originLeague==='f3').every(d=>d.worldHistory.some(r=>r.league==='f3')&&d.worldHistory.some(r=>r.league==='f2')));
+  const oldEra=S.world.era.number;S.world.era.next=S.season+2;S.world.era.announced=null;worldEra(S,S.season+1);const notice=S.news[0],preparedTeams=S.teams.every(t=>['engine','aero','chassis'].includes(t.eraTarget));const beforeEra=JSON.stringify(S.world.era.profile);worldEra(S,S.season+2);
+  check('era is announced a full season before applying equal rules to all F1 teams',preparedTeams&&notice.k==='world'&&S.world.era.number===oldEra+1&&beforeEra!==JSON.stringify(S.world.era.profile)&&S.teams.every(t=>JSON.stringify(t.eraProfile)===JSON.stringify(S.world.era.profile)));
+  check('dynamic profiles are general and retirement records preserve identity/history',S.retired.every(d=>d.uid&&d.name&&Array.isArray(d.worldHistory))&&worldDriverBio(me()).includes('driver'));
+  fresh();S.round=22;endSeason(S);const reserveUid=me().uid;startNewSeason(S,7,1,null,{sit:true});
+  check('reserve entry keeps one human identity and a legal stand-in/F2 replacement chain',S.bench.uid===reserveUid&&S.drivers[S.pi].stand&&worldValidate(S));
+  S.round=22;endSeason(S);['f3','f2','f1'].forEach(l=>worldRecord(S,l,worldView(S,l),false));S.world.prepared=S.season;startNewSeason(S,7,1);
+  check('reserve return preserves human identity and does not duplicate stand-in seats',me().uid===reserveUid&&!S.bench&&worldValidate(S));
+  fresh('f2');check('internal active F2 uses spec GTG teams, with a separate unchanged F1 world',worldValidate(S)&&S.teams[0].name==='Bellori Racing'&&worldView(S,'f1').teams[0].name===TEAMS[0].name);
+  const setupA=JSON.parse(JSON.stringify(S)),setupB=JSON.parse(JSON.stringify(S));setupA.xp=setupB.xp=0;setupA.teams[7].ops.setup=.1;setupB.teams[7].ops.setup=.9;seedRnd(707008);const qa=qkInit(setupA,0,0);seedRnd(707008);const qb=qkInit(setupB,0,0);setupA.teams[7].ops.crew=.1;setupB.teams[7].ops.crew=.9;seedRnd(707009);const ca=crewTime({t:setupA.teams[7]});seedRnd(707009);const cb=crewTime({t:setupB.teams[7]});setupA.teams[7].ops.coaching=.1;setupB.teams[7].ops.coaching=.9;
+  check('junior setup/crew/coaching affect real systems without unequal car specification',qa.base[setupA.pi].t>qb.base[setupB.pi].t&&ca>cb&&trainingQuality(setupB.drivers[setupB.pi],setupB)>trainingQuality(setupA.drivers[setupA.pi],setupA)&&JSON.stringify(setupA.teams[7].car)===JSON.stringify(setupB.teams[7].car));
+  S.round=8;endSeason(S);const uid=me().uid;S.market8.license.earned=true;S.market8.license.points=40;worldPromotePlayer(S,7,2,1);
+  check('player F2-to-F1 promotion reuses the world and preserves UID/history/mastery',leagueOf(S)==='f1'&&S.cal.length===22&&me().uid===uid&&worldValidate(S)&&me().worldHistory.some(r=>r.league==='f2'));
+  const oldJunior=JSON.parse(JSON.stringify(legacyPro));oldJunior.league='f2';oldJunior.cal=seasonCalendar(oldJunior);oldJunior.round=0;const oldJuniorFacts=facts(oldJunior);S=migrate(oldJunior);const oldJuniorUid=me().uid;const preservedJunior=oldJuniorFacts===facts(S)&&S.world.legacyJunior;
+  S.round=8;endSeason(S);['f1','f2','f3'].forEach(l=>worldRecord(S,l,worldView(S,l),false));S.world.prepared=S.season;startNewSeason(S,null,1);
+  check('legacy Pro junior keeps current facts, then adopts GTG spec teams at annual boundary',preservedJunior&&me().uid===oldJuniorUid&&S.teams[0].name==='Bellori Racing'&&S.teams.every(t=>t.spec==='f2')&&worldValidate(S));
+  fresh('f3');check('internal F3 starts at 16 with its own legal spec grid and F2/F1 worlds',me().age===16&&worldValidate(S)&&S.teams.every(t=>t.spec==='f3'));
+  const original=JSON.parse(JSON.stringify(S)),f3uids=S.drivers.map(d=>d.uid);const weekend=simulateWeekend(S);check('F3 qualifying and actual race include all 30 distinct cars',weekend.race.cars.length===30&&weekend.race.cls.length===30&&new Set(weekend.race.cars.map(f=>f.di)).size===30&&S.rr[0].c.length===30&&worldValidate(S));
+  const oldGrid=JSON.parse(JSON.stringify(original));const counts={};oldGrid.drivers=oldGrid.drivers.filter(d=>{const max=d.team===oldGrid.drivers[oldGrid.pi].team?1:2;if(d.uid===oldGrid.playerUid)return true;counts[d.team]=(counts[d.team]||0)+1;return counts[d.team]<=max;});oldGrid.drivers.forEach((d,i)=>d.id=i);oldGrid.pi=oldGrid.drivers.findIndex(d=>d.uid===oldGrid.playerUid);delete oldGrid.world.seatVersion;oldGrid.round=1;oldGrid.results=[{round:0,pos:12,pts:0}];const beforeOld=JSON.stringify(oldGrid.results),oldUids=oldGrid.drivers.map(d=>d.uid);S=migrate(oldGrid);const heldGrid=S.drivers.length===20&&S.world.pendingF3Seats&&beforeOld===JSON.stringify(S.results)&&worldValidate(S);S.round=8;endSeason(S);['f1','f2','f3'].forEach(l=>worldRecord(S,l,worldView(S,l),false));S.world.prepared=S.season;startNewSeason(S,null,1);check('mid-season legacy F3 keeps 20 seats until winter then expands once without losing human identity',heldGrid&&S.drivers.length===30&&!S.world.pendingF3Seats&&me().uid===oldGrid.playerUid&&worldValidate(S));const upgraded=JSON.stringify(S),upgradedWorld=JSON.stringify(S.world),upgradedFacts=facts(S);S=migrate(JSON.parse(upgraded));check('upgraded F3 reload preserves roster, world and progress',JSON.stringify(S.world)===upgradedWorld&&facts(S)===upgradedFacts&&worldValidate(S));
+  fresh('f3');S.round=8;S.drivers[0].pts=100;endSeason(S);worldRecord(S,'f3',worldView(S,'f3'),false);const activeChampion=S.world.champions.f3;['f1','f2'].forEach(l=>worldRecord(S,l,worldView(S,l),false));S.world.prepared=S.season;startNewSeason(S,null,1);
+  check('active F3 AI champion also progresses to F2 while human stays protected',worldView(S,'f2').drivers.some(d=>d.uid===activeChampion)&&me().age===17&&worldValidate(S));
+  S.settings.style='expert';S.settings.tips=false;UI.screen='hub';UI.tab='musim';UI.musimView='world';render();closeModal();
+  check('320px World screen exposes all three rosters in English without page overflow',document.body.textContent.includes('F1 · 20 drivers')&&document.body.textContent.includes('F2 · 20 drivers')&&document.body.textContent.includes('F3 · 30 drivers')&&document.documentElement.scrollWidth<=320);
+  return rows;
+ },{fixtures,legacyPro});rows.forEach(r=>console.log(r.pass?'PASS':'FAIL',r.name,!r.pass&&r.data?JSON.stringify(r.data):''));console.log('ERRS',JSON.stringify(errors));assert.equal(errors.length,0);assert.equal(rows.filter(r=>!r.pass).length,0);
+ }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

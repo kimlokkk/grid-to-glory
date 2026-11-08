@@ -61,7 +61,7 @@ function hHist() {
   else {
     h += '<div class="scroll"><table class="t"><thead><tr><th>Season</th><th>Team</th><th class="r">Pos</th><th class="r">Pts</th><th class="r">Wins</th><th>Champion</th></tr></thead><tbody>' + S.hist.slice().reverse().map(function (r) {
       var has = (S.rr || []).some(function (e) { return e.s === r.season; });
-      return '<tr class="' + (has ? 'clk' : '') + '"' + (has ? ' data-act="hs-open" data-v="' + r.season + '"' : '') + '><td class="mono">S' + r.season + '</td><td><span class="tag" style="--tc:' + r.tcol + '">' + r.team + '</span></td><td class="r mono">P' + r.pos + '</td><td class="r mono">' + r.pts + '</td><td class="r mono">' + (r.wins || 0) + '</td><td class="dim">' + esc(r.champ) + (r.champTeam ? '<br><small>' + esc(r.champTeam) + '</small>' : '') + '</td></tr>';
+      return '<tr class="' + (has ? 'clk' : '') + '"' + (has ? ' data-act="hs-open" data-v="' + r.season + '"' : '') + '><td class="mono">S' + r.season + '</td><td><span class="tag" style="--tc:' + r.tcol + '">' + r.team + '</span></td><td class="r mono">' + (r.inactive ? 'Inactive' : 'P' + r.pos) + '</td><td class="r mono">' + r.pts + '</td><td class="r mono">' + (r.wins || 0) + '</td><td class="dim">' + esc(r.inactive ? 'No races' : r.champ || '') + (r.champTeam ? '<br><small>' + esc(r.champTeam) + '</small>' : '') + '</td></tr>';
     }).join('') + '</tbody></table></div><p class="dim" style="font-size:12.5px;margin:8px 0 0">Tap a season with full results to see its final standings.</p>';
   }
   return h + '</div>';
@@ -115,7 +115,7 @@ A['nw-open'] = function (d) {
   if (n.k === 'race') {
     var e = (S.rr || []).filter(function (x) { return x.s === n.s && x.r === n.r - 1; })[0], ix = (S.rr || []).indexOf(e);
     if (e) {
-      extra = '<div class="nwpod">' + e.c.slice(0, 3).map(function (r, i) { return '<div><span class="mono dim">P' + (i + 1) + '</span> ' + rrTag(r[1]) + ' <b>' + esc(r[0]) + '</b></div>'; }).join('') + '</div>';
+      extra = '<div class="nwpod">' + e.c.filter(function (r) { return r[2] > 0; }).slice(0, 3).map(function (r, i) { return '<div><span class="mono dim">P' + (i + 1) + '</span> ' + rrTag(r[1]) + ' <b>' + esc(r[0]) + '</b></div>'; }).join('') + '</div>';
       btns += '<button class="btn" data-act="rr-open" data-v="' + ix + '">Full results</button>';
     }
   }

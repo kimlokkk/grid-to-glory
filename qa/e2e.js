@@ -1,5 +1,6 @@
 /* Regresi hujung ke hujung: main musim penuh melalui UI sebenar dengan jam dipercepat. Guna: node e2e.js [bilangan musim] */
 const { chromium } = require('playwright');
+const { assert, chooseStyle, seasonIntro, signOffer, clickUI } = require('./flow');
 (async () => {
   const seasons = Number(process.argv[2] || 1), W = Number(process.argv[3] || 390);
   const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: W, height: 844 } });
@@ -8,9 +9,9 @@ const { chromium } = require('playwright');
   await pg.clock.install();
   await pg.goto(require('url').pathToFileURL(require('path').resolve(__dirname, '../index.html')).href); await pg.clock.runFor(500);
   const has = async s => !!(await pg.$(s));
-  const click = async s => { const el = await pg.$(s); if (!el) return false; try { await el.click({ timeout: 1500 }); return true; } catch (e) { return false; } };
+  const click = s => clickUI(pg, s, true);
   const tick = async ms => { await pg.clock.runFor(ms); };
-  await click('[data-act=new]'); await tick(300); await pg.evaluate("A['new-go']()"); await tick(300);
+  await click('[data-act=new]'); await tick(300); await pg.evaluate("A['new-go']()"); await tick(300); await chooseStyle(pg, true);
   await pg.evaluate("S.settings.mini=false; S.settings.ask=false; save()");
   const log = [];
   for (let s = 0; s < seasons; s++) {
@@ -42,13 +43,17 @@ const { chromium } = require('playwright');
       if (s === 0 && r === 9) await pg.screenshot({ path: 'e2e_finalpost.png', fullPage: true });
       await click('[data-act=r-next]'); await tick(300);
     }
+    assert.equal(await pg.evaluate('S.round'), 10, 'all races completed');
+    assert.equal(await pg.evaluate('S.results.length'), 10);
     log.push('after last race: screen=' + await pg.evaluate('UI.screen'));
     if (await has('[data-act=rev-done]')) { if (s === 0) await pg.screenshot({ path: 'e2e_review.png', fullPage: true }); await click('[data-act=rev-done]'); await tick(300); }
-    else { if (!(await has('[data-act=season-end]'))) { await pg.evaluate("UI.tab='musim'; render()"); await tick(200); } await click('[data-act=season-end]'); await tick(300); if (await has('[data-act=rev-done]')) { await click('[data-act=rev-done]'); await tick(300); } }
+    else { if (!(await has('[data-act=season-end]'))) { await pg.evaluate("UI.tab='utama'; render()"); await tick(200); } await click('[data-act=season-end]'); await tick(300); if (await has('[data-act=rev-done]')) { await click('[data-act=rev-done]'); await tick(300); } }
     log.push('S' + s + ' end: screen=' + await pg.evaluate('UI.screen') + ' offers=' + await pg.evaluate('S.offers?S.offers.length:0'));
     if (s === 0) await pg.screenshot({ path: 'e2e_season.png', fullPage: true });
-    if (await has('[data-act=sign]')) await click('[data-act=sign]'); else await click('[data-act=next-season]');
+    if (await has('[data-act=sign-pre]')) await signOffer(pg, false, true);
+    else { await pg.click('[data-act=next-season]'); await seasonIntro(pg, true); }
     await tick(400);
+    assert.equal(await pg.evaluate('S.season'), s + 2, 'next season reached');
     log.push('-> S' + await pg.evaluate('S.season') + ' screen=' + await pg.evaluate('UI.screen'));
     for (const t of ['saya', 'kereta', 'kej', 'kal', 'musim']) { await pg.evaluate("UI.screen='hub'; UI.tab='" + t + "'; render()"); await tick(100); }
   }

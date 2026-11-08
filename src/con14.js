@@ -19,6 +19,10 @@ function offerCardHTML(o) {
     '<button class="btn pri wide" data-act="sign-pre" ' + offerAttrs(o) + '>Review contract</button></div>';
 }
 A['sign-pre'] = function (d) {
+  if (S.mode === 'pro') {
+    if (careerRetirementDue(S)) return;
+    d.y = Math.min(+d.y, careerNextYears(S)); if (+d.y >= careerNextYears(S)) d.o = 0;
+  }
   var t = +d.f1 === 1 ? f1Team(+d.t) : S.teams[+d.t], p = me(), yrs = +d.y, pay = +d.p, wb = +d.w, sit = +d.sit === 1, ren = +d.r === 1, today = 'Season ' + (S.season + 1);
   var attrs = 'data-t="' + d.t + '" data-y="' + d.y + '" data-p="' + d.p + '" data-w="' + d.w + '" data-o="' + d.o + '" data-b="' + d.b + '" data-sit="' + d.sit + '" data-r="' + d.r + '" data-f1="' + (d.f1 || 0) + '"';
   showModal('<div class="contract" style="--tc:' + t.color + '"><div class="ct-top"><span>' + esc(t.name).toUpperCase() + '</span><small>DRIVER CONTRACT</small></div>' +
@@ -42,7 +46,8 @@ function ceremonyModal(t, name, mv, ren, yrs, pay, season) {
 var sign0 = A['sign'];
 A['sign'] = function (d) {
   var t = S.teams[+d.t], sit = +d.sit === 1, ren = +d.r === 1, prev = me().team, name = me().name, yrs = +d.y, pay = +d.p;
-  sign0(d);
+  if (sit) closeModal();
+  if (sign0(d) === false) return false;
   try { if (!sit) ceremonyModal(t, name, !ren && +d.t !== prev, ren, yrs, pay, S.season); } catch (e) { }
 };
 A['cm-ok'] = function () { closeModal(); render(); };
@@ -53,14 +58,14 @@ A['cm-ok'] = function () { closeModal(); render(); };
   preHTML = function (pr) {
     var Q = PRE[pr.kind], h = '<div class="pcf"><div class="pcf-bar"><span class="pcf-live"><i></i>LIVE</span><b>Pre-season press conference</b><small>Season ' + pr.s + '</small></div><div class="pcf-q"><span class="pcf-mic">🎙</span><p>' + Q.q(pr.ctx) + '</p></div>';
     if (pr.done == null) h += '<div class="pcf-o">' + Q.o.map(function (o, i) { return '<button class="pcf-b ' + o.hint.toLowerCase() + '" data-act="pre-a" data-i="' + i + '"><span class="pcf-t">' + o.hint + '</span><span class="pcf-x">' + o.t + '</span></button>'; }).join('') + '</div>';
-    else { var c = Q.o[pr.done]; h += '<div class="pcf-a"><span class="pcf-t ' + c.hint.toLowerCase() + '">' + c.hint + '</span><q>' + c.t.replace(/[“”]/g, '') + '</q><p>' + c.r + '</p><div class="chips">' + [['Morale', c.mor], ['Fame', c.fame], ['Team', c.rel]].map(function (x) { return '<span class="' + (x[1] > 0 ? 'up' : x[1] < 0 ? 'dn' : '') + '">' + x[0] + ' ' + (x[1] > 0 ? '+' : '') + x[1] + '</span>'; }).join('') + '</div></div><button class="btn pri wide" data-act="pre-ok">On to the season</button>'; }
+    else { var c = Q.o[pr.done]; h += '<div class="pcf-a"><span class="pcf-t ' + c.hint.toLowerCase() + '">' + c.hint + '</span><q>' + c.t.replace(/[“”]/g, '') + '</q><p>' + c.r + '</p><div class="chips">' + pressChanges(pr, c).map(function (x) { return '<span class="' + (x[1] > 0 ? 'up' : x[1] < 0 ? 'dn' : '') + '">' + x[0] + ' ' + (x[1] > 0 ? '+' : '') + x[1] + '</span>'; }).join('') + '</div></div><button class="btn pri wide" data-act="pre-ok">On to the season</button>'; }
     return h + '</div>';
   };
   pressHTML = function (pr) {
     if (!pr) return '';
     var Q = PRESS[pr.kind], h = '<div class="card pcf"><div class="pcf-bar"><span class="pcf-live"><i></i>LIVE</span><b>Press conference</b><small>' + (pr.home ? 'Home race · double fame' : 'Post-race') + '</small></div><div class="pcf-q"><span class="pcf-mic">🎙</span><p>' + Q.q + '</p></div>';
     if (pr.done == null) h += '<div class="pcf-o">' + Q.o.map(function (o, i) { return '<button class="pcf-b ' + o.hint.toLowerCase() + '" data-act="press" data-i="' + i + '"><span class="pcf-t">' + o.hint + '</span><span class="pcf-x">' + o.t + '</span></button>'; }).join('') + '</div>';
-    else { var c = Q.o[pr.done], m = pr.home ? 2 : 1; h += '<div class="pcf-a"><span class="pcf-t ' + c.hint.toLowerCase() + '">' + c.hint + '</span><q>' + c.t.replace(/[“”]/g, '') + '</q><p>' + c.r + '</p><div class="chips">' + [['Morale', c.mor], ['Fame', c.fame * m], ['Team', c.rel]].map(function (x) { return '<span class="' + (x[1] > 0 ? 'up' : x[1] < 0 ? 'dn' : '') + '">' + x[0] + ' ' + (x[1] > 0 ? '+' : '') + x[1] + '</span>'; }).join('') + '</div></div>'; }
+    else { var c = Q.o[pr.done]; h += '<div class="pcf-a"><span class="pcf-t ' + c.hint.toLowerCase() + '">' + c.hint + '</span><q>' + c.t.replace(/[“”]/g, '') + '</q><p>' + c.r + '</p><div class="chips">' + pressChanges(pr, c).map(function (x) { return '<span class="' + (x[1] > 0 ? 'up' : x[1] < 0 ? 'dn' : '') + '">' + x[0] + ' ' + (x[1] > 0 ? '+' : '') + x[1] + '</span>'; }).join('') + '</div></div>'; }
     return h + '</div>';
   };
 })();

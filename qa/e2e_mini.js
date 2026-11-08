@@ -45,7 +45,7 @@ const { chromium } = require('playwright');
     }
     log.push('after last race: screen=' + await pg.evaluate('UI.screen'));
     if (await has('[data-act=rev-done]')) { if (s === 0) await pg.screenshot({ path: 'e2e_review.png', fullPage: true }); await click('[data-act=rev-done]'); await tick(300); }
-    else { if (!(await has('[data-act=season-end]'))) { await pg.evaluate("UI.tab='musim'; render()"); await tick(200); } await click('[data-act=season-end]'); await tick(300); if (await has('[data-act=rev-done]')) { await click('[data-act=rev-done]'); await tick(300); } }
+    else { if (!(await has('[data-act=season-end]'))) { await pg.evaluate("UI.tab='utama'; render()"); await tick(200); } await click('[data-act=season-end]'); await tick(300); if (await has('[data-act=rev-done]')) { await click('[data-act=rev-done]'); await tick(300); } }
     log.push('S' + s + ' end: screen=' + await pg.evaluate('UI.screen') + ' offers=' + await pg.evaluate('S.offers?S.offers.length:0'));
     if (s === 0) await pg.screenshot({ path: 'e2e_season.png', fullPage: true });
     if (await has('[data-act=sign]')) await click('[data-act=sign]'); else await click('[data-act=next-season]');

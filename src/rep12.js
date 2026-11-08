@@ -9,7 +9,7 @@ function repStain(S) { var r = repInit(S); return r.fires.filter(function (f) { 
 function repEval(S) {
   var r = repInit(S), p = S.drivers[S.pi];
   Object.keys(r.rel).forEach(function (k) { r.rel[k] *= REP.decay; if (Math.abs(r.rel[k]) < 0.4) delete r.rel[k]; });
-  if (p.obj && p.obj.res) {
+  if (p.obj && p.obj.res && p.obj.res !== 'protected') {
     var d = p.obj.res === 'met' ? 2 : -1;
     if (p.obj.pos === 1) d += 3;
     r.rel[p.team] = clamp((r.rel[p.team] || 0) + d, -10, 10);

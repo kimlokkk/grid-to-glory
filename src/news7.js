@@ -1,10 +1,18 @@
-/* ===== Paddock Wire: berita gaya siaran sukan. S.news = senarai objek, ditulis masa dipapar ===== */
+/* ===== Paddock Wire: archived stories keep the facts captured when the event happened. ===== */
 var PARTN = { aero: 'aero', engine: 'engine', chassis: 'chassis', rel: 'reliability' };
 function pushNews(S, o) {
   S.news = (S.news || []).filter(function (n) { return typeof n === 'object'; });
   if (o.s == null) o.s = S.season;
   if (o.r == null) o.r = S.round + 1;
   o.id = (S.newsId = (S.newsId || 0) + 1);
+  if (!o.eventId) {
+    var facts = {}; Object.keys(o).forEach(function (key) { if (key !== 'story') facts[key] = o[key]; });
+    o.eventId = recordEvent(S, 'news.' + o.k, JSON.parse(JSON.stringify(facts))).id;
+  }
+  if (!o.story) {
+    var story = newsStory(o, S), team = story.team;
+    o.story = { kick: story.kick, kc: story.kc, col: story.col, head: story.head, sub: story.sub, ci: story.ci, team: team ? { id: team.id, name: team.name, short: team.short, color: team.color, liv: team.liv ? JSON.parse(JSON.stringify(team.liv)) : null } : null };
+  }
   S.news.unshift(o); S.news = S.news.slice(0, 300);
 }
 function newsList(S) {
@@ -12,16 +20,32 @@ function newsList(S) {
   return (S.news || []).filter(function (n) { return n && typeof n === 'object'; });
 }
 function nPick(o, arr) { return arr[(o.id || 0) % arr.length]; }
-function newsStory(n) {
-  var T = function (i) { return S.teams[i] || { name: '?', short: '?', color: '#888' }; }, t = n.t != null ? T(n.t) : null, part = PARTN[n.p] || 'car';
-  var surname = function (di) { var d = S.drivers[di]; return d ? d.name.split(' ').slice(-1)[0] : '?'; };
+function newsStory(n, game) {
+  if (n.story && typeof n.story.head === 'string') return n.story;
+  game = game || S;
+  var T = function (i) { return game.teams[i] || { name: '?', short: '?', color: '#888' }; }, t = n.t != null ? T(n.t) : null, part = PARTN[n.p] || 'car';
+  var surname = function (di) { var d = game.drivers[di]; return d ? d.name.split(' ').slice(-1)[0] : '?'; };
   switch (n.k) {
+    case 'world': return { kick: 'WORLD', kc: 'sc', col: '#8b5cf6', head: n.head, sub: n.sub };
     case 'race': {
-      var w = n.w || [], wd = S.drivers[w[0]], wt = wd ? T(wd.team) : null, me5 = S.drivers[S.pi], ds = driverStandings(S), lead = ds[0], gap = ds[1] ? lead.pts - ds[1].pts : 0;
-      var you = n.me ? (n.me === w.indexOf(S.pi) + 1 && n.me <= 3 ? '' : ' ' + surname(S.pi) + ' finished P' + n.me + '.') : ' ' + surname(S.pi) + ' failed to finish.';
+      var record = (game.rr || []).filter(function (x) { return x.s === n.s && x.r === n.r - 1; })[0];
+      if (!record && (n.s !== game.season || n.r < game.round)) return { kick: 'RACE REPORT', kc: 'k-race', col: '#888', team: null, head: n.c + ' race report', sub: 'The original driver identities are not available in this older save.' };
+      var finishers = record ? record.c.filter(function (r) { return r[2] > 0; }).sort(function (a, b) { return a[2] - b[2]; }) : null;
+      var w = n.w || [], names = finishers ? finishers.slice(0, 3).map(function (r) { return r[0].split(' ').slice(-1)[0]; }) : w.map(surname);
+      var wd = game.drivers[w[0]], wt = finishers && finishers[0] ? T(finishers[0][1]) : wd ? T(wd.team) : null;
+      var playerRow = record && record.c.filter(function (r) { return r[5]; })[0];
+      var player = (n.driver || (playerRow && playerRow[0]) || game.drivers[game.pi].name).split(' ').slice(-1)[0];
+      var you = n.reserve ? ' Stand-in ' + player + (n.me ? ' finished P' + n.me + '.' : ' failed to finish.') : n.me ? (n.me <= 3 ? '' : ' ' + player + ' finished P' + n.me + '.') : ' ' + player + ' failed to finish.';
+      var podium = names.length >= 3 ? names[1] + ' and ' + names[2] + ' complete the podium.' : names.length === 2 ? names[1] + ' finishes second.' : '';
+      var championship = '';
+      /* Old articles without a snapshot can recover race names, but must not invent historical standings. */
+      if (n.s === game.season && (n.r === game.round || n.r === game.round + 1)) {
+        var ds = driverStandings(game), lead = ds[0], gap = ds[1] ? lead.pts - ds[1].pts : 0;
+        if (lead && lead.pts > 0) championship = ' ' + surname(lead.id) + (n.r >= game.cal.length ? ' wins the championship.' : ' leads the championship' + (gap ? ' by ' + gap + ' pts.' : ' on countback.'));
+      }
       return { kick: 'RACE REPORT', kc: 'k-race', col: wt ? wt.color : '#888', team: wt,
-        head: wd ? nPick(n, [surname(w[0]) + ' storms to victory at ' + n.c, surname(w[0]) + ' wins ' + n.c, surname(w[0]) + ' takes the chequered flag at ' + n.c, 'Masterclass from ' + surname(w[0]) + ' at ' + n.c]) : n.c + ' result',
-        sub: (w[1] != null ? surname(w[1]) + ' and ' + surname(w[2]) + ' complete the podium.' : '') + you + (lead ? ' ' + surname(lead.id) + ' leads the championship' + (gap ? ' by ' + gap + ' pts.' : '.') : '') };
+        head: names.length ? nPick(n, [names[0] + ' storms to victory at ' + n.c, names[0] + ' wins ' + n.c, names[0] + ' takes the chequered flag at ' + n.c, 'Masterclass from ' + names[0] + ' at ' + n.c]) : n.c + ': no finishers',
+        sub: podium + you + championship };
     }
     case 'upg': return { kick: 'TECHNICAL', kc: 'k-tech', col: t.color, team: t,
       head: n.big ? nPick(n, [t.name + ' unveil a major ' + part + ' overhaul', 'The wait is over: ' + t.name + '’s big ' + part + ' upgrade arrives']) : nPick(n, [t.name + ' bring a new ' + part + ' upgrade', 'Step forward for ' + t.name, t.name + ' unleash new ' + part + ' package']),
@@ -58,7 +82,7 @@ function newsStory(n) {
       sub: 'The ' + n.a + '-year-old leaves ' + (t ? t.name : 'the grid') + ' after ' + (n.ti ? n.ti + ' world title' + (n.ti > 1 ? 's' : '') + ' and ' : '') + n.w + ' win' + (n.w === 1 ? '' : 's') + '. The paddock will miss him.' };
     case 'rookie': return { kick: 'CONFIRMED', kc: 'k-trf', col: t ? t.color : '#888', team: t,
       head: (t ? t.name : 'Team') + ' promote ' + n.n + ' to the grid',
-      sub: (typeof flagE === 'function' ? flagE(n.nat) + ' ' : '') + n.n + (n.jt ? ', the ' + JR_NAME + ' champion,' : n.ac ? ', a product of their own academy,' : ' from the ' + JR_NAME) + ' gets his big chance next season.' };
+      sub: (typeof flagE === 'function' ? flagE(n.nat) + ' ' : '') + n.n + (n.jt ? ', the ' + JR_NAME + ' champion,' : n.ac ? ', a product of their own academy,' : ' from the ' + JR_NAME) + ' gets his big chance in Season ' + n.s + '.' };
     case 'jchamp': return { kick: 'JUNIORS', kc: 'k-int', col: '#f0b429', team: null,
       head: n.n + ' crowned ' + JR_NAME + ' champion',
       sub: (typeof flagE === 'function' ? flagE(n.nat) + ' ' : '') + n.w + ' wins this season. Team bosses are already circling.' };
@@ -67,7 +91,7 @@ function newsStory(n) {
       head: nPick(n, [t.name + ' push back upgrade as budget runs dry', t.name + ' cash-strapped: new ' + part + ' parts delayed', 'Finance office says wait at ' + t.name]),
       sub: nPick(n, ['The parts are nearly ready, but the money is not. Expect a smaller package, later.', 'Spending on drivers and the factory has left little for development. Questions are being asked.', 'A lesson in budgeting: you can’t buy a quick car and a big payroll at the same time.']) };
     case 'budget': return { kick: 'BUDGET WATCH', kc: 'k-ana', col: t.color, team: t,
-      head: t.name + ' lead the money race with $' + n.a + 'M, ' + S.teams[n.z].short + ' squeezed on $' + n.b + 'M',
+      head: t.name + ' lead the money race with $' + n.a + 'M, ' + game.teams[n.z].short + ' squeezed on $' + n.b + 'M',
       sub: 'Development funds for Season ' + n.s + '. ' + (n.cap ? t.short + ' are up against the cost cap.' : 'Big gaps in the bank balance mean big gaps on the track.') };
     case 'cexp': { var sn = n.n.split(' ').slice(-1)[0]; return { kick: 'INTERVIEW', kc: 'k-int', col: t.color, team: t,
       head: nPick(n, ['“Contract talks can wait”, says ' + sn, sn + ': “Focused on the job, the future will sort itself out”', '“No rush on my future”: ' + sn + ' plays it cool']),
@@ -93,7 +117,7 @@ function newsStory(n) {
     case 'opn': return { kick: 'BREAKING', kc: 'k-brk', col: t.color, team: t,
       head: n.by === 'team' ? t.name + ' let ' + n.n + ' option lapse' : n.n + ' passes on option, will test the market',
       sub: n.by === 'team' ? 'The team chose not to keep him for an extra year. He will be on the market this winter.' : 'He believes there are better places to be. Expect offers from rivals.' };
-    case 'psign': return { kick: n.mv ? 'BREAKING' : 'CONFIRMED', kc: n.mv ? 'k-brk' : 'k-trf', col: t.color, team: t,
+    case 'psign': if (n.reserve) return { kick: 'CONFIRMED', kc: 'k-trf', col: t.color, team: t, head: n.n + ' signs as reserve driver for ' + t.name, sub: 'A ' + n.y + '-year test and reserve deal for Season ' + n.s + '. A stand-in takes the race seat while ' + n.n + ' trains with the team.' }; return { kick: n.mv ? 'BREAKING' : 'CONFIRMED', kc: n.mv ? 'k-brk' : 'k-trf', col: t.color, team: t,
       head: n.mv ? n.n + ' signs for ' + t.name : n.n + ' stays at ' + t.name,
       sub: n.mv ? 'The deal is done: ' + n.n + ' leaves ' + T(n.f).name + ' to join ' + t.name + ' on a ' + n.y + '-year contract. The paddock is talking.' : t.name + ' have tied down ' + n.n + ' with a new ' + n.y + '-year deal. Continuity for the new season.' };
     case 'cmove': return { kick: 'TRANSFER', kc: 'k-trf', col: t.color, team: t,
@@ -112,7 +136,7 @@ function newsStory(n) {
       head: n.n + ' joins ' + t.name + ' as ' + (n.z === 'td' ? 'technical director' : 'team principal'),
       sub: (n.f >= 0 ? 'He leaves ' + T(n.f).name + '. ' : 'A new face in the paddock. ') + (n.z === 'td' ? 'The factory is already talking about fresh ideas.' : 'The garage is already talking about a new direction.') };
     case 'eng': return { kick: 'TECHNICAL', kc: 'k-tech', col: t.color, team: t,
-      head: t.name + ' switch to ' + n.to + ' power', sub: 'The deal with ' + n.f + ' ends after this winter. ' + t.short + ' hope the new engine closes the gap.' };
+      head: t.name + ' switch to ' + n.to + ' power', sub: 'For Season ' + n.s + ', ' + n.to + ' replaces ' + n.f + '. ' + t.short + ' hope the new engine closes the gap.' };
     case 'fac': return { kick: 'TECHNICAL', kc: 'k-tech', col: t.color, team: t,
       head: n.up ? t.name + ' open upgraded factory facilities' : t.name + ' scale back factory spending',
       sub: n.up ? 'New simulator and wind-tunnel time lift the team to level ' + n.lv + ' of 5.' : 'Money is tight and the facilities slip to level ' + n.lv + ' of 5.' };
@@ -127,19 +151,19 @@ function newsStory(n) {
       head: 'Scouts tip ' + n.n + ' as the next big thing',
       sub: (typeof flagE === 'function' ? flagE(n.nat) + ' ' : '') + 'Rated ' + n.st + '/5 by the media, though not every team is convinced. Time will tell.' };
     case 'preview': {
-      var c = CIRCUITS[n.ci], L = laps2(c), rain = Math.round(c.rain * 100);
+      var c = circuitFor(game, n.ci), L = laps2(c), rain = Math.round(c.rain * 100);
       return { kick: 'PREVIEW', kc: 'k-race', col: '#e2342b', team: null, ci: n.ci,
         head: nPick(n, ['Next up: ' + c.name, 'All eyes on ' + c.name, c.name + ': what to expect']),
         sub: L + ' laps around ' + c.loc + '. ' + (rain >= 40 ? 'A ' + rain + '% chance of rain could throw strategy into chaos.' : rain >= 20 ? 'Rain risk sits at ' + rain + '%, so keep an eye on the radar.' : 'Dry weather expected.') + ' Overtaking is ' + (c.ot < 0.5 ? 'easy here, so expect action.' : c.ot < 0.7 ? 'possible with a good run.' : 'hard, so qualifying is everything.') };
     }
     case 'season': {
-      var fav = S.teams.filter(function (x) { return teamRank(S, x.id) === 1; })[0] || S.teams[0], sec = S.teams.filter(function (x) { return teamRank(S, x.id) === 2; })[0], mt = myTeam();
+      var fav = game.teams.filter(function (x) { return teamRank(game, x.id) === 1; })[0] || game.teams[0], sec = game.teams.filter(function (x) { return teamRank(game, x.id) === 2; })[0], mt = game.teams[game.drivers[game.pi].team];
       return { kick: 'SEASON PREVIEW', kc: 'k-int', col: fav.color, team: fav,
         head: nPick(n, [fav.name + ' start as title favourites', 'Season ' + n.s + ': can anyone stop ' + fav.name + '?']),
-        sub: 'Pre-season data puts ' + fav.short + ' ahead' + (sec ? ' of ' + sec.short : '') + '. ' + (mt === fav ? 'No pressure, then.' : 'Your team, ' + mt.name + ', starts with the #' + teamRank(S, mt.id) + ' car.') };
+        sub: 'Pre-season data puts ' + fav.short + ' ahead' + (sec ? ' of ' + sec.short : '') + '. ' + (mt === fav ? 'No pressure, then.' : 'Your team, ' + mt.name + ', starts with the #' + teamRank(game, mt.id) + ' car.') };
     }
     case 'standings': {
-      var ds = driverStandings(S), a = ds[0], b = ds[1], p = S.drivers[S.pi], pos = ds.indexOf(p) + 1, at = S.teams[a.team];
+      var ds = driverStandings(game), a = ds[0], b = ds[1], p = game.drivers[game.pi], pos = ds.indexOf(p) + 1, at = game.teams[a.team];
       return { kick: 'STANDINGS', kc: 'k-ana', col: at.color, team: at,
         head: a === p ? 'You lead the championship!' : a.name.split(' ').slice(-1)[0] + ' leads the championship',
         sub: (b ? (a.pts - b.pts) + ' pts clear of ' + b.name.split(' ').slice(-1)[0] + '. ' : '') + (a === p ? '' : 'You are P' + pos + ' on ' + p.pts + ' pts.') };
@@ -149,7 +173,7 @@ function newsStory(n) {
 }
 function newsAuto() {
   var out = [], ds = driverStandings(S), p = S.drivers[S.pi];
-  if (S.round < 10) { var ci = S.cal[S.round], c = CIRCUITS[ci]; out.push({ k: 'preview', ci: ci, s: S.season, r: S.round + 1, id: 900 + S.round }); }
+  if (S.round < S.cal.length) { var ci = S.cal[S.round], c = CIRCUITS[ci]; out.push({ k: 'preview', ci: ci, s: S.season, r: S.round + 1, id: 900 + S.round }); }
   if (ds[0] && ds[0].pts > 0) out.push({ k: 'standings', s: S.season, r: S.round, id: 950 + S.round });
   else out.push({ k: 'season', s: S.season, r: 0, id: 980 + S.season });
   return out;
