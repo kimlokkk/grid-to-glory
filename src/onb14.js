@@ -90,8 +90,8 @@ var TIPS = {
   'hub:news': ['Paddock Wire', 'All the news of the season: race reports, transfers, upgrades and rumours. Tap a story to read it in full and jump to the related driver, team or race results.'],
   'hub:kej': ['Standings', 'Points go to the top 10: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1. Tap any driver or team to see their profile.'],
   'hub:team': ['Your car', 'Aero = cornering grip, Engine = straight-line speed, Chassis = tyre care, Reliability = fewer breakdowns. Upgrades arrive during the season. Finance shows what your team can afford to develop.'],
-  'hub:aku': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Settings and save controls are here too.'],
-  'wk:quali': ['Qualifying', 'Qualifying decides your starting grid. A better grid makes the race easier. The mini-game rewards a clean, well-timed lap. If you prefer to skip it, turn Mini game off in Driver › Settings.'],
+  'hub:aku': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Find assistance and save controls on the Settings page.'],
+  'wk:quali': ['Qualifying', 'Qualifying decides your starting grid. A better grid makes the race easier. The mini-game rewards a clean, well-timed lap. If you prefer to skip it, turn Mini game off in Settings.'],
   'wk:strat': ['Strategy: tyres and pace', 'Soft = fast but wears quickly. Medium = balanced. Hard = slow but lasts. Most races need a pit stop, and your engineer recommends a plan you can follow or change. Tyres, Fuel and Energy have separate controls. Each can stay on Auto or follow your manual choice. Pushing costs resources; hot or worn tyres increase spin risk. Boost spends the same battery as Deploy.'],
   'wk:result': ['After the race', 'Points go to the standings and XP to your driver. The press conference answer changes morale, fame and your relationship with the team.']
 };
@@ -108,7 +108,7 @@ function onbTip() {
   host.insertAdjacentHTML('afterbegin', '<div class="card tipc" data-k="' + k + '"><div><small>Tip</small><b>' + T[0] + '</b><p>' + T[1] + '</p></div><div class="row"><button class="btn sm pri" data-act="tip-ok" data-k="' + k + '">Got it</button><button class="btn sm" data-act="glossary">Glossary</button><button class="btn sm" data-act="tip-off">Hide all tips</button></div></div>');
 }
 A['tip-ok'] = function (d) { S.tips = S.tips || {}; S.tips[d.k] = 1; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); };
-A['tip-off'] = function () { S.settings.tips = false; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); toast('Tips hidden. Turn them back on in Driver › Settings.'); };
+A['tip-off'] = function () { S.settings.tips = false; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); toast('Tips hidden. Turn them back on in Settings.'); };
 A['tips-toggle'] = function () { S.settings.tips = S.settings.tips === false; if (S.settings.tips) S.tips = {}; save(); render(); };
 
 /* ---------- 3. glosari ---------- */
@@ -129,7 +129,7 @@ A['glossary'] = function () {
 
 /* ---------- 4. pilihan gaya main (karier baru sahaja) ---------- */
 function onbStyleHTML() {
-  return '<div class="stack"><h2 style="margin:0">How do you want to play?</h2><p class="dim" style="margin:0">You can change this anytime in Driver › Settings.</p>' +
+  return '<div class="stack"><h2 style="margin:0">How do you want to play?</h2><p class="dim" style="margin:0">You can change this anytime in Settings.</p>' +
     '<button class="opt press-o" data-act="onb-style" data-v="guided"><div class="t"><b>Guided</b> (recommended)</div><div class="s">You make the calls, with tips, a glossary and an engineer who recommends. Mini-games on.</div></button>' +
     '<button class="opt press-o" data-act="onb-style" data-v="casual"><div class="t"><b>Casual</b></div><div class="s">Your engineer handles pit stops and strategy. No mini-games. Just watch the race and manage your career.</div></button>' +
     '<button class="opt press-o" data-act="onb-style" data-v="expert"><div class="t"><b>Expert</b></div><div class="s">All decisions and mini-games, no tips. For players who know F1.</div></button></div>';

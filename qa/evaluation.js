@@ -52,7 +52,7 @@ const path=require('node:path'),fs=require('node:fs');
    p=fresh();S.xp=0;const run=simulateWeekend(S);const real=p.evaluation.latest;save();const reloaded=migrate(JSON.parse(JSON.stringify(S)));
    check('actual race pipeline stores pre-race evidence before R&D and survives reload',real&&real.snapshot&&real.snapshot.key==='1:f1:0'&&S.round===1&&JSON.stringify(reloaded.drivers[S.pi].evaluation)===JSON.stringify(p.evaluation));
    S.settings.tips=false;UI.screen='hub';UI.tab='aku';render();closeModal();
-   check('320px English performance/tier panel is readable without width overflow',document.body.textContent.includes('Performance & tier')&&document.body.textContent.includes('Season STS')&&document.documentElement.scrollWidth<=320);
+   check('320px English performance/tier panel is readable without width overflow',document.body.textContent.includes('Performance & tier')&&document.body.textContent.includes('Season score')&&document.documentElement.scrollWidth<=320);
    return rows;
   },fixtures);
   rows.forEach(r=>console.log(r.pass?'PASS':'FAIL',r.name,!r.pass&&r.data?JSON.stringify(r.data):''));console.log('ERRS',JSON.stringify(errors));assert.equal(errors.length,0);assert.equal(rows.filter(r=>!r.pass).length,0);

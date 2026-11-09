@@ -1222,6 +1222,112 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
  .season-team-name { font-size: 12px; gap: 5px; }
  .season-team-name svg { width: 38px; }
 }
+/* Driver: short explanations, visible status, optional technical detail. */
+.driver-page { display: grid; grid-template-columns: minmax(0,1fr); grid-template-areas: "identity" "performance" "skills" "training" "care" "abilities"; gap: 16px; align-items: start; }
+.driver-page > .dcard { grid-area: identity; }
+.driver-page > #performance-review { grid-area: performance; }
+.driver-page > #ability-loadout { grid-area: abilities; }
+.driver-page > #training-plan { grid-area: training; }
+.driver-page > .driver-skills { grid-area: skills; }
+.driver-page > #fitness-care { grid-area: care; }
+.driver-page > * { min-width: 0; }
+.driver-panel { padding: 20px; border-radius: 18px; display: flex; flex-direction: column; gap: 14px; }
+.driver-panel .home-card-head h2 { font-size: 22px; }
+.driver-lead { color: var(--dim); font-size: 13px; line-height: 1.65; }
+.driver-caption { color: var(--dim); font-size: 11px; line-height: 1.6; }
+.driver-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.driver-metric { padding: 13px; background: var(--panel2); border-radius: 12px; min-width: 0; }
+.driver-metric > small { display: block; color: var(--dim); font-size: 11px; margin-bottom: 7px; }
+.driver-metric > b { display: block; font: 700 26px/1.1 var(--disp); white-space: nowrap; overflow-wrap: normal; }
+.driver-metric > span { display: block; color: var(--dim); font-size: 10px; line-height: 1.5; margin-top: 6px; }
+.driver-tier-road { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 5px; }
+.driver-tier-road span { padding: 9px 3px; border: 1px solid var(--line); border-radius: 9px; color: var(--dim); text-align: center; font-size: 10px; }
+.driver-tier-road span.current { background: var(--accSoft); border-color: var(--acc); color: var(--accDeep); font-weight: 700; }
+.driver-insight { padding: 13px; border-left: 3px solid var(--acc); border-radius: 0 10px 10px 0; background: var(--panel2); font-size: 12px; line-height: 1.65; }
+.driver-insight b { display: block; margin-bottom: 4px; }
+.driver-insight small { display: block; margin-top: 5px; color: var(--dim); font-size: 10px; }
+.driver-help { border-top: 1px solid var(--line); padding-top: 10px; }
+.driver-help summary { padding: 4px 0; min-height: 32px; font-size: 12px; font-weight: 600; }
+.driver-help p { color: var(--dim); font-size: 12px; line-height: 1.75; margin-top: 10px; }
+.driver-section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.driver-section-head h4 { font-size: 13px; margin: 0; }
+.driver-panel .btn { min-height: 40px; overflow-wrap: normal; word-break: normal; line-height: 1.35; }
+.driver-meter { height: 6px; border-radius: 6px; background: var(--line); overflow: hidden; min-width: 0; }
+.driver-meter i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--acc),var(--accDeep)); }
+.ability-choice { border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.ability-choice.active { border-color: color-mix(in srgb,var(--acc) 40%,var(--line)); background: color-mix(in srgb,var(--accSoft) 35%,var(--panel)); }
+.ability-choice-head { display: flex; gap: 10px; align-items: center; }
+.ability-number { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accSoft); color: var(--accDeep); font: 700 12px var(--mono); }
+.ability-choice-head b { font-size: 14px; }
+.ability-choice-head small { display: block; color: var(--dim); font-size: 10px; margin-top: 3px; }
+.ability-choice > p { font-size: 13px; line-height: 1.55; margin: 12px 0; }
+.ability-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ability-library { display: grid; gap: 10px; margin-top: 10px; }
+.ability-library-item { padding: 13px; border: 1px solid var(--line); border-radius: 10px; }
+.ability-library-item .btn { margin-top: 10px; }
+.ability-library-item > small { display: block; margin-top: 8px; color: var(--dim); font-size: 11px; }
+.mastery-preview { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); background: var(--panel2); border-radius: 12px; padding: 14px; }
+.mastery-preview > small { color: var(--dim); font-size: 11px; }
+.mastery-preview > b { font-size: 15px; }
+.mastery-preview .home-card-head { font-size: 12px; }
+.mastery-list > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); padding: 10px 0; font-size: 12px; }
+.mastery-list small { display: block; color: var(--dim); font-size: 10px; }
+.mastery-list b { white-space: nowrap; }
+.xp-wallet { text-align: right; }
+.xp-wallet b { display: block; color: var(--accDeep); font: 700 34px/1 var(--disp); }
+.xp-wallet span { color: var(--dim); font-size: 10px; }
+.driver-skill-list { display: grid; gap: 2px; }
+.driver-skill { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.driver-skill-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-size: 14px; }
+.driver-skill-head > span { font: 700 16px var(--mono); white-space: nowrap; }
+.driver-skill-head small { color: var(--dim); font-size: 11px; }
+.driver-skill > p { margin-top: 4px; color: var(--dim); font-size: 11px; line-height: 1.5; }
+.driver-skill-action { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 14px; align-items: center; margin-top: 8px; }
+.driver-skill-action .btn { min-width: 102px; white-space: nowrap; }
+.fitness-layout { display: grid; gap: 18px; }
+.fitness-score { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.fitness-score b { font: 700 34px/1 var(--disp); color: var(--accDeep); }
+.fitness-score span { font-size: 12px; color: var(--dim); }
+.fitness-layout .driver-caption { margin-top: 8px; }
+.mind-metrics { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.mind-metrics .driver-metric { padding: 11px; }
+.mind-metrics .driver-metric b { font-size: 23px; }
+.fatigue-meter .driver-meter i { background: var(--a2); }
+.training-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.training-controls label, .training-goal { color: var(--dim); font-size: 11px; }
+.training-controls select, .training-goal select, .training-session select { display: block; width: 100%; min-width: 0; min-height: 42px; margin-top: 6px; padding: 9px 8px; border: 1px solid var(--line2); border-radius: 9px; color: var(--fg); background: var(--panel); font: 600 13px var(--body); }
+.training-sessions { display: grid; gap: 10px; }
+.training-session { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+.training-session > div { min-width: 0; flex: 1; }
+.training-session select { margin: 0; }
+.training-session p { font-size: 11px; line-height: 1.55; color: var(--dim); margin-top: 6px; }
+.settings-page { display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; }
+.settings-heading { grid-column: 1 / -1; }
+.settings-heading p { margin-top: 8px; font-size: 13px; }
+.settings-page > .card { padding: 20px; border-radius: 18px; }
+.settings-page .btn { min-height: 42px; overflow-wrap: normal; word-break: normal; line-height: 1.4; }
+.settings-page p { font-size: 13px; line-height: 1.7; }
+@media (min-width: 1100px) {
+ .driver-page { grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-areas: "identity skills" "performance skills" "abilities training" "care care"; grid-template-rows: min-content auto auto auto; }
+ .fitness-layout { grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); align-items: center; }
+ .settings-page { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
+}
+@media (max-width: 600px) {
+ .driver-panel { padding: 16px; }
+ .driver-panel .home-card-head h2 { font-size: 21px; }
+ .driver-tier-road span { font-size: 9px; }
+ .mind-metrics .driver-metric { padding: 10px 7px; }
+ .mind-metrics .driver-metric > small { font-size: 10px; }
+ .settings-page > .card { padding: 16px; }
+ .driver-page > .dcard { height: auto; }
+}
+
+.settings-page [data-act="onb-style"][aria-pressed="true"] { background: var(--accSoft); color: var(--accDeep); border-color: var(--acc); }
+.mastery-circuit { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mastery-circuit > div { min-width: 0; }
+.mastery-circuit small { display: block; color: var(--dim); font-size: 11px; margin-bottom: 5px; }
+.mastery-circuit b { font-size: 15px; }
+.mastery-circuit svg { flex: none; width: 90px; height: 50px; }
 </style>
 <div id="app"></div><div id="modal"></div>
 <script>
@@ -4026,7 +4132,7 @@ function tKerjaya() {
 }
 function tSettings() {
   return '<div class="card stack" id="career-settings"><h3>Settings</h3><div class="row"><button class="btn sm ' + (S.settings.ask ? 'on' : '') + '" data-act="ask">Race decisions: ' + (S.settings.ask ? 'I decide' : 'Auto (watch)') + '</button><button class="btn sm ' + (S.settings.mini ? 'on' : '') + '" data-act="mini">Mini game: ' + (S.settings.mini ? 'On' : 'Off') + '</button><button class="btn sm ' + ((typeof SND !== 'undefined' && SND.on) ? 'on' : '') + '" data-act="snd-toggle">Sound: ' + ((typeof SND !== 'undefined' && SND.on) ? 'On' : 'Off') + '</button><button class="btn sm ' + (S.settings.tips === false ? '' : 'on') + '" data-act="tips-toggle">Tips: ' + (S.settings.tips === false ? 'Off' : 'On') + '</button><button class="btn sm" data-act="glossary">Glossary</button><button class="btn sm" data-act="calib">Touch calibration (' + Math.round(MGT.lat) + ' ms)</button><button class="btn sm" data-act="export">Export save</button><button class="btn sm" data-act="import">Import save</button>' +
-    (UI.wipe ? '<button class="btn sm bad" data-act="wipe-go">Yes, delete career</button><button class="btn sm" data-act="tab" data-v="aku">Cancel</button>' : '<button class="btn sm bad" data-act="wipe">Delete career</button>') +
+    (UI.wipe ? '<button class="btn sm bad" data-act="wipe-go">Yes, delete career</button><button class="btn sm" data-act="tab" data-v="settings">Cancel</button>' : '<button class="btn sm bad" data-act="wipe">Delete career</button>') +
     '<button class="btn sm" data-act="retire">Retire</button></div><p class="dim">Your career auto-saves after every race in this browser. Use Export to move to another device.</p></div>';
 }
 A['ask'] = function () { S.settings.ask = !S.settings.ask; save(); render(); };
@@ -5544,17 +5650,18 @@ var ICO = {
   saya: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>'
 };
 function ico(k) { return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>'; }
-ICO.utama = ICO.musim; ICO.musim = ICO.kal; ICO.aku = ICO.saya; ICO.team = ICO.kereta; ICO.kerjaya = ICO.kej;
-var NAV = [['utama', 'Home'], ['musim', 'Season'], ['aku', 'Driver'], ['team', 'Team'], ['kerjaya', 'Career']];
+ICO.utama = ICO.musim; ICO.musim = ICO.kal; ICO.aku = ICO.saya; ICO.team = ICO.kereta; ICO.kerjaya = ICO.kej; ICO.settings = '<path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>';
+var NAV = [['utama', 'Home'], ['musim', 'Season'], ['aku', 'Driver'], ['team', 'Team'], ['kerjaya', 'Career'], ['settings', 'Settings']];
 
 function vHub() {
   selectHubTab(UI.tab);
   if (typeof ensureDev === 'function') ensureDev(S);
-  var nav = NAV.map(function (x) { return '<button class="' + (UI.tab === x[0] ? 'on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + ico(x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
-  var body = ({ utama: function () { return S.sit ? vSit(true) : hUtama(); }, musim: hMusim, aku: hAku, team: hTeam, kerjaya: hKerjaya })[UI.tab]();
+  var navItems = NAV.map(function (x) { return {key:x[0],html: '<button class="' + (UI.tab === x[0] ? 'on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + ico(x[0]) + '<span>' + x[1] + '</span></button>'}; });
+  var nav = navItems.map(function(x){return x.html;}).join(''), mobileNav = navItems.filter(function(x){return x.key!=='settings';}).map(function(x){return x.html;}).join('');
+  var body = ({ utama: function () { return S.sit ? vSit(true) : hUtama(); }, musim: hMusim, aku: hAku, team: hTeam, kerjaya: hKerjaya, settings: hSettings })[UI.tab]();
   return '<div class="hub6"><aside class="snav"><div class="brand">Grid to <b>Glory</b></div><nav>' + nav + '</nav><button class="btn sm" data-act="menu">Main menu</button></aside>' +
     '<main class="hmain"><div class="top htop"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>' + hubSeasonHTML() + '</span><button class="btn sm hub-settings" data-act="hub-settings" aria-label="Settings" title="Settings">⚙</button><button class="btn sm" data-act="menu">Menu</button></div></div>' + body + '</main>' +
-    '<nav class="bnav">' + nav + '</nav></div>';
+    '<nav class="bnav">' + mobileNav + '</nav></div>';
 }
 
 function drvCard() {
@@ -8391,8 +8498,8 @@ var TIPS = {
   'hub:news': ['Paddock Wire', 'All the news of the season: race reports, transfers, upgrades and rumours. Tap a story to read it in full and jump to the related driver, team or race results.'],
   'hub:kej': ['Standings', 'Points go to the top 10: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1. Tap any driver or team to see their profile.'],
   'hub:team': ['Your car', 'Aero = cornering grip, Engine = straight-line speed, Chassis = tyre care, Reliability = fewer breakdowns. Upgrades arrive during the season. Finance shows what your team can afford to develop.'],
-  'hub:aku': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Settings and save controls are here too.'],
-  'wk:quali': ['Qualifying', 'Qualifying decides your starting grid. A better grid makes the race easier. The mini-game rewards a clean, well-timed lap. If you prefer to skip it, turn Mini game off in Driver › Settings.'],
+  'hub:aku': ['Your driver', 'Spend XP here to improve your driver. You earn XP every race: beating what your car should do earns the most. Find assistance and save controls on the Settings page.'],
+  'wk:quali': ['Qualifying', 'Qualifying decides your starting grid. A better grid makes the race easier. The mini-game rewards a clean, well-timed lap. If you prefer to skip it, turn Mini game off in Settings.'],
   'wk:strat': ['Strategy: tyres and pace', 'Soft = fast but wears quickly. Medium = balanced. Hard = slow but lasts. Most races need a pit stop, and your engineer recommends a plan you can follow or change. Tyres, Fuel and Energy have separate controls. Each can stay on Auto or follow your manual choice. Pushing costs resources; hot or worn tyres increase spin risk. Boost spends the same battery as Deploy.'],
   'wk:result': ['After the race', 'Points go to the standings and XP to your driver. The press conference answer changes morale, fame and your relationship with the team.']
 };
@@ -8409,7 +8516,7 @@ function onbTip() {
   host.insertAdjacentHTML('afterbegin', '<div class="card tipc" data-k="' + k + '"><div><small>Tip</small><b>' + T[0] + '</b><p>' + T[1] + '</p></div><div class="row"><button class="btn sm pri" data-act="tip-ok" data-k="' + k + '">Got it</button><button class="btn sm" data-act="glossary">Glossary</button><button class="btn sm" data-act="tip-off">Hide all tips</button></div></div>');
 }
 A['tip-ok'] = function (d) { S.tips = S.tips || {}; S.tips[d.k] = 1; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); };
-A['tip-off'] = function () { S.settings.tips = false; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); toast('Tips hidden. Turn them back on in Driver › Settings.'); };
+A['tip-off'] = function () { S.settings.tips = false; save(); var e = document.querySelector('.tipc'); if (e) e.remove(); toast('Tips hidden. Turn them back on in Settings.'); };
 A['tips-toggle'] = function () { S.settings.tips = S.settings.tips === false; if (S.settings.tips) S.tips = {}; save(); render(); };
 
 /* ---------- 3. glosari ---------- */
@@ -8430,7 +8537,7 @@ A['glossary'] = function () {
 
 /* ---------- 4. pilihan gaya main (karier baru sahaja) ---------- */
 function onbStyleHTML() {
-  return '<div class="stack"><h2 style="margin:0">How do you want to play?</h2><p class="dim" style="margin:0">You can change this anytime in Driver › Settings.</p>' +
+  return '<div class="stack"><h2 style="margin:0">How do you want to play?</h2><p class="dim" style="margin:0">You can change this anytime in Settings.</p>' +
     '<button class="opt press-o" data-act="onb-style" data-v="guided"><div class="t"><b>Guided</b> (recommended)</div><div class="s">You make the calls, with tips, a glossary and an engineer who recommends. Mini-games on.</div></button>' +
     '<button class="opt press-o" data-act="onb-style" data-v="casual"><div class="t"><b>Casual</b></div><div class="s">Your engineer handles pit stops and strategy. No mini-games. Just watch the race and manage your career.</div></button>' +
     '<button class="opt press-o" data-act="onb-style" data-v="expert"><div class="t"><b>Expert</b></div><div class="s">All decisions and mini-games, no tips. For players who know F1.</div></button></div>';
@@ -8613,8 +8720,8 @@ function hMusim() {
     ({ calendar: hKal, results: hRes, standings: hKed, news: hNews, history: hHist, world: hWorld })[view]();
 }
 function hAku() {
-  if (S.sit) return '<div class="stack"><div class="card"><h2>' + esc(S.bench.name) + '</h2><p class="dim">Test and reserve driver · ' + esc(S.teams[S.sit.team].name) + '</p></div>' + reserveFocusHTML() + bodyCardHTML() + tSettings() + '</div>';
-  return '<div class="stack">' + drvCard() + evaluationCardHTML(false) + abilitiesHTML(false) + trainingCardHTML() + tPemandu() + tSettings() + '</div>';
+  if (S.sit) return '<div class="stack"><div class="card"><h2>' + esc(S.bench.name) + '</h2><p class="dim">Test and reserve driver · ' + esc(S.teams[S.sit.team].name) + '</p></div>' + reserveFocusHTML() + bodyCardHTML() + '</div>';
+  return '<div class="' + (S.mode==='pro'?'driver-page':'stack') + '">' + drvCard() + evaluationCardHTML(false) + abilitiesHTML(false) + trainingCardHTML() + tPemandu() + '</div>';
 }
 function hTeam() { if (S.mode === 'pro' && myTeam().spec) return worldJuniorTeamHTML(myTeam()) + tmCardHTML(); return '<div class="stack">' + hPasukan() + (S.sit ? '' : tmCardHTML()) + '</div>'; }
 function careerNudgeHTML() {
@@ -8638,7 +8745,7 @@ A['hub-section'] = function (d) {
   if (['calendar', 'results', 'standings', 'news', 'history', 'world'].indexOf(d.v) < 0) return;
   UI.musimView = d.v; UI.tab = 'musim'; render(); window.scrollTo(0, 0);
 };
-A['hub-settings'] = function () { selectHubTab('aku'); UI.screen = 'hub'; render(); document.getElementById('career-settings').scrollIntoView({ block: 'start' }); };
+A['hub-settings'] = function () { A.tab({v:'settings'}); };
 A['kal-m'] = function (d) { UI.kalMode = d.v; selectHubTab('kal'); render(); };
 
 ['toggle', 'up', 'auto'].forEach(function (action) {
@@ -9598,14 +9705,14 @@ GLOSS=GLOSS.filter(function(g){return g[0]!=='OVR / Rating'&&g[0]!=="Constructor
  ['Comeback / Retirement','After F1 debut, one inactive training year may reopen the market if you lose your seat. It grants no race rewards or guaranteed return. Age 44 is the final racing season; retirement is compulsory at 45.'],
  ['Highlights','The live race runs faster between key moments and slows briefly for important events. It uses the same engine. Mini-games are skipped, as in Fast; base race XP is unchanged.']
 ]);
-function drivingGuideHTML(){var pro=S&&S.mode==='pro',junior=pro&&leagueOf(S)!=='f1';return '<div class="stack"><h2 id="guide-title">Driving guide</h2><p>Choose how much help you want. You can change the assistance style in Driver → Settings at any time.</p><details open><summary>1 · Your next step</summary><p>'+(junior?'Race your junior season, use earned XP in Driver, and review promotion funding in Career. A champion cannot repeat their championship. Non-champions can continue racing; three seasons is a review point, not a game-over limit.':'Race the season, assess your performance and choose the next contract. Car development, teammates, rivals and regulation eras continue even after your stats mature.')+'</p></details><details><summary>2 · Race weekend</summary><p>Qualify, read the forecast, compare strategies and race. A circuit’s rain probability is not a live forecast. Wet tyres suit actual wet conditions; a dry strategy estimate is not a promise about future rain.</p><p>Tyres, Fuel and Energy have separate Auto/Manual controls. You can ignore engineer advice. Tyre Push costs wear and heat and can increase spin risk. Fuel Push uses more fuel. Deploy and Boost share the battery.</p></details><details><summary>3 · Guided, Casual and Expert</summary><p>Guided offers tips with decisions and mini-games. Casual automates pit decisions and skips mini-games. Expert keeps decisions and mini-games with tips off. Each setting can also be changed individually.</p><p>All styles use the same race engine and base XP rules. Your decisions and mini-game performance can still change the outcome and the bounded manual bonus. Switching help does not award XP or reset the race.</p></details><details><summary>4 · Full, Fast and Highlights</summary><p>Use 1×, 2× or 4× for live viewing. Fast accelerates the race and skips mini-games. Highlights also accelerates, then briefly slows for overtakes, incidents, stops and safety cars. Pit decisions remain yours when enabled. Neither option invents results or changes base XP.</p></details><details><summary>5 · Progress and offers</summary><p>Spend existing XP on stats; compare the net annual preview before signing. Focus affects racing, not Overall. Scout Watch explains interest, trend, barriers and the evidence teams want. Only an open contract is an offer.</p></details><details><summary>6 · Save and backup</summary><p>Export your save from Driver → Settings before clearing browser data or replacing a career. Import restores it on another browser. Hall of Fame has a separate backup option. A race already in progress is completed by the engineer after a reload.</p></details><div class="row"><button class="btn" data-act="glossary">Glossary</button><button class="btn pri" data-act="mclose">Close</button></div></div>';}
+function drivingGuideHTML(){var pro=S&&S.mode==='pro',junior=pro&&leagueOf(S)!=='f1';return '<div class="stack"><h2 id="guide-title">Driving guide</h2><p>Choose how much help you want. You can change the assistance style in Settings at any time.</p><details open><summary>1 · Your next step</summary><p>'+(junior?'Race your junior season, use earned XP in Driver, and review promotion funding in Career. A champion cannot repeat their championship. Non-champions can continue racing; three seasons is a review point, not a game-over limit.':'Race the season, assess your performance and choose the next contract. Car development, teammates, rivals and regulation eras continue even after your stats mature.')+'</p></details><details><summary>2 · Race weekend</summary><p>Qualify, read the forecast, compare strategies and race. A circuit’s rain probability is not a live forecast. Wet tyres suit actual wet conditions; a dry strategy estimate is not a promise about future rain.</p><p>Tyres, Fuel and Energy have separate Auto/Manual controls. You can ignore engineer advice. Tyre Push costs wear and heat and can increase spin risk. Fuel Push uses more fuel. Deploy and Boost share the battery.</p></details><details><summary>3 · Guided, Casual and Expert</summary><p>Guided offers tips with decisions and mini-games. Casual automates pit decisions and skips mini-games. Expert keeps decisions and mini-games with tips off. Each setting can also be changed individually.</p><p>All styles use the same race engine and base XP rules. Your decisions and mini-game performance can still change the outcome and the bounded manual bonus. Switching help does not award XP or reset the race.</p></details><details><summary>4 · Full, Fast and Highlights</summary><p>Use 1×, 2× or 4× for live viewing. Fast accelerates the race and skips mini-games. Highlights also accelerates, then briefly slows for overtakes, incidents, stops and safety cars. Pit decisions remain yours when enabled. Neither option invents results or changes base XP.</p></details><details><summary>5 · Progress and offers</summary><p>Spend existing XP on stats; compare the net annual preview before signing. Focus affects racing, not Overall. Scout Watch explains interest, trend, barriers and the evidence teams want. Only an open contract is an offer.</p></details><details><summary>6 · Save and backup</summary><p>Export your save from Settings before clearing browser data or replacing a career. Import restores it on another browser. Hall of Fame has a separate backup option. A race already in progress is completed by the engineer after a reload.</p></details><div class="row"><button class="btn" data-act="glossary">Glossary</button><button class="btn pri" data-act="mclose">Close</button></div></div>';}
 A['driving-guide']=function(){showModal(drivingGuideHTML());};
 var contentOldPractice=onbPractice;
 onbPractice=function(){var prior=_s;try{return contentOldPractice();}finally{_s=prior;}};
 var contentOldStyleHTML=onbStyleHTML;
 onbStyleHTML=function(){return contentOldStyleHTML()+'<p class="dim">All styles use the same engine and base XP. Decisions and mini-games can still affect results.</p><button class="btn" data-act="driving-guide">Read the driving guide</button>';};
 var contentOldSettings=tSettings;
-tSettings=function(){return '<div class="card stack"><h3>Assistance &amp; help</h3><div class="row">'+['guided','casual','expert'].map(function(k){return '<button class="btn" data-act="onb-style" data-v="'+k+'" aria-pressed="'+(S.settings.style===k)+'">'+k[0].toUpperCase()+k.slice(1)+'</button>';}).join('')+'</div><button class="btn" data-act="driving-guide">Driving guide</button><p class="dim">Changing assistance does not reset progress. Individual race-decision and mini-game settings remain below.</p></div>'+contentOldSettings();};
+tSettings=function(){return '<div class="card stack"><h3>Assistance &amp; help</h3><div class="row">'+['guided','casual','expert'].map(function(k){return '<button class="btn" data-act="onb-style" data-v="'+k+'" aria-pressed="'+(S.settings.style===k)+'">'+k[0].toUpperCase()+k.slice(1)+'</button>';}).join('')+'</div><button class="btn" data-act="driving-guide">Driving guide</button><p class="dim">Guided: tips and decisions. Casual: engineer-led pit decisions, no mini-games. Expert: decisions and mini-games, without tips. Adjust individual controls below.</p></div>'+contentOldSettings();};
 var contentOldStyle=A['onb-style'];
 A['onb-style']=function(d){if(['guided','casual','expert'].indexOf(d.v)<0)return;contentOldStyle(d);};
 var contentOldTip=onbTip;
@@ -9654,4 +9761,34 @@ var seasonOldMusim=hMusim;
 hMusim=function(){var h=seasonOldMusim();if(S.mode!=='pro'||['standings','results','world'].indexOf(UI.musimView)<0)return h;var pos=h.indexOf('</div>')+6;return h.slice(0,pos)+seasonBrowseControls(UI.musimView==='results'||UI.musimView==='standings'&&UI.kedMode!=='pf')+h.slice(pos);};
 
 A['season-team']=function(x){var l=seasonBrowseLeague(),v=worldView(S,l),t=v.teams[+x.v];if(!t)return;if(l===leagueOf(S)&&l==='f1'){A.tprof({v:x.v});return;}var drivers=v.drivers.filter(function(d){return d.team===t.id;}).map(function(d){return '<button class="btn sm" data-act="world-driver" data-v="'+d.uid+'">'+esc(d.name)+'</button>';}).join('');showModal((t.spec?juniorOldTeam(t):'<div class="pf" style="--tc:'+t.color+'"><h2>'+esc(t.name)+'</h2>'+carSVG(t,280)+pfTiles([['Points',t.pts],['Wins',t.wins]])+'</div>')+'<h4>Drivers</h4><div class="season-retired">'+drivers+'</div><button class="btn wide" data-act="mclose">Close</button>');};
+'use strict';
+/* Driver presentation only: all purchases, training and unlocks use existing actions. */
+function driverMeter(value,max,label){return '<div class="driver-meter" role="meter" aria-label="'+esc(label)+'" aria-valuemin="0" aria-valuemax="'+max+'" aria-valuenow="'+clamp(value,0,max)+'"><i style="width:'+clamp(value/max*100,0,100)+'%"></i></div>';}
+function driverMetric(label,value,note){return '<div class="driver-metric"><small>'+label+'</small><b>'+value+'</b>'+(note?'<span>'+note+'</span>':'')+'</div>';}
+function hSettings(){return '<div class="settings-page"><header class="settings-heading"><h2>Settings</h2><p class="dim">Choose your help level, adjust controls and manage your save.</p></header>'+tSettings()+'</div>';}
+var driverOldEvaluation=evaluationCardHTML;
+evaluationCardHTML=function(review){if(review)return driverOldEvaluation(review);if(S.mode!=='pro'||S.sit)return '';var p=progressionPlayer(S),e=p.evaluation,s=evaluationSummary(S),r=e.latest;
+ return '<section class="card driver-panel" id="performance-review"><div class="home-card-head"><div><h3>Performance &amp; tier</h3><h2>'+EVALUATION.tiers[e.tier]+'</h2></div><span class="home-tag">'+abilitySlots(p)+' ability '+(abilitySlots(p)===1?'slot':'slots')+'</span></div><p class="driver-lead">How well you perform with the car you have.</p><div class="driver-tier-road">'+EVALUATION.tiers.map(function(t,i){return '<span class="'+(i===e.tier?'current':'')+'">'+t+'</span>';}).join('')+'</div><div class="driver-metrics">'+driverMetric('Season score',s.sts==null?'—':s.sts.toFixed(1),s.sts==null?'Race to earn a rating':'STS · out of 100')+driverMetric('Teammate battles',s.h2hWins+' / '+s.h2hRaces,'Finishes ahead / compared')+'</div><p class="driver-caption">'+s.n+' races rated · '+s.excluded+' excluded. '+(leagueOf(S)!=='f1'?'Tier upgrades begin in F1.':'Higher tiers unlock more ability slots.')+'</p>'+(r?'<div class="driver-insight"><b>Latest race</b><p>'+esc(r.excluded||'Expected P'+r.snapshot.expected.toFixed(1)+' · Finished P'+r.pos+' · Score '+r.sts.toFixed(1))+'</p></div>':'<div class="driver-insight">Complete a race to see how you performed against expectations.</div>')+'<details class="driver-help"><summary>How your rating works</summary><p>STS is your season performance score. It combines results against car expectations, teammate strength, clean driving and achievements. Mechanical failures do not count as a zero. Team orders are excluded from teammate comparisons.</p><p>'+(leagueOf(S)!=='f1'?'Tier promotions are reviewed in F1; your junior performance still builds your racing record.':'Tier is reviewed at season end using enough race evidence and recent performance. A first weak season gives a warning; recovery can clear it.')+' Legend also requires three F1 titles. Tier does not discount XP or reduce wear.</p></details></section>';
+};
+var driverOldAbilities=abilitiesHTML;
+abilitiesHTML=function(review){if(review)return driverOldAbilities(review);if(S.mode!=='pro'||S.sit)return '';var p=progressionPlayer(S),a=p.abilities,editable=abilityEditable(S),active=activeAbilityIds(S),cap=abilityCapParts(S,'pace'),expert=Object.keys(a.mastery).filter(function(k){return masteryLevel(a.mastery[k])>=4;}).length,ci=S.cal[Math.min(S.round,S.cal.length-1)],c=CIRCUITS[ci],visits=a.mastery[c.key]||0,level=masteryLevel(visits),next=ABILITY_RULES.visits[level];
+ var h='<section class="card driver-panel" id="ability-loadout"><div class="home-card-head"><div><h3>Abilities &amp; mastery</h3><h2>Your racing edge</h2></div><span class="home-tag">'+active.length+' / '+abilitySlots(p)+' active</span></div><p class="driver-lead">Abilities are automatic race perks. Mastery is experience you build at each circuit.</p><div class="driver-section-head"><h4>Active abilities</h4><span class="driver-caption">'+(editable?'You can change these now':'Locked for this season')+'</span></div>';
+ h+=a.priority.map(function(id,i){var b=ABILITIES[id],on=active.indexOf(id)>=0;return '<div class="ability-choice '+(on?'active':'')+'"><div class="ability-choice-head"><span class="ability-number">'+(i+1)+'</span><div><b>'+esc(b.n)+'</b><small>'+ (on?'Active · applies automatically':'Standby · not active')+'</small></div></div><p>'+esc(b.d)+'</p><div class="ability-actions"><button class="btn sm" data-act="ability-up" data-v="'+id+'" '+(!editable||i===0?'disabled':'')+'>Move up</button><button class="btn sm" data-act="ability-toggle" data-v="'+id+'" '+(!editable?'disabled':'')+'>Remove</button></div></div>';}).join('');
+ if(!a.priority.length)h+='<p class="driver-insight">No abilities selected. Add one from your collection below.</p>';
+ h+='<button class="btn sm" data-act="ability-auto" '+(!editable?'disabled':'')+'>Recommend my selection</button><details class="driver-help"><summary>All abilities &amp; unlocks</summary><div class="ability-library">'+Object.keys(ABILITIES).map(function(id){var b=ABILITIES[id],owned=a.owned.indexOf(id)>=0,queued=a.priority.indexOf(id)>=0;return '<div class="ability-library-item"><div class="home-card-head"><b>'+esc(b.n)+'</b><span class="home-tag">'+(owned?'Owned':'Locked')+'</span></div><p>'+esc(b.d)+'</p>'+(owned?'<button class="btn sm" data-act="ability-toggle" data-v="'+id+'" '+(!editable?'disabled':'')+'>'+(queued?'Remove from selection':'Add to selection')+'</button>':'<small>Earn it: '+esc(b.need)+'</small>')+'</div>';}).join('')+'</div></details>';
+ h+='<div class="driver-section-head"><h4>Track experience</h4><span class="home-tag">Mastery</span></div><p class="driver-caption">Race a circuit to learn it. Higher levels add a small pace and mistake-risk benefit there.</p><div class="mastery-preview"><div class="mastery-circuit"><div><small>'+(S.round<S.cal.length?'Next circuit':'Last circuit')+'</small><b>'+esc(c.name)+'</b></div>'+circuitSVG(ci,90,'var(--accDeep)')+'</div><div class="home-card-head"><span>Level '+level+' / 5</span><span>'+visits+' visits</span></div>'+driverMeter(level,5,'Circuit mastery level')+'<small>'+(next?'Next level at '+next+' visits':'Highest mastery level reached')+'</small></div><details class="driver-help"><summary>All circuit levels</summary><div class="mastery-list">'+GTG_TRACKS.map(function(t){var n=a.mastery[t[1]]||0,l=masteryLevel(n);return '<div><span>'+esc(t[2])+'<small>'+n+' visits</small></span><b>'+l+' / 5</b></div>';}).join('')+'</div></details>';
+ h+='<div class="driver-insight"><b>Higher growth caps</b><p>Mastery +'+cap.mastery+' · Legend +'+cap.legend+(cap.legacy?' · Existing save bonuses retained':'')+'</p><small>'+expert+' circuits at level 4+ · every four add +1 mastery cap, up to +3.</small></div><details class="driver-help"><summary>Selection rules &amp; bonus limits</summary><p>Change your selection before the first weekend or during season review. Top eligible abilities use your available slots. Lower entries wait on standby. Removing one never deletes an owned ability.</p><p>Cap Breaker raises your growth ceiling, not your stats instantly. Combined cap boosts stop at +5; no stat exceeds 99. Mastery and abilities do not award extra XP or reduce annual body wear.</p><p>Mastery levels need 1, 3, 5, 8 and 12 personal race visits. Each level adds 0.02s local pace and 1% lower mistake risk. Total Focus, ability and mastery pace stays within ±0.30s/lap; mistake multiplier 0.60–1.65 and ability tyre wear 0.90–1.00.</p></details></section>';return h;
+};
+bodyCardHTML=function(){if(S.mode!=='pro')return '';var b=progressionPlayer(S).body;return '<section class="card driver-panel" id="fitness-care"><div class="home-card-head"><div><h3>Fitness &amp; care</h3><h2>Look after your career</h2></div><span class="home-tag">Long-term condition</span></div><div class="fitness-layout"><div><div class="fitness-score"><b>'+b.fitness.toFixed(1)+'</b><span>/ 100 Fitness</span></div>'+driverMeter(b.fitness,100,'Fitness')+'<p class="driver-caption">Higher fitness helps limit wear as you age.</p></div><div class="driver-metric"><small>Career wear</small><b>'+b.wear.toFixed(1)+'</b><span>Accumulated strain · lower is better</span></div></div><div class="driver-insight"><b>Fitness and Recovery do different jobs</b><p>Choose Fitness sessions to build condition. Choose Recovery to clear fatigue before racing.</p></div><details class="driver-help"><summary>How age and care affect growth</summary><p>Fitness and consistent care reduce annual wear. Wear gradually lowers growth caps; Pace is more sensitive than Racecraft and Feedback. Annual changes happen once and overlap with cap adjustments, so the same loss is not charged twice.</p></details></section>';};
+var driverOldSkills=tPemandu;
+tPemandu=function(){if(S.mode!=='pro')return driverOldSkills();var p=me(),h='<section class="card driver-panel driver-skills" id="driver-skills"><div class="home-card-head"><div><h3>Skill development</h3><h2>Spend your XP</h2></div><div class="xp-wallet"><b>'+S.xp+'</b><span>XP available</span></div></div><p class="driver-lead">Choose a skill to improve. Each button buys one point; the price is shown.</p><div class="driver-skill-list">';
+ SKILLS.forEach(function(s){var v=p[s[0]],cost=skillCost(v,S,s[0]),cap=statCap(S,s[0]);h+='<div class="driver-skill"><div class="driver-skill-head"><b>'+s[1]+'</b><span>'+v+' <small>/ '+cap+'</small></span></div><p>'+s[2]+'</p><div class="driver-skill-action">'+driverMeter(v,cap,s[1]+' progress to cap')+'<button class="btn sm" data-act="buy" data-k="'+s[0]+'" '+(S.xp<cost||v>=cap?'disabled':'')+'>'+(v>=cap?'At cap':'+1 · '+cost+' XP')+'</button></div></div>';});
+ return h+'</div><details class="driver-help"><summary>XP, Overall &amp; growth caps</summary><p>Overall averages all six stats. Each value shows your current skill / current cap. Costs increase near the cap; there is no age gate. You still need to spend XP to grow.</p><p>Season race XP: '+PROGRESSION.annual[leagueOf(S)]+' base, up to '+PROGRESSION.bonuses.performance+' performance, '+PROGRESSION.bonuses.objectives+' objectives, '+PROGRESSION.bonuses.manual+' manual and '+PROGRESSION.bonuses.facilities+' simulator XP. Auto earns the same base XP. Unspent XP carries over.</p></details></section>'+bodyCardHTML();
+};
+trainingCardHTML=function(){if(S.mode!=='pro'||S.sit)return '';var p=progressionPlayer(S),t=p.training,m=p.mind,plan=effectiveTraining(p),prepared=m.locked&&m.locked.key===trainingKey(S),hints={simulator:'Builds the weaker of Pace and Consistency using XP.',racecraft:'Builds the weaker of Racecraft and Tyres using XP.',wet:'Improves Wet Weather using XP.',technical:'Improves Feedback using XP.',fitness:'Builds Fitness. No XP cost.',recovery:'Reduces fatigue. No XP cost.'};
+ function select(field,options,value,index){return '<select data-training="'+field+'"'+(index==null?'':' data-index="'+index+'"')+' aria-label="'+(field==='slot'?'Training slot '+(index+1):'Training '+field)+'">'+Object.keys(options).map(function(k){return '<option value="'+k+'"'+(value===k?' selected':'')+'>'+options[k]+'</option>';}).join('')+'</select>';}
+ var h='<section class="card driver-panel" id="training-plan"><div class="home-card-head"><div><h3>Training &amp; mind</h3><h2>Prepare for race day</h2></div><span class="home-tag">'+(prepared?'Weekend prepared':'Repeating plan')+'</span></div><p class="driver-lead">Set your sessions once. The plan runs before qualifying each weekend.</p><div class="driver-metrics mind-metrics">'+driverMetric('Confidence',Math.round(m.confidence),'Self-belief · /100')+driverMetric('Recent form',(m.momentum>0?'+':'')+m.momentum.toFixed(1),'Momentum')+driverMetric('Fatigue',m.fatigue.toFixed(0),'Tiredness · /100')+'</div><div class="fatigue-meter">'+driverMeter(m.fatigue,100,'Fatigue')+'</div><p class="driver-caption">'+(m.fatigue>=55?'High fatigue: choose Recovery to prepare for the next race.':'Lower fatigue helps your race-day Focus.')+'</p><div class="training-controls"><label>Who plans your sessions?'+select('mode',{manual:'I choose',auto:'Auto training'},t.mode)+'</label><label>Workload'+select('intensity',{light:'Light',normal:'Normal',hard:'Hard'},t.intensity)+'</label></div>';
+ if(t.mode==='auto')h+='<label class="training-goal">Auto priority'+select('goal',TRAINING.goals,t.goal)+'</label><p class="driver-caption">Auto balances your chosen goal with fitness and recovery. Current workload: '+TRAINING.intensity[plan.intensity].n+'.</p>';
+ h+='<div class="training-sessions">'+plan.slots.map(function(k,i){return '<div class="training-session"><span class="ability-number">'+(i+1)+'</span><div>'+(t.mode==='manual'?select('slot',TRAINING.focuses,t.slots[i],i):'<b>'+TRAINING.focuses[k]+'</b>')+'<p>'+hints[k]+'</p></div></div>';}).join('')+'</div><div class="driver-insight"><b>'+(prepared?'Changes apply next weekend':'Skill training spends your existing XP')+'</b><p>'+(prepared?'This weekend has already been prepared. Your new plan will run before the following qualifying.':'Sessions never give extra XP. If you cannot afford a skill point, that purchase is skipped.')+'</p><small>'+(m.locked?'Last prepared Focus: '+m.locked.focus+'/100':'Focus is set before qualifying. It affects pace and mistake risk.')+'</small></div><details class="driver-help"><summary>How training and Focus work</summary><p>Light and Normal can buy up to one skill point per session; Hard can buy up to two. Sessions choose the weaker eligible skill. Existing XP and growth caps still apply.</p><p>Hard adds more fatigue and preparation. Auto selects Recovery at high fatigue and reduces Hard workload before overload. Fitness gains are capped at 18 per season. Recovery reduces fatigue; these loads scale with season length.</p><p>Focus combines confidence, recent form, preparation, fatigue and pressure. It affects qualifying and race pace and mistakes; it does not change base Overall or XP rewards.</p></details></section>';return h;
+};
 </script>

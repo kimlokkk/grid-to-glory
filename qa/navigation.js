@@ -20,11 +20,11 @@ const path=require('node:path'),fs=require('node:fs');
     await clickUI(pg,nav(id),true);
     if(await pg.locator('[data-act=tip-ok]').count())await clickUI(pg,'[data-act=tip-ok]',true);
     const state=await pg.evaluate(()=>({tab:UI.tab,width:document.documentElement.scrollWidth,labels:[...document.querySelectorAll(matchMedia('(min-width:900px)').matches?'.snav nav button':'.bnav button')].map(b=>b.textContent.trim()),active:document.querySelectorAll(matchMedia('(min-width:900px)').matches?'.snav nav button.on':'.bnav button.on').length,actions:[...document.querySelectorAll('.hmain [data-act]')].map(e=>e.dataset.act),text:document.querySelector('.hmain').textContent}));
-    check(`${viewport.width} ${label}: five destinations and one active tab`,state.tab===id&&state.active===1&&state.labels.join('|')==='Home|Season|Driver|Team|Career');
+    check(`${viewport.width} ${label}: main destinations and one active tab`,state.tab===id&&state.active===1&&state.labels.join('|')===('Home|Season|Driver|Team|Career'+(viewport.width>=900?'|Settings':'')));
     check(`${viewport.width} ${label}: English menu text`,!/\b(Utama|Musim|Aku|Kerjaya|Kalendar|Keputusan|Kedudukan|Sejarah)\b/.test(state.text));
     check(`${viewport.width} ${label}: no page-width overflow`,state.width<=viewport.width,{width:state.width});
     if(id==='utama')check(`${viewport.width}: next race accessible in Home`,state.actions.includes('wk-start'));
-    if(id==='aku')check(`${viewport.width}: training/settings/save accessible in Driver`,['buy','ask','mini','snd-toggle','tips-toggle','glossary','calib','export','import','wipe','retire'].every(k=>state.actions.includes(k)));
+    if(id==='aku')check(`${viewport.width}: skills accessible in Driver and settings moved out`,state.actions.includes('buy')&&!state.actions.includes('ask')&&!state.actions.includes('export'));
     if(id==='team')check(`${viewport.width}: team profile, R&D and teammate remain accessible`,state.actions.includes('tprof')&&state.actions.includes('rd')&&state.text.includes('Teammate'));
     if(id==='kerjaya')check(`${viewport.width}: contract/sponsors/career remain accessible`,state.text.includes('Current contract')&&state.text.includes('Career stats')&&state.text.includes('Fame'));
     if(process.env.QA_NAV_DIR){await pg.screenshot({path:path.join(process.env.QA_NAV_DIR,`${viewport.width}-${id}.png`),fullPage:true});if(id==='utama'&&viewport.width<900)await pg.screenshot({path:path.join(process.env.QA_NAV_DIR,`${viewport.width}-utama-view.png`)});}
@@ -38,17 +38,18 @@ const path=require('node:path'),fs=require('node:fs');
    }
    await clickUI(pg,'[data-act=hub-settings]',true);
    const settings=await pg.locator('#career-settings').boundingBox();
-   check(`${viewport.width}: header Settings reaches settings panel`,await pg.evaluate(()=>UI.tab==='aku')&&settings.y>=-1&&settings.y<viewport.height-60);
+   check(`${viewport.width}: header Settings reaches settings panel`,await pg.evaluate(()=>UI.tab==='settings')&&settings.width>0);
   }
   await pg.setViewportSize({width:390,height:844});
   await clickUI(pg,nav('aku'),true);await pg.evaluate(()=>{S.xp=60;render();});
   const skill=await pg.evaluate(()=>({value:me().pace,xp:S.xp,cost:skillCost(me().pace,S)}));await clickUI(pg,'[data-act=buy][data-k=pace]',true);
   check('training purchase applies exactly once after menu move',await pg.evaluate(skill=>me().pace===skill.value+1&&S.xp===skill.xp-skill.cost,skill));
+  await clickUI(pg,'[data-act=hub-settings]',true);
   const ask=await pg.evaluate(()=>S.settings.ask);await clickUI(pg,'[data-act=ask]',true);
   check('settings toggle still changes the real saved setting',await pg.evaluate(ask=>S.settings.ask===!ask&&loadSave().settings.ask===!ask,ask));
   await clickUI(pg,'[data-act=export]',true);
   const code=await pg.locator('#exp').inputValue(),exported=JSON.parse(Buffer.from(code,'base64').toString('utf8'));
-  check('export remains functional from Driver',exported.round===1&&exported.saveVer===2);
+  check('export remains functional from Settings',exported.round===1&&exported.saveVer===2);
   await pg.clock.runFor(800);await clickUI(pg,'#modal [data-act=mclose]',true);
   await clickUI(pg,'[data-act=glossary]',true);check('glossary remains reachable',await pg.locator('#modal > *').count()===1);await pg.evaluate(()=>closeModal());
   await clickUI(pg,nav('team'),true);await clickUI(pg,'[data-act=rd][data-v=engine]',true);

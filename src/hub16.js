@@ -20,8 +20,8 @@ function hMusim() {
     ({ calendar: hKal, results: hRes, standings: hKed, news: hNews, history: hHist, world: hWorld })[view]();
 }
 function hAku() {
-  if (S.sit) return '<div class="stack"><div class="card"><h2>' + esc(S.bench.name) + '</h2><p class="dim">Test and reserve driver · ' + esc(S.teams[S.sit.team].name) + '</p></div>' + reserveFocusHTML() + bodyCardHTML() + tSettings() + '</div>';
-  return '<div class="stack">' + drvCard() + evaluationCardHTML(false) + abilitiesHTML(false) + trainingCardHTML() + tPemandu() + tSettings() + '</div>';
+  if (S.sit) return '<div class="stack"><div class="card"><h2>' + esc(S.bench.name) + '</h2><p class="dim">Test and reserve driver · ' + esc(S.teams[S.sit.team].name) + '</p></div>' + reserveFocusHTML() + bodyCardHTML() + '</div>';
+  return '<div class="' + (S.mode==='pro'?'driver-page':'stack') + '">' + drvCard() + evaluationCardHTML(false) + abilitiesHTML(false) + trainingCardHTML() + tPemandu() + '</div>';
 }
 function hTeam() { if (S.mode === 'pro' && myTeam().spec) return worldJuniorTeamHTML(myTeam()) + tmCardHTML(); return '<div class="stack">' + hPasukan() + (S.sit ? '' : tmCardHTML()) + '</div>'; }
 function careerNudgeHTML() {
@@ -45,7 +45,7 @@ A['hub-section'] = function (d) {
   if (['calendar', 'results', 'standings', 'news', 'history', 'world'].indexOf(d.v) < 0) return;
   UI.musimView = d.v; UI.tab = 'musim'; render(); window.scrollTo(0, 0);
 };
-A['hub-settings'] = function () { selectHubTab('aku'); UI.screen = 'hub'; render(); document.getElementById('career-settings').scrollIntoView({ block: 'start' }); };
+A['hub-settings'] = function () { A.tab({v:'settings'}); };
 A['kal-m'] = function (d) { UI.kalMode = d.v; selectHubTab('kal'); render(); };
 
 ['toggle', 'up', 'auto'].forEach(function (action) {

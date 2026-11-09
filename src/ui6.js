@@ -59,17 +59,18 @@ var ICO = {
   saya: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>'
 };
 function ico(k) { return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>'; }
-ICO.utama = ICO.musim; ICO.musim = ICO.kal; ICO.aku = ICO.saya; ICO.team = ICO.kereta; ICO.kerjaya = ICO.kej;
-var NAV = [['utama', 'Home'], ['musim', 'Season'], ['aku', 'Driver'], ['team', 'Team'], ['kerjaya', 'Career']];
+ICO.utama = ICO.musim; ICO.musim = ICO.kal; ICO.aku = ICO.saya; ICO.team = ICO.kereta; ICO.kerjaya = ICO.kej; ICO.settings = '<path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>';
+var NAV = [['utama', 'Home'], ['musim', 'Season'], ['aku', 'Driver'], ['team', 'Team'], ['kerjaya', 'Career'], ['settings', 'Settings']];
 
 function vHub() {
   selectHubTab(UI.tab);
   if (typeof ensureDev === 'function') ensureDev(S);
-  var nav = NAV.map(function (x) { return '<button class="' + (UI.tab === x[0] ? 'on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + ico(x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
-  var body = ({ utama: function () { return S.sit ? vSit(true) : hUtama(); }, musim: hMusim, aku: hAku, team: hTeam, kerjaya: hKerjaya })[UI.tab]();
+  var navItems = NAV.map(function (x) { return {key:x[0],html: '<button class="' + (UI.tab === x[0] ? 'on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + ico(x[0]) + '<span>' + x[1] + '</span></button>'}; });
+  var nav = navItems.map(function(x){return x.html;}).join(''), mobileNav = navItems.filter(function(x){return x.key!=='settings';}).map(function(x){return x.html;}).join('');
+  var body = ({ utama: function () { return S.sit ? vSit(true) : hUtama(); }, musim: hMusim, aku: hAku, team: hTeam, kerjaya: hKerjaya, settings: hSettings })[UI.tab]();
   return '<div class="hub6"><aside class="snav"><div class="brand">Grid to <b>Glory</b></div><nav>' + nav + '</nav><button class="btn sm" data-act="menu">Main menu</button></aside>' +
     '<main class="hmain"><div class="top htop"><div class="brand">Grid to <b>Glory</b></div><div class="meta"><span>' + hubSeasonHTML() + '</span><button class="btn sm hub-settings" data-act="hub-settings" aria-label="Settings" title="Settings">⚙</button><button class="btn sm" data-act="menu">Menu</button></div></div>' + body + '</main>' +
-    '<nav class="bnav">' + nav + '</nav></div>';
+    '<nav class="bnav">' + mobileNav + '</nav></div>';
 }
 
 function drvCard() {
