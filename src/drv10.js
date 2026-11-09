@@ -181,29 +181,30 @@ function pfAttrs(d) {
     return '<div><span>' + ATTRN[k] + '</span><i><u style="width:' + clamp((v - 45) / 54 * 100, 0, 100) + '%"></u></i><b>' + v + '</b><em class="' + (dl > 0 ? 'up' : dl < 0 ? 'dn' : '') + '">' + (dl > 0 ? '▲' + dl : dl < 0 ? '▼' + (-dl) : '') + '</em></div>';
   }).join('') + '</div>';
 }
-function profileHTML(kind, i) {
-  var d = kind === 'j' ? S.juniors[i] : S.drivers[i]; if (!d) return '';
-  var jr = kind === 'j', t = jr ? null : S.teams[d.team], col = t ? t.color : '#f0b429', o = ovr(d), mine = !jr && d.id === S.pi;
+function profileHTML(kind, i, view) {
+  var g = view || S, foreign = !!view;
+  var d = kind === 'j' ? g.juniors[i] : g.drivers[i]; if (!d) return '';
+  var jr = kind === 'j', t = jr ? null : g.teams[d.team], col = t ? t.color : '#f0b429', o = ovr(d), mine = !jr && (g.playerUid ? d.uid === g.playerUid : d.id === g.pi);
   var potH = (d.age < (d.pk || 28) || jr) && !mine ? '<div class="pf-pot"><small>Scout rating</small>' + starsH(potStars(scoutPot(d))) + '</div>' : '<div class="pf-pot"><small>' + (mine ? 'Growth' : 'Status') + '</small><b>' + (mine ? 'XP-driven' : d.age > (d.pk || 28) + 2 ? 'Veteran' : 'At his peak') + '</b></div>';
-  var h = '<div class="pf" style="--tc:' + col + '"><div class="pf-h"><div class="pf-helm">' + helmetSVG(jr ? Object.assign({}, d, { team: null, id: 500 + i }) : d, 84, false) + '</div><div class="pf-id"><small>' + (jr ? JR_NAME : '<a class="pf-tl" data-act="tprof" data-v="' + t.id + '">' + esc(t.name) + ' ›</a>') + '</small><b>' + esc(d.name) + '</b><span>' + flagE(d.nat) + ' ' + esc(natName(d.nat)) + ' · age ' + d.age + (d.num ? ' · #' + d.num : '') + '</span></div>' +
+  var h = '<div class="pf" style="--tc:' + col + '"><div class="pf-h"><div class="pf-helm">' + helmetSVG(jr ? Object.assign({}, d, { team: null, id: 500 + i }) : d, 84, false) + '</div><div class="pf-id"><small>' + (jr ? JR_NAME : (foreign ? esc(t.name) : '<a class="pf-tl" data-act="tprof" data-v="' + t.id + '">' + esc(t.name) + ' ›</a>')) + '</small><b>' + esc(d.name) + '</b><span>' + flagE(d.nat) + ' ' + esc(natName(d.nat)) + ' · age ' + d.age + (d.num ? ' · #' + d.num : '') + '</span></div>' +
     '<div class="pf-ovr"><b>' + o + '</b><small>OVR</small></div></div>' + potH;
-  h += '<div class="pf-chips"><span class="pf-ty">' + DTYPES[typeOf(d)].n + '</span>' + (!jr && d.lastPerf && d.lastPerf.n ? '<span>Last season: ' + (d.lastPerf.avg > 0.25 ? 'beat expectations' : d.lastPerf.avg < -0.25 ? 'below expectations' : 'as expected') + '</span>' : '') + (!jr && !mine && envMult(S, d) >= 1.05 ? '<span>Strong team environment</span>' : '') + '</div>';
-  if (S.mode === 'pro') h += '<p class="pf-bio">' + esc(worldDriverBio(d)) + '</p>';
+  h += '<div class="pf-chips"><span class="pf-ty">' + DTYPES[typeOf(d)].n + '</span>' + (!jr && d.lastPerf && d.lastPerf.n ? '<span>Last season: ' + (d.lastPerf.avg > 0.25 ? 'beat expectations' : d.lastPerf.avg < -0.25 ? 'below expectations' : 'as expected') + '</span>' : '') + (!jr && !mine && envMult(g, d) >= 1.05 ? '<span>Strong team environment</span>' : '') + '</div>';
+  if (g.mode === 'pro') h += '<p class="pf-bio">' + esc(worldDriverBio(d)) + '</p>';
   else if (d.bio) h += '<p class="pf-bio">' + esc(d.bio) + '</p>'; else if (jr) h += '<p class="pf-bio">' + DTYPES[typeOf(d)].bio + '</p>';
   h += '<h4>Attributes</h4>' + pfAttrs(d);
   if (jr) {
     h += '<h4>' + JR_NAME + '</h4>' + pfTiles([['Seasons', d.jr.seasons], ['Titles', d.jr.titles], ['Wins', d.jr.wins], ['Last year', d.jr.last ? 'P' + d.jr.last : '–']]);
-    h += '<p class="dim" style="font-size:12.5px">Scouts rate him ' + potStars(scoutPot(d)) + '/5, but that is only an estimate. Every team judges him differently.' + (d.gold ? ' <b class="pur">Golden generation.</b>' : '') + '</p>' + (d.acad != null ? '<p class="dim" style="font-size:12.5px">Academy: <a class="pf-tl" style="color:var(--acc)" data-act="tprof" data-v="' + d.acad + '">' + esc(S.teams[d.acad].name) + ' ›</a></p>' : '<p class="dim" style="font-size:12.5px">Independent: not tied to any team yet.</p>');
+    h += '<p class="dim" style="font-size:12.5px">Scouts rate him ' + potStars(scoutPot(d)) + '/5, but that is only an estimate. Every team judges him differently.' + (d.gold ? ' <b class="pur">Golden generation.</b>' : '') + '</p>' + (d.acad != null ? '<p class="dim" style="font-size:12.5px">Academy: <a class="pf-tl" style="color:var(--acc)" data-act="tprof" data-v="' + d.acad + '">' + esc(g.teams[d.acad].name) + ' ›</a></p>' : '<p class="dim" style="font-size:12.5px">Independent: not tied to any team yet.</p>');
   } else {
-    var ds = driverStandings(S), c = careerOf(d);
-    if (typeof conSectionHTML === 'function') h += conSectionHTML(S, d);
-    h += '<h4>Season ' + S.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]) + (typeof pfRaces === 'function' ? pfRaces(d) : '');
+    var ds = driverStandings(g), c = careerOf(d);
+    if (typeof conSectionHTML === 'function') h += conSectionHTML(g, d);
+    h += '<h4>Season ' + g.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]) + (!foreign && typeof pfRaces === 'function' ? pfRaces(d) : '');
     h += '<h4>Career</h4>' + pfTiles([['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles]]);
     var rh = (d.rh || []).map(function (x) { return x.r; }); if (!rh.length || rh[rh.length - 1] !== o) rh = rh.concat([o]);
     if (rh.length >= 2) h += '<h4>Rating trend</h4><div class="pf-spark">' + rateSpark(rh, d.rh || []) + '</div>';
     if (d.sh && d.sh.length) h += '<h4>History</h4><table class="t pf-hist"><thead><tr><th>Season</th><th>Team</th><th class="r">Pos</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>' + d.sh.slice().reverse().map(function (r) { return '<tr><td class="mono">S' + r.s + '</td><td><span class="tag" style="--tc:' + r.tc + '">' + r.t + '</span></td><td class="r mono">P' + r.pos + '</td><td class="r mono">' + r.wins + '</td><td class="r mono">' + r.pts + '</td></tr>'; }).join('') + '</tbody></table>';
   }
-  if (S.mode === 'pro' && d.worldHistory && d.worldHistory.length) h += worldDriverHistoryHTML(d);
+  if (g.mode === 'pro' && d.worldHistory && d.worldHistory.length) h += worldDriverHistoryHTML(d);
   return h + '<button class="btn wide" data-act="mclose">Close</button></div>';
 }
 if (typeof A !== 'undefined') A['prof'] = function (x) { var p = String(x.v).split(':'); showModal(profileHTML(p[0], +p[1])); var m = document.querySelector('#modal .mbox'); if (m) m.classList.add('mbpf'); };

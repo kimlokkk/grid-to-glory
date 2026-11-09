@@ -32,12 +32,13 @@ function hRes() {
   return h;
 }
 A['rs-s'] = function (d) { UI.rsS = +d.v; render(); };
-function rrHTML(i) {
-  var e = (S.rr || [])[i]; if (!e) return '';
+function rrHTML(i, record, teams) {
+  var e = record || (S.rr || [])[i]; if (!e) return '';
+  var tag = function(id){var t=teams&&teams[id];return t?'<span class="tag" style="--tc:'+t.color+'">'+esc(t.short)+'</span>':rrTag(id);};
   var c = CIRCUITS[e.ci], pole = null; e.c.forEach(function (r) { if (r[4] === 1) pole = r; });
   var rows = e.c.map(function (r, k) {
     var gain = r[2] && r[4] ? r[4] - r[2] : null;
-    return '<tr class="' + (r[5] ? 'me' : '') + '"><td class="mono dim">' + (r[2] || '–') + '</td><td>' + rrTag(r[1]) + ' ' + esc(r[0]) + '</td><td class="r mono dim">' + (r[4] || '–') + '</td><td class="r mono ' + (gain > 0 ? 'good' : gain < 0 ? 'bad' : 'dim') + '">' + (gain == null ? '' : gain > 0 ? '▲' + gain : gain < 0 ? '▼' + (-gain) : '–') + '</td><td class="r mono"><b>' + (r[3] || (r[2] ? '' : 'DNF')) + '</b></td></tr>';
+    return '<tr class="' + (r[5] ? 'me' : '') + '"><td class="mono dim">' + (r[2] || '–') + '</td><td>' + tag(r[1]) + ' ' + esc(r[0]) + '</td><td class="r mono dim">' + (r[4] || '–') + '</td><td class="r mono ' + (gain > 0 ? 'good' : gain < 0 ? 'bad' : 'dim') + '">' + (gain == null ? '' : gain > 0 ? '▲' + gain : gain < 0 ? '▼' + (-gain) : '–') + '</td><td class="r mono"><b>' + (r[3] || (r[2] ? '' : 'DNF')) + '</b></td></tr>';
   }).join('');
   return '<div class="stack"><div class="row sp"><div><h3 style="margin:0">' + c.name + '</h3><small class="dim">Season ' + e.s + ' · Round ' + (e.r + 1) + '</small></div>' + flagSVG(e.ci, 34) + '</div>' +
     '<div class="scroll" style="max-height:56vh;overflow-y:auto"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">Grid</th><th class="r">+/-</th><th class="r">Pts</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
@@ -54,7 +55,7 @@ function hRecords() {
   return '<div class="card"><h3 style="margin-bottom:8px">Records</h3><div class="recgrid">' + tbl('Most wins', top(w)) + tbl('Most podiums', top(p)) + '</div><p class="dim" style="font-size:12.5px;margin:8px 0 0">Counted from the races recorded since this feature was added.</p></div>';
 }
 function hHist() {
-  var c = S.career, h = '<div class="card"><h3 style="margin-bottom:8px">Your career</h3><div class="pf-tiles">' + [['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles], ['Points', c.pts]].map(function (x) { return '<div><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('') + '</div></div>';
+  var c = S.career, h = '<div class="season-history"><div class="card"><h3 style="margin-bottom:8px">Your career</h3><div class="pf-tiles">' + [['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles], ['Points', c.pts]].map(function (x) { return '<div><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('') + '</div></div>';
   h += hRecords();
   h += '<div class="card"><h3 style="margin-bottom:8px">Season by season</h3>';
   if (!S.hist.length) h += '<p class="dim" style="margin:0">Your first season is still in progress. Completed seasons appear here.</p>';
@@ -64,7 +65,7 @@ function hHist() {
       return '<tr class="' + (has ? 'clk' : '') + '"' + (has ? ' data-act="hs-open" data-v="' + r.season + '"' : '') + '><td class="mono">S' + r.season + '</td><td><span class="tag" style="--tc:' + r.tcol + '">' + r.team + '</span></td><td class="r mono">' + (r.inactive ? 'Inactive' : 'P' + r.pos) + '</td><td class="r mono">' + r.pts + '</td><td class="r mono">' + (r.wins || 0) + '</td><td class="dim">' + esc(r.inactive ? 'No races' : r.champ || '') + (r.champTeam ? '<br><small>' + esc(r.champTeam) + '</small>' : '') + '</td></tr>';
     }).join('') + '</tbody></table></div><p class="dim" style="font-size:12.5px;margin:8px 0 0">Tap a season with full results to see its final standings.</p>';
   }
-  return h + '</div>';
+  return h + '</div></div>';
 }
 function hsHTML(s) {
   var pts = {}, wins = {}, tm = {};

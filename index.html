@@ -1145,6 +1145,83 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
  .home-bento:not(:has(.home-training)) .home-roadmap { grid-row: auto; }
  .home-bento:not(:has(.home-training)):not(:has(.home-roadmap)) .g-h { grid-column: 1 / -1; }
 }
+/* Tables pass vertical scrolling back to the page, including touch/trackpad gestures. */
+.scroll { overscroll-behavior-y: auto; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
+.season-browse { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin: 14px 0; }
+.season-leagues, .season-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.season-tabs { margin: 12px 0; }
+.season-leagues .btn { min-width: 58px; }
+.season-year { display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 12px; }
+.season-year select { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line2); padding: 10px; border-radius: 10px; }
+.season-note { padding: 12px 14px; margin: 12px 0; font-size: 12px; line-height: 1.65; border-radius: 12px; background: var(--panel2); color: var(--dim); }
+.season-table-card { min-width: 0; padding: 18px; }
+.season-table-card > h3, .season-results > h3 { margin-bottom: 12px; }
+.season-table th { white-space: nowrap; letter-spacing: .06em; }
+.season-table td.r, .season-table th.r, .season-table td:first-child { white-space: nowrap; overflow-wrap: normal; }
+.season-table { min-width: 420px; }
+.season-table td { padding: 10px 6px; }
+.season-driver { display: inline-flex; align-items: center; gap: 9px; background: transparent; border: 0; border-radius: 7px; color: var(--fg); text-align: left; padding: 3px 0; font: 500 13px/1.45 var(--body); cursor: pointer; min-height: 36px; }
+.season-driver svg { flex: none; }
+.season-driver span { min-width: 125px; }
+.season-driver:hover span { color: var(--accDeep); }
+.season-team-name { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.season-team-name svg { flex: none; }
+.season-standings-grid, .season-world, .season-history { display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; }
+.season-history > *, .season-world > * { min-width: 0; }
+.season-history .pf-tiles { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.season-history .pf-tiles small { font-size: 10px; letter-spacing: .04em; }
+.season-history > .card { padding: 20px; border-radius: 18px; }
+.season-history h3 { margin-bottom: 14px !important; }
+.season-history .recgrid { gap: 18px; }
+.season-history .recgrid > div { padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+.season-history .scroll { margin-top: 14px; }
+.season-history table { min-width: 620px; }
+.season-history th { white-space: nowrap; }
+.season-history td { font-size: 12px; }
+.season-empty { color: var(--dim); font-size: 13px; line-height: 1.7; padding: 18px 0; }
+.season-race-list { display: grid; gap: 8px; margin-top: 14px; }
+.season-race { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--fg); background: var(--panel); cursor: pointer; font: inherit; }
+.season-race > span:nth-child(2) { flex: 1; min-width: 0; }
+.season-race b { font-size: 14px; }
+.season-race small { display: block; color: var(--dim); font-size: 12px; margin-top: 5px; }
+.season-retired { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.world-roster { min-width: 480px; }
+@media (min-width: 1100px) {
+ .season-standings-grid { grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); align-items: start; }
+ .season-history { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: stretch; }
+ .season-history > .card:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+ .season-table-card { padding: 12px; }
+ .season-history > .card { padding: 16px; }
+ .season-history .pf-tiles small { font-size: 9px; }
+ .season-history .pf-tiles b { font-size: 22px; }
+ .hub-sections .btn { overflow-wrap: normal; word-break: normal; white-space: nowrap; }
+ .season-tabs .btn { flex: 1; white-space: nowrap; }
+ .mbpf .pf-ovr { flex: none; white-space: nowrap; overflow-wrap: normal; }
+}
+.season-team-name { border: 0; padding: 0; background: none; color: var(--fg); cursor: pointer; text-align: left; font-family: inherit; }
+.world-team-mobile { display: none; }
+.world-roster .season-driver b { font-weight: 500; }
+@media (max-width: 600px) {
+ .season-table { min-width: 0; table-layout: fixed; }
+ .season-table td, .season-table th { padding: 10px 3px; }
+ .season-table th { font-size: 9px; letter-spacing: .02em; }
+ .season-table td.r { font-size: 11px; }
+ .season-table th:first-child { width: 8%; }
+ .season-table th:nth-child(2) { width: 50%; }
+ .season-table th.r { width: 14%; }
+ .teams-table th:nth-child(2) { width: 64%; }
+ .season-driver { gap: 6px; width: 100%; font-size: 12px; }
+ .season-driver svg { width: 24px; height: auto; }
+ .season-driver span { min-width: 0; overflow-wrap: normal; }
+ .world-roster th:first-child { width: 74%; }
+ .world-roster th.r { width: 13%; }
+ .world-team-col { display: none; }
+ .world-team-mobile { display: block; color: var(--dim); font-size: 10px; margin-top: 4px; }
+ .season-team-name { font-size: 12px; gap: 5px; }
+ .season-team-name svg { width: 38px; }
+}
 </style>
 <div id="app"></div><div id="modal"></div>
 <script>
@@ -2061,7 +2138,7 @@ function worldRecord(game,league,v,background){var order=v.drivers.slice().sort(
 function worldSimulate(game,league,fromRound){var v=worldView(game,league),proxy={mode:'pro',worldAI:true,league:league,season:game.season,round:0,teams:v.teams,drivers:v.drivers,pi:-1,world:{era:game.world.era}};proxy.cal=seasonCalendar(proxy);
  v.drivers.forEach(function(d){d.fp=d.fp||[];});
  if(!fromRound){v.drivers.forEach(function(d){d.pts=0;d.wins=0;d.pods=0;d.fp=[];});v.teams.forEach(function(t){t.pts=0;t.wins=0;});}
- for(var i=fromRound||0;i<proxy.cal.length;i++){proxy.round=i;var ci=proxy.cal[i],R=runRace2(proxy,ci,qualiGrid2(proxy,ci)),fastest=R.cars.filter(function(f){return !f.dnf&&f.best<900;}).sort(function(a,b){return a.best-b.best;})[0];R.cls.forEach(function(f){var d=f.d,pts=!f.dnf&&f.pos<=10?PTS[f.pos-1]:0;if(fastest&&fastest.di===f.di){d.fl=(d.fl||0)+1;if(!f.dnf&&f.pos<=10)pts++;}d.pts+=pts;d.starts=(d.starts||0)+1;if(f.grid===1)d.poles=(d.poles||0)+1;if(f.dnf)d.dnf=(d.dnf||0)+1;else{d.fp[f.pos-1]=(d.fp[f.pos-1]||0)+1;if(f.pos===1){d.wins++;v.teams[d.team].wins++;}if(f.pos<=3)d.pods++;}v.teams[d.team].pts+=pts;});}
+ for(var i=fromRound||0;i<proxy.cal.length;i++){proxy.round=i;var ci=proxy.cal[i],R=runRace2(proxy,ci,qualiGrid2(proxy,ci)),fastest=R.cars.filter(function(f){return !f.dnf&&f.best<900;}).sort(function(a,b){return a.best-b.best;})[0];R.cls.forEach(function(f){var d=f.d,pts=!f.dnf&&f.pos<=10?PTS[f.pos-1]:0;if(fastest&&fastest.di===f.di){d.fl=(d.fl||0)+1;if(!f.dnf&&f.pos<=10)pts++;}d.pts+=pts;d.starts=(d.starts||0)+1;if(f.grid===1)d.poles=(d.poles||0)+1;if(f.dnf)d.dnf=(d.dnf||0)+1;else{d.fp[f.pos-1]=(d.fp[f.pos-1]||0)+1;if(f.pos===1){d.wins++;v.teams[d.team].wins++;}if(f.pos<=3)d.pods++;}v.teams[d.team].pts+=pts;});if(typeof seasonRecordBackground==='function')seasonRecordBackground(game,league,i,R,v,fastest);}
  worldRecord(game,league,v,true);
 }
 function worldPrepareAnnual(game){if(game.mode!=='pro'||game.world.prepared===game.season)return;['f3','f2','f1'].forEach(function(l){if(l===leagueOf(game))worldRecord(game,l,worldView(game,l),false);else worldSimulate(game,l);});game.world.prepared=game.season;}
@@ -2106,7 +2183,12 @@ function worldStandIn(game,team){var v=worldView(game,'f2'),d=(game.reserves||[]
 function worldValidate(game){if(game.mode!=='pro'||!game.world)return true;var ids={},player=0;['f1','f2','f3'].forEach(function(l){var v=worldView(game,l),nums={};if(new Set(v.teams.map(function(t){return t.key;})).size!==10)throw new Error('Duplicate/missing team keys');if(v.teams.length!==10||v.drivers.length!==(l==='f3'&&game.world.pendingF3Seats?20:worldGridSize(l)))throw new Error('Invalid '+l+' grid size');v.teams.forEach(function(t){if(v.drivers.filter(function(d){return d.team===t.id;}).length!==(l==='f3'&&game.world.pendingF3Seats?2:worldTeamSeats(l)))throw new Error('Invalid '+l+' team seats');});v.drivers.concat(v.reserves).forEach(function(d){if(!d.uid||ids[d.uid])throw new Error('Duplicate world driver');ids[d.uid]=true;if(d.uid===game.playerUid)player++;if(v.drivers.indexOf(d)>=0){if(d.id!==v.drivers.indexOf(d))throw new Error('Invalid driver slot');if(nums[d.num])throw new Error('Duplicate race number');nums[d.num]=true;}if(!Number.isFinite(d.age)||PROGRESSION.stats.some(function(k){return !Number.isFinite(d[k])||d[k]<35||d[k]>99;}))throw new Error('Invalid driver stats');});});if(game.bench){if(ids[game.bench.uid])throw new Error('Bench driver duplicated');player++;}if(player!==1)throw new Error('Player must exist once');(game.retired||[]).forEach(function(d){if(ids[d.uid])throw new Error('Retired driver still active');});return true;}
 function worldJuniorTeamHTML(t){return '<div class="card stack"><h2>'+esc(t.name)+'</h2><p>'+flagE(t.nat)+' '+esc(t.base)+' · Est. '+t.founded+'</p><p>'+esc(t.blurb)+'</p><p>Shared '+t.spec.toUpperCase()+' car specification. Differences come from setup, crew and driver development.</p><div class="chips">'+chip('Setup',Math.round(t.ops.setup*100))+chip('Crew',Math.round(t.ops.crew*100))+chip('Coaching',Math.round(t.ops.coaching*100))+'</div><p class="dim">Team season cost estimate: '+payTxt(t.seasonCost)+'. Academy partners: '+(t.academyLinks.length?t.academyLinks.map(function(i){return TEAMS[i].name;}).join(', '):'Independent')+'.</p><button class="btn sm" data-act="tab" data-v="musim">View season</button></div>';}
 function hWorld(){return '<div class="stack">'+['f1','f2','f3'].map(function(l){var v=worldView(S,l);return '<div class="card"><h3>'+l.toUpperCase()+' · '+v.drivers.length+' drivers</h3><div class="scroll"><table class="t"><thead><tr><th>Team</th><th>Driver</th><th>Age</th><th>Rating</th></tr></thead><tbody>'+v.drivers.map(function(d){return '<tr><td>'+esc(v.teams[d.team].name)+'</td><td><button class="btn sm" data-act="world-driver" data-v="'+d.uid+'">'+flagE(d.nat)+' '+esc(d.name)+'</button></td><td>'+d.age+'</td><td>'+ovr(d)+'</td></tr>';}).join('')+'</tbody></table></div></div>';}).join('')+'<div class="card"><details><summary>Retired &amp; departed drivers</summary>'+ (S.retired||[]).map(function(d){return '<button class="btn sm" data-act="world-driver" data-v="'+d.uid+'">'+esc(d.name)+'</button>';}).join('')+'</details></div></div>';}
-function worldDriverModal(uid){var d=S.drivers.concat(S.reserves||[],worldPeople(S),S.retired||[],S.bench?[S.bench]:[]).filter(function(x){return x.uid===uid;})[0];if(!d)return;showModal('<h2>'+esc(d.name)+'</h2><p>'+flagE(d.nat)+' '+natName(d.nat)+' · age '+d.age+'</p><p>'+esc(worldDriverBio(d))+'</p>'+worldDriverHistoryHTML(d)+'<button class="btn wide" data-act="mclose">Close</button>');}
+function worldDriverModal(uid){
+ var active=S.drivers.findIndex(function(d){return d.uid===uid;});if(active>=0){A.prof({v:'d:'+active});return;}
+ var found=null;['f1','f2','f3'].some(function(l){var v=worldView(S,l),i=v.drivers.findIndex(function(d){return d.uid===uid;});if(i<0)return false;found={v:v,i:i,l:l};return true;});
+ if(found){var g=Object.assign({},S,{league:found.l,teams:found.v.teams,drivers:found.v.drivers,pi:-1,playerUid:null});showModal(profileHTML('d',found.i,g));var box=document.querySelector('#modal .mbox');if(box)box.classList.add('mbpf');return;}
+ var d=(S.reserves||[]).concat(worldPeople(S),S.retired||[],S.bench?[S.bench]:[]).find(function(d){return d.uid===uid;});if(d)showModal('<h2>'+esc(d.name)+'</h2><p>'+flagE(d.nat)+' '+natName(d.nat)+' · age '+d.age+'</p><h4>Attributes</h4>'+pfAttrs(d)+'<p>'+esc(worldDriverBio(d))+'</p>'+worldDriverHistoryHTML(d)+'<button class="btn wide" data-act="mclose">Close</button>');
+}
 
 function worldJuniorEconomy(v,season){ v.teams.forEach(function(t){t.car=worldSpec(t.spec);t.ops=t.ops||{setup:.5,crew:.5,coaching:.5};Object.keys(t.ops).forEach(function(k){t.ops[k]=clamp(t.ops[k]+gauss()*.035+(t.budget&&t.budget.balance<-1?-.025:t.budget&&t.budget.balance>1?.01:0),.2,.95);});t.developmentSupport=t.ops.coaching;t.budget=t.budget||{balance:0,history:[]};var income=t.seasonCost*worldTeamSeats(t.spec),spent=income*rr(.85,1.1);t.budget.balance=clamp(t.budget.balance+income-spent,-2,4);t.budget.history.push({season:season,income:income,spent:spent,balance:t.budget.balance});t.budget.history=t.budget.history.slice(-12);});}
 function worldEnterJunior(game){
@@ -6679,29 +6761,30 @@ function pfAttrs(d) {
     return '<div><span>' + ATTRN[k] + '</span><i><u style="width:' + clamp((v - 45) / 54 * 100, 0, 100) + '%"></u></i><b>' + v + '</b><em class="' + (dl > 0 ? 'up' : dl < 0 ? 'dn' : '') + '">' + (dl > 0 ? '▲' + dl : dl < 0 ? '▼' + (-dl) : '') + '</em></div>';
   }).join('') + '</div>';
 }
-function profileHTML(kind, i) {
-  var d = kind === 'j' ? S.juniors[i] : S.drivers[i]; if (!d) return '';
-  var jr = kind === 'j', t = jr ? null : S.teams[d.team], col = t ? t.color : '#f0b429', o = ovr(d), mine = !jr && d.id === S.pi;
+function profileHTML(kind, i, view) {
+  var g = view || S, foreign = !!view;
+  var d = kind === 'j' ? g.juniors[i] : g.drivers[i]; if (!d) return '';
+  var jr = kind === 'j', t = jr ? null : g.teams[d.team], col = t ? t.color : '#f0b429', o = ovr(d), mine = !jr && (g.playerUid ? d.uid === g.playerUid : d.id === g.pi);
   var potH = (d.age < (d.pk || 28) || jr) && !mine ? '<div class="pf-pot"><small>Scout rating</small>' + starsH(potStars(scoutPot(d))) + '</div>' : '<div class="pf-pot"><small>' + (mine ? 'Growth' : 'Status') + '</small><b>' + (mine ? 'XP-driven' : d.age > (d.pk || 28) + 2 ? 'Veteran' : 'At his peak') + '</b></div>';
-  var h = '<div class="pf" style="--tc:' + col + '"><div class="pf-h"><div class="pf-helm">' + helmetSVG(jr ? Object.assign({}, d, { team: null, id: 500 + i }) : d, 84, false) + '</div><div class="pf-id"><small>' + (jr ? JR_NAME : '<a class="pf-tl" data-act="tprof" data-v="' + t.id + '">' + esc(t.name) + ' ›</a>') + '</small><b>' + esc(d.name) + '</b><span>' + flagE(d.nat) + ' ' + esc(natName(d.nat)) + ' · age ' + d.age + (d.num ? ' · #' + d.num : '') + '</span></div>' +
+  var h = '<div class="pf" style="--tc:' + col + '"><div class="pf-h"><div class="pf-helm">' + helmetSVG(jr ? Object.assign({}, d, { team: null, id: 500 + i }) : d, 84, false) + '</div><div class="pf-id"><small>' + (jr ? JR_NAME : (foreign ? esc(t.name) : '<a class="pf-tl" data-act="tprof" data-v="' + t.id + '">' + esc(t.name) + ' ›</a>')) + '</small><b>' + esc(d.name) + '</b><span>' + flagE(d.nat) + ' ' + esc(natName(d.nat)) + ' · age ' + d.age + (d.num ? ' · #' + d.num : '') + '</span></div>' +
     '<div class="pf-ovr"><b>' + o + '</b><small>OVR</small></div></div>' + potH;
-  h += '<div class="pf-chips"><span class="pf-ty">' + DTYPES[typeOf(d)].n + '</span>' + (!jr && d.lastPerf && d.lastPerf.n ? '<span>Last season: ' + (d.lastPerf.avg > 0.25 ? 'beat expectations' : d.lastPerf.avg < -0.25 ? 'below expectations' : 'as expected') + '</span>' : '') + (!jr && !mine && envMult(S, d) >= 1.05 ? '<span>Strong team environment</span>' : '') + '</div>';
-  if (S.mode === 'pro') h += '<p class="pf-bio">' + esc(worldDriverBio(d)) + '</p>';
+  h += '<div class="pf-chips"><span class="pf-ty">' + DTYPES[typeOf(d)].n + '</span>' + (!jr && d.lastPerf && d.lastPerf.n ? '<span>Last season: ' + (d.lastPerf.avg > 0.25 ? 'beat expectations' : d.lastPerf.avg < -0.25 ? 'below expectations' : 'as expected') + '</span>' : '') + (!jr && !mine && envMult(g, d) >= 1.05 ? '<span>Strong team environment</span>' : '') + '</div>';
+  if (g.mode === 'pro') h += '<p class="pf-bio">' + esc(worldDriverBio(d)) + '</p>';
   else if (d.bio) h += '<p class="pf-bio">' + esc(d.bio) + '</p>'; else if (jr) h += '<p class="pf-bio">' + DTYPES[typeOf(d)].bio + '</p>';
   h += '<h4>Attributes</h4>' + pfAttrs(d);
   if (jr) {
     h += '<h4>' + JR_NAME + '</h4>' + pfTiles([['Seasons', d.jr.seasons], ['Titles', d.jr.titles], ['Wins', d.jr.wins], ['Last year', d.jr.last ? 'P' + d.jr.last : '–']]);
-    h += '<p class="dim" style="font-size:12.5px">Scouts rate him ' + potStars(scoutPot(d)) + '/5, but that is only an estimate. Every team judges him differently.' + (d.gold ? ' <b class="pur">Golden generation.</b>' : '') + '</p>' + (d.acad != null ? '<p class="dim" style="font-size:12.5px">Academy: <a class="pf-tl" style="color:var(--acc)" data-act="tprof" data-v="' + d.acad + '">' + esc(S.teams[d.acad].name) + ' ›</a></p>' : '<p class="dim" style="font-size:12.5px">Independent: not tied to any team yet.</p>');
+    h += '<p class="dim" style="font-size:12.5px">Scouts rate him ' + potStars(scoutPot(d)) + '/5, but that is only an estimate. Every team judges him differently.' + (d.gold ? ' <b class="pur">Golden generation.</b>' : '') + '</p>' + (d.acad != null ? '<p class="dim" style="font-size:12.5px">Academy: <a class="pf-tl" style="color:var(--acc)" data-act="tprof" data-v="' + d.acad + '">' + esc(g.teams[d.acad].name) + ' ›</a></p>' : '<p class="dim" style="font-size:12.5px">Independent: not tied to any team yet.</p>');
   } else {
-    var ds = driverStandings(S), c = careerOf(d);
-    if (typeof conSectionHTML === 'function') h += conSectionHTML(S, d);
-    h += '<h4>Season ' + S.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]) + (typeof pfRaces === 'function' ? pfRaces(d) : '');
+    var ds = driverStandings(g), c = careerOf(d);
+    if (typeof conSectionHTML === 'function') h += conSectionHTML(g, d);
+    h += '<h4>Season ' + g.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]) + (!foreign && typeof pfRaces === 'function' ? pfRaces(d) : '');
     h += '<h4>Career</h4>' + pfTiles([['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles]]);
     var rh = (d.rh || []).map(function (x) { return x.r; }); if (!rh.length || rh[rh.length - 1] !== o) rh = rh.concat([o]);
     if (rh.length >= 2) h += '<h4>Rating trend</h4><div class="pf-spark">' + rateSpark(rh, d.rh || []) + '</div>';
     if (d.sh && d.sh.length) h += '<h4>History</h4><table class="t pf-hist"><thead><tr><th>Season</th><th>Team</th><th class="r">Pos</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>' + d.sh.slice().reverse().map(function (r) { return '<tr><td class="mono">S' + r.s + '</td><td><span class="tag" style="--tc:' + r.tc + '">' + r.t + '</span></td><td class="r mono">P' + r.pos + '</td><td class="r mono">' + r.wins + '</td><td class="r mono">' + r.pts + '</td></tr>'; }).join('') + '</tbody></table>';
   }
-  if (S.mode === 'pro' && d.worldHistory && d.worldHistory.length) h += worldDriverHistoryHTML(d);
+  if (g.mode === 'pro' && d.worldHistory && d.worldHistory.length) h += worldDriverHistoryHTML(d);
   return h + '<button class="btn wide" data-act="mclose">Close</button></div>';
 }
 if (typeof A !== 'undefined') A['prof'] = function (x) { var p = String(x.v).split(':'); showModal(profileHTML(p[0], +p[1])); var m = document.querySelector('#modal .mbox'); if (m) m.classList.add('mbpf'); };
@@ -8404,12 +8487,13 @@ function hRes() {
   return h;
 }
 A['rs-s'] = function (d) { UI.rsS = +d.v; render(); };
-function rrHTML(i) {
-  var e = (S.rr || [])[i]; if (!e) return '';
+function rrHTML(i, record, teams) {
+  var e = record || (S.rr || [])[i]; if (!e) return '';
+  var tag = function(id){var t=teams&&teams[id];return t?'<span class="tag" style="--tc:'+t.color+'">'+esc(t.short)+'</span>':rrTag(id);};
   var c = CIRCUITS[e.ci], pole = null; e.c.forEach(function (r) { if (r[4] === 1) pole = r; });
   var rows = e.c.map(function (r, k) {
     var gain = r[2] && r[4] ? r[4] - r[2] : null;
-    return '<tr class="' + (r[5] ? 'me' : '') + '"><td class="mono dim">' + (r[2] || '–') + '</td><td>' + rrTag(r[1]) + ' ' + esc(r[0]) + '</td><td class="r mono dim">' + (r[4] || '–') + '</td><td class="r mono ' + (gain > 0 ? 'good' : gain < 0 ? 'bad' : 'dim') + '">' + (gain == null ? '' : gain > 0 ? '▲' + gain : gain < 0 ? '▼' + (-gain) : '–') + '</td><td class="r mono"><b>' + (r[3] || (r[2] ? '' : 'DNF')) + '</b></td></tr>';
+    return '<tr class="' + (r[5] ? 'me' : '') + '"><td class="mono dim">' + (r[2] || '–') + '</td><td>' + tag(r[1]) + ' ' + esc(r[0]) + '</td><td class="r mono dim">' + (r[4] || '–') + '</td><td class="r mono ' + (gain > 0 ? 'good' : gain < 0 ? 'bad' : 'dim') + '">' + (gain == null ? '' : gain > 0 ? '▲' + gain : gain < 0 ? '▼' + (-gain) : '–') + '</td><td class="r mono"><b>' + (r[3] || (r[2] ? '' : 'DNF')) + '</b></td></tr>';
   }).join('');
   return '<div class="stack"><div class="row sp"><div><h3 style="margin:0">' + c.name + '</h3><small class="dim">Season ' + e.s + ' · Round ' + (e.r + 1) + '</small></div>' + flagSVG(e.ci, 34) + '</div>' +
     '<div class="scroll" style="max-height:56vh;overflow-y:auto"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">Grid</th><th class="r">+/-</th><th class="r">Pts</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
@@ -8426,7 +8510,7 @@ function hRecords() {
   return '<div class="card"><h3 style="margin-bottom:8px">Records</h3><div class="recgrid">' + tbl('Most wins', top(w)) + tbl('Most podiums', top(p)) + '</div><p class="dim" style="font-size:12.5px;margin:8px 0 0">Counted from the races recorded since this feature was added.</p></div>';
 }
 function hHist() {
-  var c = S.career, h = '<div class="card"><h3 style="margin-bottom:8px">Your career</h3><div class="pf-tiles">' + [['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles], ['Points', c.pts]].map(function (x) { return '<div><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('') + '</div></div>';
+  var c = S.career, h = '<div class="season-history"><div class="card"><h3 style="margin-bottom:8px">Your career</h3><div class="pf-tiles">' + [['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles], ['Points', c.pts]].map(function (x) { return '<div><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('') + '</div></div>';
   h += hRecords();
   h += '<div class="card"><h3 style="margin-bottom:8px">Season by season</h3>';
   if (!S.hist.length) h += '<p class="dim" style="margin:0">Your first season is still in progress. Completed seasons appear here.</p>';
@@ -8436,7 +8520,7 @@ function hHist() {
       return '<tr class="' + (has ? 'clk' : '') + '"' + (has ? ' data-act="hs-open" data-v="' + r.season + '"' : '') + '><td class="mono">S' + r.season + '</td><td><span class="tag" style="--tc:' + r.tcol + '">' + r.team + '</span></td><td class="r mono">' + (r.inactive ? 'Inactive' : 'P' + r.pos) + '</td><td class="r mono">' + r.pts + '</td><td class="r mono">' + (r.wins || 0) + '</td><td class="dim">' + esc(r.inactive ? 'No races' : r.champ || '') + (r.champTeam ? '<br><small>' + esc(r.champTeam) + '</small>' : '') + '</td></tr>';
     }).join('') + '</tbody></table></div><p class="dim" style="font-size:12.5px;margin:8px 0 0">Tap a season with full results to see its final standings.</p>';
   }
-  return h + '</div>';
+  return h + '</div></div>';
 }
 function hsHTML(s) {
   var pts = {}, wins = {}, tm = {};
@@ -9545,4 +9629,29 @@ showModal=function(h){contentOldModal(h);polishA11y(document.getElementById('mod
 function playbackOptionsHTML(){return '<div class="stack"><h2>Race playback</h2><p>Fast and Highlights skip mini-games. Your enabled pit decisions and selected resource controls stay in effect.</p><div class="row">'+[1,2,4].map(function(v){return '<button class="btn" data-act="r-spd" data-v="'+v+'">'+v+'× live</button>';}).join('')+'</div><button class="btn" data-act="r-fast">Fast</button><button class="btn" data-act="r-highlights">Highlights</button><button class="btn" data-act="mclose">Close</button></div>';}
 A['r-playback']=function(){if(!RUN)return;stopRace();paintPanels(true);showModal(playbackOptionsHTML());};
 ['r-spd','r-fast','r-highlights'].forEach(function(k){var old=A[k];A[k]=function(d){if(document.querySelector('#modal [data-act="r-highlights"]'))closeModal();return old(d||{});};});
+'use strict';
+/* Season browsing is read-only; background championships still settle annually. */
+function seasonBrowseLeague(){return ['f1','f2','f3'].indexOf(UI.seasonLeague)>=0?UI.seasonLeague:leagueOf(S);}
+function seasonPeople(){var seen={};return S.drivers.concat(worldPeople(S),S.retired||[]).filter(function(d){if(seen[d.uid])return false;seen[d.uid]=true;return true;});}
+function seasonRaceRows(){var seen={};return (S.rr||[]).concat(S.world.raceResults||[]).filter(function(e){var l=e.league||progressionPlayer(S).legacyLeague||leagueOf(S),k=l+':'+e.s+':'+e.r;if(seen[k])return false;seen[k]=true;return l===seasonBrowseLeague();});}
+function seasonYears(){var l=seasonBrowseLeague(),years=[S.season];seasonPeople().forEach(function(d){(d.worldHistory||[]).forEach(function(r){if(r.league===l&&years.indexOf(r.season)<0)years.push(r.season);});});seasonRaceRows().forEach(function(r){if(years.indexOf(r.s)<0)years.push(r.s);});return years.sort(function(a,b){return b-a;});}
+function seasonBrowseYear(){var years=seasonYears();return years.indexOf(UI.seasonYear)>=0?UI.seasonYear:S.season;}
+function seasonBrowseControls(years){var l=seasonBrowseLeague();return '<div class="season-browse"><div class="season-leagues" role="group" aria-label="Championship">'+['f1','f2','f3'].map(function(x){return '<button class="btn sm '+(x===l?'on':'')+'" data-act="season-league" data-v="'+x+'" aria-pressed="'+(x===l)+'">'+x.toUpperCase()+'</button>';}).join('')+'</div>'+(years?'<label class="season-year">Season <select data-season-year aria-label="Season">'+seasonYears().map(function(y){return '<option value="'+y+'"'+(y===seasonBrowseYear()?' selected':'')+'>'+y+(y===S.season?' · current':'')+'</option>';}).join('')+'</select></label>':'')+'</div>';}
+function seasonBrowseNote(){var l=seasonBrowseLeague(),year=seasonBrowseYear();return '<p class="season-note">'+(year!==S.season?'Recorded '+l.toUpperCase()+' standings · Season '+year+'. Driver ratings shown are current.':l===leagueOf(S)?'Your championship · '+S.round+' / '+seasonRounds(S)+' rounds completed.':S.world.prepared===S.season?'Background championship complete for this season.':'Background championship: results are settled at the end of your season. Live race-by-race progress is not simulated.')+'</p>';}
+A['season-league']=function(d){if(['f1','f2','f3'].indexOf(d.v)<0)return;UI.seasonLeague=d.v;UI.seasonYear=S.season;render();};
+document.addEventListener('change',function(e){if(e.target.matches('[data-season-year]')){UI.seasonYear=+e.target.value;render();}});
+function seasonStandingsRows(){var l=seasonBrowseLeague(),year=seasonBrowseYear(),v=worldView(S,l);if(year===S.season)return driverStandings(v).map(function(d,i){return {d:d,team:v.teams[d.team],pos:i+1,pts:d.pts,wins:d.wins};});return seasonPeople().map(function(d){var r=(d.worldHistory||[]).find(function(r){return r.season===year&&r.league===l;});return r&&r.pos?{d:d,team:v.teams.find(function(t){return t.key===r.teamKey;}),pos:r.pos,pts:r.points,wins:r.wins||0}:null;}).filter(Boolean).sort(function(a,b){return a.pos-b.pos;});}
+function seasonStandingsCard(teams){var rows=seasonStandingsRows(),list=rows;if(teams){var by={};rows.forEach(function(r){if(!r.team)return;var t=by[r.team.key]=by[r.team.key]||{team:r.team,pts:0,wins:0};t.pts+=r.pts||0;t.wins+=r.wins||0;});list=seasonBrowseYear()===S.season?teamStandings(worldView(S,seasonBrowseLeague())).map(function(t){return {team:t,pts:t.pts,wins:t.wins};}):Object.keys(by).map(function(k){return by[k];}).sort(function(a,b){return b.pts-a.pts||b.wins-a.wins||a.team.id-b.team.id;});}
+ return '<section class="card season-table-card"><h3>'+seasonBrowseLeague().toUpperCase()+' · '+(teams?'Teams':'Drivers')+'</h3>'+(!list.length?'<p class="season-empty">No standings were recorded for this season.</p>':'<div class="scroll"><table class="t season-table '+(teams?'teams-table':'')+'"><thead><tr><th>#</th><th>'+(teams?'Team':'Driver')+'</th>'+(!teams?'<th class="r">OVR</th>':'')+'<th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>'+list.map(function(r,i){var mine=!teams&&r.d.uid===S.playerUid;return '<tr'+(mine?' class="me"':'')+'><td class="mono dim">'+(teams?i+1:r.pos)+'</td><td>'+(teams?'<button class="season-team-name" data-act="season-team" data-v="'+r.team.id+'">'+carSVG(r.team,50)+'<span>'+esc(r.team.name)+'</span></button>':'<button class="season-driver" data-act="world-driver" data-v="'+r.d.uid+'">'+avatarSVG(r.d,28)+'<span>'+esc(r.d.name)+'</span></button>')+'</td>'+(!teams?'<td class="r mono">'+ovr(r.d)+'</td>':'')+'<td class="r mono">'+r.wins+'</td><td class="r mono"><b>'+r.pts+'</b></td></tr>';}).join('')+'</tbody></table></div>')+'</section>';}
+hKed=function(){if(S.mode!=='pro')return hKed1();var wide=WIDE.matches,m=UI.kedMode||'p';if(m==='j')m='p';if(wide&&m==='t')m='p';var tabs=wide?[['p','Standings'],['pf','Profiles']]:[['p','Drivers'],['t','Teams'],['pf','Profiles']];var nav='<div class="season-tabs" role="group" aria-label="Standings views">'+tabs.map(function(x){return '<button class="btn sm '+(x[0]===m?'on':'')+'" data-act="ked-m" data-v="'+x[0]+'" aria-pressed="'+(x[0]===m)+'">'+x[1]+'</button>';}).join('')+'</div>';return nav+(m==='pf'?'<p class="season-note">Current roster. Open a driver to review attributes, contracts and career history.</p>':seasonBrowseNote())+(m==='pf'?seasonRosterHTML():wide?'<div class="season-standings-grid">'+seasonStandingsCard(false)+seasonStandingsCard(true)+'</div>':seasonStandingsCard(m==='t'));};
+function seasonRosterHTML(){var l=seasonBrowseLeague(),v=worldView(S,l);return '<section class="card season-table-card"><div class="row sp"><h3>'+l.toUpperCase()+' · '+v.drivers.length+' drivers</h3><span class="dim">Current roster</span></div><div class="scroll"><table class="t season-table world-roster"><thead><tr><th>Driver</th><th class="world-team-col">Team</th><th class="r">Age</th><th class="r">OVR</th></tr></thead><tbody>'+v.drivers.map(function(d){return '<tr><td><button class="season-driver" data-act="world-driver" data-v="'+d.uid+'">'+avatarSVG(d,28)+'<span><b>'+esc(d.name)+'</b><small class="world-team-mobile">'+esc(v.teams[d.team].name)+'</small></span></button></td><td class="world-team-col">'+esc(v.teams[d.team].name)+'</td><td class="r mono">'+d.age+'</td><td class="r mono">'+ovr(d)+'</td></tr>';}).join('')+'</tbody></table></div></section>';}
+hWorld=function(){return '<div class="season-world">'+seasonRosterHTML()+'<section class="card"><details><summary>Retired &amp; departed drivers</summary><div class="season-retired">'+(S.retired||[]).map(function(d){return '<button class="btn sm" data-act="world-driver" data-v="'+d.uid+'">'+esc(d.name)+'</button>';}).join('')+(!(S.retired||[]).length?'<p class="dim">No departed drivers recorded yet.</p>':'')+'</div></details></section></div>';};
+var seasonOldResults=hRes;
+hRes=function(){if(S.mode!=='pro')return seasonOldResults();var y=seasonBrowseYear(),list=seasonRaceRows().filter(function(r){return r.s===y;}).sort(function(a,b){return a.r-b.r;});return seasonBrowseNote()+'<section class="card season-results"><h3>'+seasonBrowseLeague().toUpperCase()+' · Race results · S'+y+'</h3>'+(!list.length?'<p class="season-empty">No full race classifications recorded here yet. Background races will be saved when this season is settled; older seasons may only contain final season standings.</p><button class="btn sm" data-act="hub-section" data-v="standings">View standings →</button>':'<div class="season-race-list">'+list.map(function(e){return '<button class="season-race" data-act="season-race" data-v="'+e.s+':'+e.r+'"><span class="home-tag">R'+(e.r+1)+'</span><span><b>'+esc(CIRCUITS[e.ci].name)+'</b><small>Winner: '+esc(e.c[0][0])+'</small></span><span aria-hidden="true">→</span></button>';}).join('')+'</div>')+'</section>';};
+A['season-race']=function(d){var e=seasonRaceRows().find(function(e){return e.s+':'+e.r===d.v;});if(e)showModal(rrHTML(0,e,e.teams||worldView(S,e.league||leagueOf(S)).teams));};
+function seasonRecordBackground(g,l,r,R,v,fastest){var key=l+':'+g.season+':'+r,all=g.world.raceResults||[];if(all.some(function(e){return e.key===key;}))return;all.push({key:key,league:l,s:g.season,r:r,ci:R.ci,fl:fastest?fastest.d.name:null,teams:v.teams.map(function(t){return {color:t.color,short:t.short};}),c:R.cls.map(function(f){var pts=!f.dnf&&f.pos<=10?PTS[f.pos-1]:0;if(fastest&&fastest.di===f.di&&!f.dnf&&f.pos<=10)pts++;return [f.d.name,f.d.team,f.dnf?0:f.pos,pts,f.grid,0,f.d.nat,f.d.uid];})});g.world.raceResults=all.slice(-400);}
+var seasonOldMusim=hMusim;
+hMusim=function(){var h=seasonOldMusim();if(S.mode!=='pro'||['standings','results','world'].indexOf(UI.musimView)<0)return h;var pos=h.indexOf('</div>')+6;return h.slice(0,pos)+seasonBrowseControls(UI.musimView==='results'||UI.musimView==='standings'&&UI.kedMode!=='pf')+h.slice(pos);};
+
+A['season-team']=function(x){var l=seasonBrowseLeague(),v=worldView(S,l),t=v.teams[+x.v];if(!t)return;if(l===leagueOf(S)&&l==='f1'){A.tprof({v:x.v});return;}var drivers=v.drivers.filter(function(d){return d.team===t.id;}).map(function(d){return '<button class="btn sm" data-act="world-driver" data-v="'+d.uid+'">'+esc(d.name)+'</button>';}).join('');showModal((t.spec?juniorOldTeam(t):'<div class="pf" style="--tc:'+t.color+'"><h2>'+esc(t.name)+'</h2>'+carSVG(t,280)+pfTiles([['Points',t.pts],['Wins',t.wins]])+'</div>')+'<h4>Drivers</h4><div class="season-retired">'+drivers+'</div><button class="btn wide" data-act="mclose">Close</button>');};
 </script>

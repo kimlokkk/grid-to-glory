@@ -59,7 +59,8 @@ const {chromium}=require('playwright');const {assert}=require('./flow');const {p
   fresh('f3');S.round=8;S.drivers[0].pts=100;endSeason(S);worldRecord(S,'f3',worldView(S,'f3'),false);const activeChampion=S.world.champions.f3;['f1','f2'].forEach(l=>worldRecord(S,l,worldView(S,l),false));S.world.prepared=S.season;startNewSeason(S,null,1);
   check('active F3 AI champion also progresses to F2 while human stays protected',worldView(S,'f2').drivers.some(d=>d.uid===activeChampion)&&me().age===17&&worldValidate(S));
   S.settings.style='expert';S.settings.tips=false;UI.screen='hub';UI.tab='musim';UI.musimView='world';render();closeModal();
-  check('320px World screen exposes all three rosters in English without page overflow',document.body.textContent.includes('F1 · 20 drivers')&&document.body.textContent.includes('F2 · 20 drivers')&&document.body.textContent.includes('F3 · 30 drivers')&&document.documentElement.scrollWidth<=320);
+  const leagueViews=['f1','f2','f3'].every(l=>{UI.seasonLeague=l;render();return document.body.textContent.includes(l.toUpperCase()+' · '+(l==='f3'?30:20)+' drivers')&&document.querySelectorAll('[data-act=season-league]').length===3&&document.documentElement.scrollWidth<=320;});
+  check('320px World exposes each league roster through its selector without page overflow',leagueViews);
   return rows;
  },{fixtures,legacyPro});rows.forEach(r=>console.log(r.pass?'PASS':'FAIL',r.name,!r.pass&&r.data?JSON.stringify(r.data):''));console.log('ERRS',JSON.stringify(errors));assert.equal(errors.length,0);assert.equal(rows.filter(r=>!r.pass).length,0);
  }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
