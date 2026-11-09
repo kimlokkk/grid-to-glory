@@ -21,7 +21,8 @@ function hMusim() {
 }
 function hAku() {
   if (S.sit) return '<div class="stack"><div class="card"><h2>' + esc(S.bench.name) + '</h2><p class="dim">Test and reserve driver · ' + esc(S.teams[S.sit.team].name) + '</p></div>' + reserveFocusHTML() + bodyCardHTML() + '</div>';
-  return '<div class="' + (S.mode==='pro'?'driver-page':'stack') + '">' + drvCard() + evaluationCardHTML(false) + abilitiesHTML(false) + trainingCardHTML() + tPemandu() + '</div>';
+  if(S.mode==='pro')return '<div class="driver-page"><div class="bento-column">'+drvCard()+evaluationCardHTML(false)+trainingCardHTML()+'</div><div class="bento-column">'+tPemandu(true)+abilitiesHTML(false)+bodyCardHTML()+'</div></div>';
+  return '<div class="stack">'+drvCard()+evaluationCardHTML(false)+abilitiesHTML(false)+trainingCardHTML()+tPemandu()+'</div>';
 }
 function hTeam() { if (S.mode === 'pro' && myTeam().spec) return worldJuniorTeamHTML(myTeam()) + tmCardHTML(); return '<div class="stack">' + hPasukan() + (S.sit ? '' : tmCardHTML()) + '</div>'; }
 function careerNudgeHTML() {

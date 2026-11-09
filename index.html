@@ -1224,12 +1224,12 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
 }
 /* Driver: short explanations, visible status, optional technical detail. */
 .driver-page { display: grid; grid-template-columns: minmax(0,1fr); grid-template-areas: "identity" "performance" "skills" "training" "care" "abilities"; gap: 16px; align-items: start; }
-.driver-page > .dcard { grid-area: identity; }
-.driver-page > #performance-review { grid-area: performance; }
-.driver-page > #ability-loadout { grid-area: abilities; }
-.driver-page > #training-plan { grid-area: training; }
-.driver-page > .driver-skills { grid-area: skills; }
-.driver-page > #fitness-care { grid-area: care; }
+.driver-page .dcard { grid-area: identity; }
+.driver-page #performance-review { grid-area: performance; }
+.driver-page #ability-loadout { grid-area: abilities; }
+.driver-page #training-plan { grid-area: training; }
+.driver-page .driver-skills { grid-area: skills; }
+.driver-page #fitness-care { grid-area: care; }
 .driver-page > * { min-width: 0; }
 .driver-panel { padding: 20px; border-radius: 18px; display: flex; flex-direction: column; gap: 14px; }
 .driver-panel .home-card-head h2 { font-size: 22px; }
@@ -1308,7 +1308,8 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
 .settings-page .btn { min-height: 42px; overflow-wrap: normal; word-break: normal; line-height: 1.4; }
 .settings-page p { font-size: 13px; line-height: 1.7; }
 @media (min-width: 1100px) {
- .driver-page { grid-template-columns: minmax(0,1fr) minmax(0,1fr); grid-template-areas: "identity skills" "performance skills" "abilities training" "care care"; grid-template-rows: min-content auto auto auto; }
+ .driver-page { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-areas: none; }
+ .driver-page .bento-column > * { grid-area: auto; }
  .fitness-layout { grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); align-items: center; }
  .settings-page { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
 }
@@ -1319,7 +1320,7 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
  .mind-metrics .driver-metric { padding: 10px 7px; }
  .mind-metrics .driver-metric > small { font-size: 10px; }
  .settings-page > .card { padding: 16px; }
- .driver-page > .dcard { height: auto; }
+ .driver-page .dcard { height: auto; }
 }
 
 .settings-page [data-act="onb-style"][aria-pressed="true"] { background: var(--accSoft); color: var(--accDeep); border-color: var(--acc); }
@@ -1442,6 +1443,16 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
 /* Career HQ: contracts and opportunity signals, without a wall of text. */
 .career-hq { display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; align-items: start; }
 .career-hq > * { min-width: 0; }
+.bento-column { display: contents; }
+.career-hq .career-hero { order: 1; }
+.career-hq .career-wallet { order: 2; }
+.career-market { order: 3; }
+.career-hq .career-scouts { order: 4; }
+.career-hq .career-academy { order: 5; }
+.career-hq .career-sponsors { order: 6; }
+.career-hq .career-seats { order: 7; }
+.career-hq .career-record { order: 8; }
+.career-extra, .career-decisions { order: 9; }
 .career-jumps { display: flex; flex-wrap: wrap; gap: 7px; }
 .career-jumps a { color: var(--dim); border: 1px solid var(--line2); background: var(--panel); padding: 9px 13px; border-radius: 30px; font-size: 12px; text-decoration: none; }
 .career-jumps a:hover { border-color: var(--acc); color: var(--accDeep); }
@@ -1543,13 +1554,23 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
 .career-legacy .card { border-radius: 18px; }
 .career-legacy .btn { min-height: 40px; word-break: normal; overflow-wrap: normal; }
 @media (min-width: 1100px) {
- .career-hq { grid-template-columns: repeat(12,minmax(0,1fr)); }
- .career-jumps, .career-market, .career-record, .career-extra, .career-decisions { grid-column: 1 / -1; }
- .career-hero { grid-column: span 8; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: center; }
- .career-wallet { grid-column: span 4; }
- .career-scouts, .career-sponsors { grid-column: span 7; }
- .career-academy, .career-seats { grid-column: span 5; }
- .career-record > .career-record-grid { grid-template-columns: repeat(6,minmax(0,1fr)); }
+ .career-hq { grid-template-columns: minmax(0,1.25fr) minmax(0,1fr); gap: 14px; }
+ .career-jumps, .career-market, .career-extra, .career-decisions { grid-column: 1 / -1; }
+ .career-hq .career-jumps { order: -2; }
+ .career-hq .career-market { order: -1; }
+ .career-hq .bento-column, .driver-page .bento-column { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+ .career-hq .bento-column > * { order: initial; }
+ .career-hero { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 18px; gap: 16px; align-items: start; }
+ .career-hero h2 { font-size: 22px; }
+ .career-next { padding: 14px; }
+ .career-next > h3 { font-size: 21px; }
+ .career-panel, .driver-panel { padding: 18px; }
+ .driver-page { gap: 14px; }
+ .driver-skill { display: grid; grid-template-columns: minmax(0,1fr) 185px; grid-template-areas: "label action" "description action"; gap: 4px 14px; padding: 11px 0; }
+ .driver-skill-head { grid-area: label; }
+ .driver-skill > p { grid-area: description; margin: 0; }
+ .driver-skill-action { grid-area: action; margin: 0; gap: 10px; }
+
  .career-legacy > .stack { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
 }
 @media (max-width: 600px) {
@@ -8964,7 +8985,8 @@ function hMusim() {
 }
 function hAku() {
   if (S.sit) return '<div class="stack"><div class="card"><h2>' + esc(S.bench.name) + '</h2><p class="dim">Test and reserve driver · ' + esc(S.teams[S.sit.team].name) + '</p></div>' + reserveFocusHTML() + bodyCardHTML() + '</div>';
-  return '<div class="' + (S.mode==='pro'?'driver-page':'stack') + '">' + drvCard() + evaluationCardHTML(false) + abilitiesHTML(false) + trainingCardHTML() + tPemandu() + '</div>';
+  if(S.mode==='pro')return '<div class="driver-page"><div class="bento-column">'+drvCard()+evaluationCardHTML(false)+trainingCardHTML()+'</div><div class="bento-column">'+tPemandu(true)+abilitiesHTML(false)+bodyCardHTML()+'</div></div>';
+  return '<div class="stack">'+drvCard()+evaluationCardHTML(false)+abilitiesHTML(false)+trainingCardHTML()+tPemandu()+'</div>';
 }
 function hTeam() { if (S.mode === 'pro' && myTeam().spec) return worldJuniorTeamHTML(myTeam()) + tmCardHTML(); return '<div class="stack">' + hPasukan() + (S.sit ? '' : tmCardHTML()) + '</div>'; }
 function careerNudgeHTML() {
@@ -10024,9 +10046,9 @@ abilitiesHTML=function(review){if(review)return driverOldAbilities(review);if(S.
 };
 bodyCardHTML=function(){if(S.mode!=='pro')return '';var b=progressionPlayer(S).body;return '<section class="card driver-panel" id="fitness-care"><div class="home-card-head"><div><h3>Fitness &amp; care</h3><h2>Look after your career</h2></div><span class="home-tag">Long-term condition</span></div><div class="fitness-layout"><div><div class="fitness-score"><b>'+b.fitness.toFixed(1)+'</b><span>/ 100 Fitness</span></div>'+driverMeter(b.fitness,100,'Fitness')+'<p class="driver-caption">Higher fitness helps limit wear as you age.</p></div><div class="driver-metric"><small>Career wear</small><b>'+b.wear.toFixed(1)+'</b><span>Accumulated strain · lower is better</span></div></div><div class="driver-insight"><b>Fitness and Recovery do different jobs</b><p>Choose Fitness sessions to build condition. Choose Recovery to clear fatigue before racing.</p></div><details class="driver-help"><summary>How age and care affect growth</summary><p>Fitness and consistent care reduce annual wear. Wear gradually lowers growth caps; Pace is more sensitive than Racecraft and Feedback. Annual changes happen once and overlap with cap adjustments, so the same loss is not charged twice.</p></details></section>';};
 var driverOldSkills=tPemandu;
-tPemandu=function(){if(S.mode!=='pro')return driverOldSkills();var p=me(),h='<section class="card driver-panel driver-skills" id="driver-skills"><div class="home-card-head"><div><h3>Skill development</h3><h2>Spend your XP</h2></div><div class="xp-wallet"><b>'+S.xp+'</b><span>XP available</span></div></div><p class="driver-lead">Choose a skill to improve. Each button buys one point; the price is shown.</p><div class="driver-skill-list">';
+tPemandu=function(skillsOnly){if(S.mode!=='pro')return driverOldSkills();var p=me(),h='<section class="card driver-panel driver-skills" id="driver-skills"><div class="home-card-head"><div><h3>Skill development</h3><h2>Spend your XP</h2></div><div class="xp-wallet"><b>'+S.xp+'</b><span>XP available</span></div></div><p class="driver-lead">Choose a skill to improve. Each button buys one point; the price is shown.</p><div class="driver-skill-list">';
  SKILLS.forEach(function(s){var v=p[s[0]],cost=skillCost(v,S,s[0]),cap=statCap(S,s[0]);h+='<div class="driver-skill"><div class="driver-skill-head"><b>'+s[1]+'</b><span>'+v+' <small>/ '+cap+'</small></span></div><p>'+s[2]+'</p><div class="driver-skill-action">'+driverMeter(v,cap,s[1]+' progress to cap')+'<button class="btn sm" data-act="buy" data-k="'+s[0]+'" '+(S.xp<cost||v>=cap?'disabled':'')+'>'+(v>=cap?'At cap':'+1 · '+cost+' XP')+'</button></div></div>';});
- return h+'</div><details class="driver-help"><summary>XP, Overall &amp; growth caps</summary><p>Overall averages all six stats. Each value shows your current skill / current cap. Costs increase near the cap; there is no age gate. You still need to spend XP to grow.</p><p>Season race XP: '+PROGRESSION.annual[leagueOf(S)]+' base, up to '+PROGRESSION.bonuses.performance+' performance, '+PROGRESSION.bonuses.objectives+' objectives, '+PROGRESSION.bonuses.manual+' manual and '+PROGRESSION.bonuses.facilities+' simulator XP. Auto earns the same base XP. Unspent XP carries over.</p></details></section>'+bodyCardHTML();
+ return h+'</div><details class="driver-help"><summary>XP, Overall &amp; growth caps</summary><p>Overall averages all six stats. Each value shows your current skill / current cap. Costs increase near the cap; there is no age gate. You still need to spend XP to grow.</p><p>Season race XP: '+PROGRESSION.annual[leagueOf(S)]+' base, up to '+PROGRESSION.bonuses.performance+' performance, '+PROGRESSION.bonuses.objectives+' objectives, '+PROGRESSION.bonuses.manual+' manual and '+PROGRESSION.bonuses.facilities+' simulator XP. Auto earns the same base XP. Unspent XP carries over.</p></details></section>'+(skillsOnly?'':bodyCardHTML());
 };
 trainingCardHTML=function(){if(S.mode!=='pro'||S.sit)return '';var p=progressionPlayer(S),t=p.training,m=p.mind,plan=effectiveTraining(p),prepared=m.locked&&m.locked.key===trainingKey(S),hints={simulator:'Builds the weaker of Pace and Consistency using XP.',racecraft:'Builds the weaker of Racecraft and Tyres using XP.',wet:'Improves Wet Weather using XP.',technical:'Improves Feedback using XP.',fitness:'Builds Fitness. No XP cost.',recovery:'Reduces fatigue. No XP cost.'};
  function select(field,options,value,index){return '<select data-training="'+field+'"'+(index==null?'':' data-index="'+index+'"')+' aria-label="'+(field==='slot'?'Training slot '+(index+1):'Training '+field)+'">'+Object.keys(options).map(function(k){return '<option value="'+k+'"'+(value===k?' selected':'')+'>'+options[k]+'</option>';}).join('')+'</select>';}
@@ -10068,5 +10090,5 @@ function careerHQSponsors(){var f=fameOf(S),act=sponActive(S),offers=S.sponOffer
  return h+'<details class="driver-help"><summary>How sponsor money works</summary><p>Personal sponsor fees pay your wallet. Seat funding is agreed separately. Results and press exposure affect fame.'+(me().nat==='MY'?' Malaysian drivers receive home-market fame and sponsor bonuses.':'')+'</p></details></section>';}
 function careerHQRecord(){var c=S.career;return '<section class="card career-panel career-record" id="career-record"><div class="home-card-head"><div><h3>Career stats</h3><h2>Your racing record</h2></div><span class="home-tag">'+(S.hist||[]).filter(function(r){return !r.inactive;}).length+' seasons recorded</span></div><div class="career-record-grid">'+[['Starts',c.starts],['Wins',c.wins],['Podiums',c.pods],['Points',c.pts],['F1 titles',c.titles],['Junior titles',c.juniorTitles||0]].map(function(x){return driverMetric(x[0],x[1]||0,'');}).join('')+'</div><details class="driver-help"><summary>More stats &amp; completed seasons</summary><div class="career-record-grid extras">'+[['Poles',c.poles],['Fastest laps',c.fl],['DNFs',c.dnf]].map(function(x){return driverMetric(x[0],x[1]||0,'');}).join('')+'</div>'+(!(S.hist||[]).length?'<p>Your first season is in progress. Completed seasons will appear here.</p>':'<div class="scroll"><table class="t"><thead><tr><th>Season</th><th>League</th><th>Team</th><th>Pos</th><th>Points</th><th>Champion</th></tr></thead><tbody>'+S.hist.slice().reverse().map(function(r){return '<tr><td>S'+r.season+'</td><td>'+(r.league||(r.jr?'f2':'f1')).toUpperCase()+'</td><td>'+esc(r.team||'—')+'</td><td>'+(r.inactive?'Inactive':r.reserve?'Reserve':r.pos?'P'+r.pos:'—')+'</td><td>'+(r.pts||0)+'</td><td>'+esc(r.champ||'—')+'</td></tr>';}).join('')+'</tbody></table></div>')+'</details></section>';}
 var careerHQOldPage=hKerjaya;
-hKerjaya=function(){if(S.mode!=='pro'||S.sit)return '<div class="career-legacy">'+careerHQOldPage()+'</div>';var p=progressionPlayer(S),mate=mateOf(S,p),market=marketWindowHTML(),extra=repCardHTML(S)+mktCard('');return '<div class="career-hq"><nav class="career-jumps" aria-label="Career sections"><a href="#career-contract">Contract</a><a href="#career-wallet">Money</a><a href="#career-scouts">Opportunities</a><a href="#career-record">Record</a></nav>'+careerHQHero()+careerHQWallet()+(market?'<div class="career-market" id="career-market">'+market+'</div>':'')+careerHQScouts()+careerHQAcademy()+careerHQSponsors()+careerHQSeats()+careerHQRecord()+(extra?'<div class="career-extra">'+extra+'</div>':'')+(p.age>=38||p.age>=35&&mate&&mate.age<=24?'<section class="card career-panel career-decisions"><h3>Next chapter</h3>'+(p.age>=38?'<p class="career-copy">You may keep racing with a valid seat through age 44, or retire now.</p><button class="btn" data-act="retire">Retire from racing</button>':'')+(p.age>=35&&mate&&mate.age<=24?'<button class="btn" data-act="mentor" '+(S.career9.mentorSeason===S.season?'disabled':'')+'>Mentor '+esc(mate.name)+'</button>':'')+'</section>':'')+'</div>';};
+hKerjaya=function(){if(S.mode!=='pro'||S.sit)return '<div class="career-legacy">'+careerHQOldPage()+'</div>';var p=progressionPlayer(S),mate=mateOf(S,p),market=marketWindowHTML(),extra=repCardHTML(S)+mktCard('');return '<div class="career-hq"><nav class="career-jumps" aria-label="Career sections"><a href="#career-contract">Contract</a><a href="#career-wallet">Money</a><a href="#career-scouts">Opportunities</a><a href="#career-record">Record</a></nav>'+'<div class="bento-column">'+careerHQHero()+careerHQScouts()+careerHQSponsors()+'</div><div class="bento-column">'+careerHQWallet()+careerHQAcademy()+careerHQSeats()+careerHQRecord()+'</div>'+(market?'<div class="career-market" id="career-market">'+market+'</div>':'')+(extra?'<div class="career-extra">'+extra+'</div>':'')+(p.age>=38||p.age>=35&&mate&&mate.age<=24?'<section class="card career-panel career-decisions"><h3>Next chapter</h3>'+(p.age>=38?'<p class="career-copy">You may keep racing with a valid seat through age 44, or retire now.</p><button class="btn" data-act="retire">Retire from racing</button>':'')+(p.age>=35&&mate&&mate.age<=24?'<button class="btn" data-act="mentor" '+(S.career9.mentorSeason===S.season?'disabled':'')+'>Mentor '+esc(mate.name)+'</button>':'')+'</section>':'')+'</div>';};
 </script>
