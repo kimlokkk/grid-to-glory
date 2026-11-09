@@ -9,8 +9,8 @@ var JUNIOR_ORGS = [
  ['noordam','Noordam Motorsport','NOO','NL','Dordrecht, Netherlands',1995,'#ef812c','A close-knit operation that grew from a small workshop near the port.',[]],
  ['vandaalen','Van Daalen Racing','VDR','NL','Alkmaar, Netherlands',1979,'#de7433','Pieter van Daalen built a reputation for giving raw talent its first chance.',[]],
  ['navarro','Navarro Racing','NAV','ES','Valencia, Spain',1998,'#e5b51f','Former racer Diego Navarro created an international racing family.',[2]],
- ['aoraki','Aoraki Motorsport','AOR','NZ','Farnham, United Kingdom',1997,'#222631','A New Zealand automotive group revived a historic British junior operation.',[]],
- ['veyra','Veyra Racing','VEY','AE','Andernach, Germany',2021,'#57d4c0','An Emirati investment group is rebuilding a German-based racing operation.',[]]
+ ['aoraki','Aoraki Motorsport','AOR','GB','Farnham, United Kingdom',1997,'#222631','A New Zealand automotive group revived a historic British junior operation.',[]],
+ ['veyra','Veyra Racing','VEY','DE','Andernach, Germany',2021,'#57d4c0','An Emirati investment group is rebuilding a German-based racing operation.',[]]
 ];
 var WORLD_NATIONS = [['GB',14],['FR',10],['IT',10],['NL',7],['ES',7],['DE',5],['BR',7],['AU',6],['US',5],['JP',6],['MX',5],['FI',3],['DK',3],['SE',3],['NO',3],['IE',3],['PL',3],['BG',2],['CO',2],['AR',3],['NZ',3],['CA',2],['MC',1],['TH',2],['IN',2],['BE',1],['AT',1],['CH',1],['CN',0.6],['LK',0.6],['AE',0.6],['MY',0.4],['ZA',0.4],['ID',0.3],['SG',0.3],['KR',0.5],['PT',0.4],['TR',0.3]];
 var WORLD_NAMES = {
@@ -60,6 +60,8 @@ function worldInit(game,fresh){
 }
 /* Existing live weekends keep their original grid; expansion happens at the next winter. */
 function worldUpgradeSeats(game){
+ // Team flags identify the racing base; ownership remains part of the biography.
+ ['f2','f3'].forEach(function(l){worldView(game,l).teams.forEach(function(t){var o=JUNIOR_ORGS.filter(function(o){return o[0]===t.orgKey||l+':'+o[0]===t.key;})[0];if(o)t.nat=o[3];});});
  var w=game.world;if(w.seatVersion===2)return;
  var v=worldView(game,'f3');if(v.drivers.length===30){w.seatVersion=2;return;}
  if(v.drivers.length!==20)throw new Error('Invalid legacy F3 grid');

@@ -1,6 +1,6 @@
 /* ===== Skrin tajuk + cipta pemandu (4 langkah) ===== */
 var NATS = [['GB', 'United Kingdom'], ['DE', 'Germany'], ['FR', 'France'], ['IT', 'Italy'], ['ES', 'Spain'], ['NL', 'Netherlands'], ['BE', 'Belgium'], ['AT', 'Austria'], ['CH', 'Switzerland'], ['FI', 'Finland'], ['SE', 'Sweden'], ['DK', 'Denmark'], ['MC', 'Monaco'], ['PT', 'Portugal'], ['IE', 'Ireland'], ['PL', 'Poland'], ['BR', 'Brazil'], ['AR', 'Argentina'], ['MX', 'Mexico'], ['US', 'United States'], ['CA', 'Canada'], ['AU', 'Australia'], ['NZ', 'New Zealand'], ['JP', 'Japan'], ['CN', 'China'], ['TH', 'Thailand'], ['MY', 'Malaysia'], ['IN', 'India'], ['ID', 'Indonesia'], ['ZA', 'South Africa'], ['AE', 'United Arab Emirates'], ['NO','Norway'], ['BG','Bulgaria'], ['CO','Colombia'], ['LK','Sri Lanka'], ['SG','Singapore'], ['KR','South Korea'], ['TR','Turkey']];
-function flagE(c) { c = String(c || '').toUpperCase(); if (c.length !== 2) return ''; return String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65, 0x1F1E6 + c.charCodeAt(1) - 65); }
+function flagE(c) { c = String(c || '').toUpperCase(); if (!FLAG_SVGS[c]) return ''; return '<img class="country-flag" src="'+FLAG_SVGS[c]+'" alt="'+natName(c)+' flag" width="20" height="14">'; }
 function natName(c) { for (var i = 0; i < NATS.length; i++) if (NATS[i][0] === c) return NATS[i][1]; return c; }
 function draft() {
   var d = UI.draft;
@@ -48,7 +48,7 @@ function w8Driver(d) {
   for (var n = 2; n <= 99; n++) if (!tk[n]) nums += '<button class="' + (d.num === n ? 'on' : '') + '" data-act="w8-num" data-v="' + n + '">' + n + '</button>';
   var h = '<div class="card stack"><h3>Your name</h3><div class="w8-2"><input type="text" id="w8f" maxlength="14" placeholder="First name" value="' + esc(d.first) + '" autocomplete="off"><input type="text" id="w8l" maxlength="16" placeholder="Last name" value="' + esc(d.last) + '" autocomplete="off"></div>' +
     '<p class="dim" style="font-size:12.5px;margin:0">Your 3-letter code comes from your last name (or first name if you leave it empty).</p></div>';
-  h += '<div class="card stack"><div class="w8-2"><div><h3>Nationality</h3><select id="w8n" class="w8-sel">' + NATS.slice().sort(function (a, b) { return a[1] < b[1] ? -1 : 1; }).map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === d.nat ? ' selected' : '') + '>' + flagE(x[0]) + ' ' + x[1] + '</option>'; }).join('') + '</select></div>' +
+  h += '<div class="card stack"><div class="w8-2"><div><h3>Nationality</h3><select id="w8n" class="w8-sel">' + NATS.slice().sort(function (a, b) { return a[1] < b[1] ? -1 : 1; }).map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === d.nat ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join('') + '</select></div>' +
     '<div><h3>Age</h3><div class="w8-age">' + (d.careerMode === 'pro' ? [d.protege ? d.age : 16] : [18, 19, 20, 21, 22]).map(function (a) { return '<button class="' + (d.age === a ? 'on' : '') + '" data-act="w8-age" data-v="' + a + '">' + a + '</button>'; }).join('') + '</div></div></div></div>';
   h += '<div class="card stack"><div class="row sp"><h3>Race number</h3><span class="w8-bignum">#' + d.num + '</span></div><div class="w8-nums">' + nums + '</div><p class="dim" style="font-size:12px;margin:0">Numbers already used by other drivers are hidden.</p></div>';
   h += '<div class="card stack"><h3>Driving style</h3><div class="pick">';

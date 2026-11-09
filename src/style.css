@@ -1012,3 +1012,30 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
 }
 
 .w8:has(.entry-grid) > .w8-nav { background: var(--bg); border-top: 1px solid var(--line); z-index: 3; }
+/* Supplied country art, consistent across platforms and offline saves. */
+.country-flag { display: inline-block; width: 20px; height: 14px; object-fit: contain; vertical-align: -.15em; flex: none; filter: drop-shadow(0 0 1px #1b234025); }
+/* Junior team identity: team colours frame the content, not the copy. */
+.w8-team.entry-team { overflow: hidden; box-shadow: 0 4px 18px #1b234008; }
+.entry-team::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--tc); }
+.entry-team.on { box-shadow: 0 0 0 2px var(--accSoft), 0 8px 24px #1b234012; }
+.entry-heading { margin: -20px -20px 0; padding: 20px 20px 14px; align-items: center; background: linear-gradient(115deg,color-mix(in srgb,var(--tc) 10%,var(--panel)),var(--panel) 85%); }
+.entry-logo { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 12px; background: var(--fg); color: var(--panel); font: italic 800 12px var(--disp); letter-spacing: .025em; border-bottom: 3px solid var(--tc); }
+.entry-name { font-size: 19px; }
+.entry-location { margin-top: 8px; }
+.entry-cost { flex-wrap: nowrap; align-items: center; padding: 16px 0; }
+.entry-car { display: block; flex: 0 0 42%; max-width: 150px; line-height: 0; }
+.entry-car svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 5px 3px #1b234018); }
+.entry-fee { display: flex; flex: 1; flex-direction: column; align-items: flex-end; gap: 4px; }
+.entry-fee > small { color: var(--dim); font-size: 11px; }
+.entry-price { font-size: 23px; white-space: nowrap; }
+.entry-support { padding: 12px; gap: 14px; background: color-mix(in srgb,var(--panel2) 65%,var(--panel)); border: 1px solid var(--line); }
+.entry-support > span { gap: 5px; }
+.entry-support i { display: block; height: 4px; margin-top: 2px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.entry-support i::after { content: ''; display: block; height: 100%; width: var(--level); background: color-mix(in srgb,var(--tc) 70%,var(--fg)); border-radius: inherit; }
+@media (max-width: 600px) {
+ .entry-heading { margin: -16px -16px 0; padding: 18px 16px 12px; gap: 10px; }
+ .entry-name { font-size: 18px; }
+ .entry-logo { width: 38px; height: 38px; border-radius: 10px; font-size: 11px; }
+ .entry-cost { padding: 14px 0; }
+ .entry-price { font-size: 21px; }
+}
