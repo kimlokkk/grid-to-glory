@@ -139,5 +139,5 @@ function xpNudgeHTML(cls) {
   if (!S || S.sit) return '';
   var p = me(), cheap = Math.min.apply(null, PROGRESSION.stats.filter(function (k) { return p[k] < statCap(S, k); }).map(function (k) { return skillCost(p[k], S, k); }));
   if (!isFinite(cheap) || S.xp < cheap) return '';
-  return '<div class="' + (cls || '') + ' card spon-b"><div><b>' + S.xp + ' XP to spend</b><span>Training is the only way your driver improves. Spend it on the Driver tab.</span></div><button class="btn sm pri" data-act="tab" data-v="aku">Train</button></div>';
+  return '<div class="' + (cls || '') + ' card spon-b"><div><b>' + S.xp + ' XP to spend</b><span>Spend earned XP on skill training in the Driver tab.</span></div><button class="btn sm pri" data-act="tab" data-v="aku">Train</button></div>';
 }

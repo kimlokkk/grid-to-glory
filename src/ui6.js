@@ -74,11 +74,11 @@ function vHub() {
 
 function drvCard() {
   var p = me(), t = myTeam(), ds = driverStandings(S), pos = ds.indexOf(p) + 1;
-  return '<div class="card dcard"><div class="row" style="gap:12px;flex-wrap:nowrap"><button class="hbtn" data-act="prof" data-v="d:' + p.id + '">' + avatarSVG(p, 64) + '</button><div style="min-width:0"><h2>' + esc(p.name) + ' <span class="dim" style="font-size:15px">#' + p.num + '</span></h2><p class="dim" style="margin:0">' + (typeof flagE === 'function' ? flagE(p.nat) + ' ' + natName(p.nat) : p.nat) + '</p><p class="dim">' + esc(t.name) + ' · age ' + p.age + ' · contract ' + S.contract + (S.contract === 1 ? ' season' : ' seasons') + ' · ' + payTxt(conOf(S, p).pay) + '</p></div><div style="margin-left:auto;text-align:center"><div class="big" style="font-size:36px;line-height:1">' + ovr(p) + '</div><small class="dim">Rating</small></div></div>' +
+  return '<div class="card dcard"><div class="driver-identity"><button class="hbtn" data-act="prof" data-v="d:' + p.id + '" aria-label="Open driver profile">' + avatarSVG(p, 64) + '</button><div class="driver-copy"><h2>' + esc(p.name) + ' <span class="driver-number">#' + p.num + '</span></h2><p class="dim driver-nationality">' + (typeof flagE === 'function' ? flagE(p.nat) + ' ' + natName(p.nat) : p.nat) + '</p><p class="driver-team">' + esc(t.name) + ' · age ' + p.age + '</p></div><div class="driver-rating"><span>Overall</span><b>' + ovr(p) + '</b><small>Driver rating</small></div></div><p class="driver-contract">Contract · ' + S.contract + (S.contract === 1 ? ' season' : ' seasons') + ' remaining · ' + payTxt(conOf(S,p).pay) + '/season</p>' +
     (typeof objDrvHTML === 'function' ? objDrvHTML(S, p) : '') + '<div class="tiles3"><div><small>Standing</small><b>P' + pos + '</b></div><div><small>Points</small><b>' + p.pts + '</b></div><div><small>XP</small><b>' + S.xp + '</b></div><div><small>Morale</small><b>' + (S.morale == null ? 50 : S.morale) + '%</b></div></div></div>';
 }
 function hUtama() {
-  var p = me(), t = myTeam(), h = '<div class="grid6' + (S.rival && S.rival.season === S.season ? ' hr' : '') + '">';
+  var p = me(), t = myTeam(), h = '<div class="grid6 home-bento' + (S.rival && S.rival.season === S.season ? ' hr' : '') + '">';
   h += '<div class="g-a">' + drvCard() + '</div>';
   if (S.round < seasonRounds(S)) {
     var ci = S.cal[S.round], c = circuitFor(S, ci);
@@ -87,19 +87,20 @@ function hUtama() {
   } else h += '<div class="g-b card nextc stack"><h3>Season ' + S.season + '</h3><h2>Season over</h2><p class="dim">All ' + seasonRounds(S) + ' rounds complete.</p><button class="btn pri wide" data-act="season-end">Season results →</button></div>';
   /* jubin */
   var res = S.results.map(function (r) { return r.dnf ? 20 : r.pos; }), ds = driverStandings(S), pos = ds.indexOf(p) + 1, ts = teamStandings(S), tpos = ts.indexOf(t) + 1;
-  h += '<div class="g-c card"><h3>Season standing</h3><div class="row sp" style="flex-wrap:nowrap"><div><div class="bignum">P' + pos + '</div><p class="dim">' + p.pts + ' pts' + (p.wins ? ' · ' + p.wins + ' wins' : '') + '</p></div>' + spark(res.length ? res : [20], 120, 56) + '</div></div>';
+  h += '<div class="g-c card"><h3>Season standing</h3><div class="row sp" style="flex-wrap:nowrap"><div><div class="bignum">P' + pos + '</div><p class="dim">' + p.pts + ' pts' + (p.wins ? ' · ' + p.wins + ' wins' : '') + '</p></div>' + (res.length ? spark(res,120,56) : '<span class="home-tag">Season '+S.season+'</span>') + '</div><div class="home-season-progress"><span>'+S.round+' / '+seasonRounds(S)+' rounds complete</span><i><u style="width:'+clamp(S.round/seasonRounds(S)*100,0,100)+'%"></u></i></div></div>';
   var parts = [['aero', 'Aero'], ['engine', 'Engine'], ['chassis', 'Chassis'], ['rel', 'Reliability']];
-  h += '<div class="g-d card"><h3>Car · rank #' + teamRank(S, t.id) + '</h3><div class="pbars">' + parts.map(function (k) { var v = Math.round(t.car[k[0]]); return '<div><span>' + k[1] + '</span><i><u style="width:' + clamp((v - 45) / 54 * 100, 4, 100) + '%"></u></i><b>' + v + '</b></div>'; }).join('') + '</div></div>';
+  h += '<div class="g-d card"><h3>' + (t.spec ? 'Spec car · '+leagueOf(S).toUpperCase() : 'Car · rank #'+teamRank(S,t.id)) + '</h3><div class="pbars">' + parts.map(function (k) { var v = Math.round(t.car[k[0]]); return '<div><span>' + k[1] + '</span><i><u style="width:' + clamp((v - 45) / 54 * 100, 4, 100) + '%"></u></i><b>' + v + '</b></div>'; }).join('') + '</div></div>';
   h += '<div class="g-e card"><h3>Constructors</h3><div class="row sp" style="flex-wrap:nowrap"><div><div class="bignum">P' + tpos + '</div><p class="dim">' + t.pts + ' pts</p></div>' + carSVG(t, 110) + '</div><button class="btn sm" data-act="tab" data-v="kej">View standings →</button></div>';
   /* rival */
   if (S.rival && S.rival.season === S.season) {
     var rv = S.drivers[S.rival.di];
     h += '<div class="g-f card"><h3>Season rival</h3><div class="vs6">' + avatarSVG(p, 48) + '<div class="sc6"><b>' + S.rival.w + ' – ' + S.rival.l + '</b><small>H2H</small></div>' + avatarSVG(rv, 48) + '</div><p class="dim" style="text-align:center">' + esc(p.name.split(' ')[0]) + ' vs ' + esc(rv.name) + ' (' + S.teams[rv.team].short + ')</p></div>';
   }
-  h += '<div class="g-gs stack">' + (typeof xpNudgeHTML === 'function' ? xpNudgeHTML('') : '') + (typeof sponBannerHTML === 'function' ? sponBannerHTML('') : '') + careerNudgeHTML() + newsCard('', 4) + '</div>';
+  if (typeof juniorRoadmapHTML === 'function') h += juniorRoadmapHTML();
   /* kalendar mini */
   var up = ''; for (var i = S.round; i < Math.min(seasonRounds(S), S.round + 3); i++) { var cc = circuitFor(S, S.cal[i]); up += '<div class="krow">' + flagSVG(S.cal[i], 24) + '<span class="mono dim">R' + (i + 1) + '</span><span>' + cc.name + '</span><span class="dim">' + laps2(cc) + ' laps</span></div>'; }
   if (up) h += '<div class="g-h card"><div class="row sp"><h3>Coming up</h3><button class="btn sm" data-act="tab" data-v="kal">Calendar →</button></div>' + up + '</div>';
+  h += '<div class="g-gs stack">' + (typeof xpNudgeHTML === 'function' ? xpNudgeHTML('home-training') : '') + careerNudgeHTML() + (typeof sponBannerHTML === 'function' ? sponBannerHTML('') : '') + newsCard('', 4) + '</div>';
   return h + '</div>';
 }
 function hKal() {

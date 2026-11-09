@@ -200,7 +200,11 @@ vSeason=function(){if(S.mode!=='pro'||!S.market8||!S.market8.window||S.market8.w
 var marketOldCareer=hKerjaya;
 hKerjaya=function(){return marketOldCareer()+(S.mode==='pro'?marketCareerHTML():'');};
 var marketOldNudge=careerNudgeHTML;
-careerNudgeHTML=function(){return marketOldNudge()+(S.mode==='pro'&&S.market8?'<div class="card row sp"><div><b>Career watch</b><p class="dim">'+Object.keys(S.market8.scouts).filter(function(k){return scoutRelevant(S,S.market8.scouts[k]);}).length+' interested teams / academies · wallet '+marketCash(S.wallet.balance)+'</p></div><button class="btn sm" data-act="tab" data-v="kerjaya">View →</button></div>':'');};
+careerNudgeHTML=function(){
+ if(S.mode!=='pro'||!S.market8)return marketOldNudge();
+ var count=Object.keys(S.market8.scouts).filter(function(k){return scoutRelevant(S,S.market8.scouts[k]);}).length,w=S.market8.window,offers=w&&w.season===S.season?w.offers.filter(function(o){return o.status==='open';}).length:0;
+ return '<div class="card home-career"><div class="home-card-head"><div><h3>Career centre</h3><h2>Your next move</h2></div><span class="home-tag">'+(S.contract===1?'Contract year':S.contract+' seasons left')+'</span></div><div class="career-metrics"><div><small>Personal wallet</small><b>'+marketCash(S.wallet.balance)+'</b></div><div><small>Scout interest</small><b>'+count+' <span>teams / academies</span></b></div><div><small>Open offers</small><b>'+offers+'</b></div></div><div class="home-card-footer"><p class="dim">'+(S.contract===1?'Your contract ends this season. Review funding and your next seat.':'Follow team interest, academy support and your contract options.')+'</p><button class="btn sm" data-act="tab" data-v="kerjaya">Open career →</button></div></div>';
+};
 A['academy-interest']=function(d){if(academyExpress(S,+d.v)){save();render();}};
 A['academy-review']=function(d){var o=S.market8.academyOffers.filter(function(o){return o.id===d.v&&o.status==='open';})[0];if(!o)return;showModal('<h2>Academy offer</h2><p>'+esc(worldView(S,'f1').teams[o.team].name)+' · through Season '+o.until+'.</p><p>'+Math.round(o.support*100)+'% of junior seat costs and coaching quality within the existing training cap. No extra XP or unlimited slots. Exclusive academy membership; release fee '+marketCash(o.release)+'. Race seats require a separate offer.</p><button class="btn pri" data-act="academy-sign" data-v="'+o.id+'">Accept academy contract</button><button class="btn" data-act="mclose">Back</button>');};
 A['academy-sign']=function(d){if(academyAccept(S,d.v)){closeModal();save();render();}};
