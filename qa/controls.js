@@ -12,7 +12,7 @@ const fs = require('node:fs');
     pg.on('pageerror', e => errors.push(e.message));
     await pg.clock.install();
     await pg.goto(pathToFileURL(path.resolve(__dirname, '../index.html')).href);
-    await pg.evaluate(() => { seedRnd(20261105); A.new(); A['new-go'](); });
+    await pg.evaluate(() => { seedRnd(20261105); A.new(); A['career-mode']({v:'classic'}); A['new-go'](); });
     await chooseStyle(pg, true);
     rows.push(...await pg.evaluate(() => {
       const rows = [], saved = { ...P2 }, random = rnd;

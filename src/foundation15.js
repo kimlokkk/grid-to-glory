@@ -1,7 +1,7 @@
 'use strict';
 /* Save/data foundation. Legacy circuit indexes 0..9 and slot ids remain compatible. */
 var GTG_SCHEMA = 2;
-var GTG_LEAGUES = { f1: { rounds: 22, seats: 20 }, f2: { rounds: 8, seats: 20 }, f3: { rounds: 8, seats: 30 } };
+var GTG_LEAGUES = { f1: { rounds: 22, seats: 20 }, f2: { rounds: 10, seats: 20 }, f3: { rounds: 10, seats: 30 } };
 /* ci, stable key, name, laps, km, base, wear, passing difficulty, power, rain, pit */
 var GTG_TRACKS = [
   [0,'cempaka-raya','Cempaka Raya',25,5.3,97,1.0,.58,.55,.40,14],
@@ -34,10 +34,12 @@ GTG_TRACKS.forEach(function (x) {
 });
 function leagueOf(game) { return game.jr && game.jr.on ? 'f2' : game.league || 'f1'; }
 function seasonRounds(game) { return game && game.cal ? game.cal.length : 10; }
+/* F2 and F3 are support series: they race on 10 of the 22 F1 weekends, so all leagues share one season clock. */
+var JUNIOR_WEEKENDS = [0, 2, 3, 5, 7, 9, 12, 14, 17, 21];
 function seasonCalendar(game) {
   if (game.mode !== 'pro') return shuffle([0,1,2,3,4,5,6,7,8,9]);
   var ids = GTG_TRACKS.map(function (t) { return t[0]; });
-  return leagueOf(game) === 'f1' ? ids : [0,3,2,6,5,7,1,9];
+  return leagueOf(game) === 'f1' ? ids : JUNIOR_WEEKENDS.map(function (w) { return ids[w]; });
 }
 function circuitFor(game, ci) {
   var c = CIRCUITS[ci];

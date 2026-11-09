@@ -128,7 +128,7 @@ function vSeason() {
   if (S.offers && typeof repCardHTML === 'function') h += repCardHTML(S);
   h += evaluationCardHTML(true) + abilitiesHTML(true) + annualPreviewHTML();
   if (S.mode === 'pro' ? careerRetirementDue(S) : p.age >= 42 && !S.sit) {
-    h += '<div class="card stack"><h3>The end of the road</h3><p class="dim" style="margin:0">' + (S.mode === 'pro' ? 'Age 44 is your final racing season. You must retire before starting a season at 45.' : 'At ' + p.age + ' the reflexes are not what they were and no team will sign you for another year. It is time to hang up the helmet.') + '</p><button class="btn pri wide" data-act="retire">Retire from racing</button></div>';
+    h += '<div class="card stack"><h3>The end of the road</h3><p class="dim" style="margin:0">' + (S.mode === 'pro' ? 'Age '+(AGEING.retireAt-1)+' is your final racing season. You must retire before starting a season at '+AGEING.retireAt+'.' : 'At ' + p.age + ' the reflexes are not what they were and no team will sign you for another year. It is time to hang up the helmet.') + '</p><button class="btn pri wide" data-act="retire">Retire from racing</button></div>';
   } else if (S.mode === 'pro' && S.market8 && S.market8.window && S.market8.window.season === S.season && !S.market8.window.signed) {
     /* The persisted market panel is appended by the phase 8 view. */
   } else if (S.offers) {
@@ -139,7 +139,7 @@ function vSeason() {
     });
     h += '</div></div>';
   } else h += '<button class="btn pri wide" data-act="next-season">Start season ' + (S.season + 1) + '</button>';
-  if (p.age >= 38 && p.age < (S.mode === 'pro' ? 44 : 42)) h += '<button class="btn wide" data-act="retire">Retire from racing</button>';
+  if (p.age >= (S.mode === 'pro' ? AGEING.retirePrompt : 38) && p.age < (S.mode === 'pro' ? AGEING.retireAt - 1 : 42)) h += '<button class="btn wide" data-act="retire">Retire from racing</button>';
   return h + '</div>';
 }
 A['sign'] = function (d) { var sit = +d.sit === 1; var advanced = startNewSeason(S, +d.t, +d.y, d.b != null ? +d.b : null, sit ? { sit: true } : null); if (advanced === false) { save(); UI.screen = S.playerRetired ? 'retire' : 'hub'; render(); return false; } var c = sit ? null : me().con; if (d.p != null && c) { c.pay = +d.p; c.wb = +d.w || 0; c.opt = +d.o ? { by: 'team', used: false } : null; } save(); UI.screen = 'hub'; UI.tab = 'utama'; render(); };

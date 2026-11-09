@@ -3,7 +3,7 @@ const { assert, chooseStyle, signOffer } = require('./flow');
 (async () => {
   const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 390, height: 844 } });
   const errs = []; pg.on('pageerror', e => errs.push(e.stack.split('\n').slice(0, 4).join('|'))); pg.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
-  await pg.goto(require('url').pathToFileURL(require('path').resolve(__dirname, '../index.html')).href); await pg.click('[data-act=new]'); await pg.evaluate("A['new-go']()"); await pg.waitForTimeout(300); await chooseStyle(pg);
+  await pg.goto(require('url').pathToFileURL(require('path').resolve(__dirname, '../index.html')).href); await pg.click('[data-act=new]'); await pg.evaluate("A['career-mode']({v:'classic'}); A['new-go']()"); await pg.waitForTimeout(300); await chooseStyle(pg);
   const run = "(function(n){ for (var r=0;r<n;r++){ var ci=S.cal[S.round]; var R=runRace2(S,ci,qualiGrid2(S,ci),{}); var fl=null; R.cars.forEach(function(f){ if(!f.dnf&&f.best<900&&(!fl||f.best<fl.best)) fl=f;}); R.fl={di:fl.di,t:fl.best}; finishRace(S,{ci:R.ci,c:R.c,fl:R.fl,cls:R.cls.map(function(f){return {car:{d:f.d,di:f.di,isP:f.isP,grid:f.grid,dnf:f.dnf},pos:f.pos,dnf:!!f.dnf};})},4);} })";
   await pg.evaluate(run + "(10)"); await pg.evaluate("S.contract=1; endSeason(S); save()");
   console.log('records', await pg.evaluate("Object.keys(S.th).length+' circuits, '+S.th[S.cal[0]].length+' rec, sample '+JSON.stringify(S.th[S.cal[0]][0])"));

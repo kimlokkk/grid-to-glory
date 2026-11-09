@@ -2,7 +2,7 @@
 # Apex Career regression: one command. Usage: bash qa/all.sh [--quick]   (quick skips full-season e2e and monkey)
 cd "$(dirname "$0")/.."
 bash build.sh >/dev/null || { echo "BUILD FAILED"; exit 1; }
-FAIL=0; pass() { echo "  PASS  $1"; }; fail() { echo "  FAIL  $1"; FAIL=$((FAIL+1)); }
+FAIL=0; SKIPPED=0; pass() { echo "  PASS  $1"; }; fail() { echo "  FAIL  $1"; FAIL=$((FAIL+1)); }
 # 1. syntax of built script
 node -e "var h=require('fs').readFileSync('index.html','utf8');var m=h.match(/<script>([\s\S]*)<\/script>/);new Function(m[1])" 2>/dev/null && pass "syntax" || fail "syntax"
 # 2. global function names unique across build (only the known intentional overrides allowed)
@@ -12,6 +12,7 @@ KNOWN="apexGame avatarSVG brakeGame carSVG chicaneGame chooseComp clutchStart dr
 [ "$DUP" == "$KNOWN" ] && pass "no new duplicate functions" || fail "duplicate functions changed: $DUP"
 run() { # name script timeout okpattern
   local out; out=$(timeout "$3" node "qa/$2.js" $5 2>&1); local rc=$?
+  if [ $rc -ne 0 ] && echo "$out" | grep -qE "ENOENT.*outputs/"; then echo "  SKIP  $1 (needs private fixture saves in ../outputs, not in this repo)"; SKIPPED=$((SKIPPED+1)); return; fi
   if [ $rc -eq 0 ] && echo "$out" | grep -qE "$4" && ! echo "$out" | grep -qE "ERRS \[\"|ERRORS [1-9]|TypeError|ReferenceError|(^|[[:space:]])ERR[[:space:]]"; then pass "$1"; else fail "$1"; echo "$out" | tail -8 | sed 's/^/        /'; fi; }
 run "old saves load (level 1)" oldsave 170 'ERRS \[\]' "1"
 run "old saves load (level 2)" oldsave 170 'ERRS \[\]' "2"
@@ -49,4 +50,4 @@ if [ "$1" != "--quick" ]; then
   run "full season e2e"          e2e 290 'ERRS \[\]'
   run "monkey (90s)"             monkey 130 'ERRORS 0' "600 7 90"
 fi
-echo; [ $FAIL -eq 0 ] && echo "ALL PASS" || echo "$FAIL FAILED"; exit $FAIL
+echo; echo "skipped (fixtures missing): $SKIPPED"; [ $FAIL -eq 0 ] && echo "ALL PASS" || echo "$FAIL FAILED"; exit $FAIL

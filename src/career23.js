@@ -7,7 +7,7 @@ function careerInit(g){
  if(g.mode!=='pro')return;
  if(!g.career9)g.career9={version:1,worldId:'world-'+Math.floor(hashS(g.playerUid+'|'+progressionPlayer(g).name+'|'+g.meta.rng)*1e10),comeback:{used:!!g.sit,legacy:!!g.sit},receipts:{},totals:{},rivals:[],mentorSeason:null};
  g.hallOfFame=g.hallOfFame||[];careerTotals(g);
- if(g.playerRetired&&!g.career9.retirement)careerRetire(g,progressionPlayer(g).age>=45?'Compulsory retirement at age 45':'Retired in an earlier save');
+ if(g.playerRetired&&!g.career9.retirement)careerRetire(g,progressionPlayer(g).age>=AGEING.retireAt?'Compulsory retirement at age '+AGEING.retireAt:'Retired in an earlier save');
  if(!g.playerRetired&&!g.sit&&g.lastSummary&&g.round>=seasonRounds(g)&&!careerRetirementDue(g)&&(g.offers!==null||g.contract<=1||g.fired)&&(!g.market8.window||g.market8.window.season!==g.season))marketOpen(g);
 }
 function careerTotals(g){
@@ -18,7 +18,7 @@ function careerTotals(g){
  });
 }
 function careerNoSeat(g){var w=g.market8&&g.market8.window;return g.mode==='pro'&&!g.playerRetired&&leagueOf(g)==='f1'&&!g.sit&&g.round>=seasonRounds(g)&&(g.contract<=1||g.fired)&&w&&w.season===g.season&&!w.signed&&w.round===3&&!w.offers.some(function(o){return o.status==='open';});}
-function careerCanComeback(g){return careerNoSeat(g)&&!g.career9.comeback.used&&progressionPlayer(g).age+1<45;}
+function careerCanComeback(g){return careerNoSeat(g)&&!g.career9.comeback.used&&progressionPlayer(g).age+1<AGEING.retireAt;}
 function careerIdleTraining(g,focus,from){
  var p=progressionPlayer(g),slot=g.drivers[g.pi],bench=g.bench,sit=g.sit,round=g.round,plan={mode:p.training.mode,slots:p.training.slots.slice(),intensity:p.training.intensity},abilities=careerCopy(p.abilities);
  try{
@@ -50,7 +50,7 @@ function careerIdleReview(g,focus,preview){
  careerRestoreBench(g);sponEval(g);g.round=seasonRounds(g);g.lastSummary={rec:g.hist[g.hist.length-1],ds:driverStandings(g).map(function(d){return d.id;}),ts:teamStandings(g).map(function(t){return t.id;})};
  g.career9.comeback={used:true,legacy:false,season:g.season,focus:focus,preview:preview};g.market8.window=null;g.market8.scoutKey=null;g.offers=[];g.fired=null;
  /* No race evidence for this year: retain protected tier and assess current condition. */
- if(careerRetirementDue(g)){g.offers=[];careerRetire(g,'Compulsory retirement before age 45');}else{marketOpen(g);marketNews(g,p.name+' seeks an F1 comeback','A year of training is complete. Age, current ability, past results and real vacancies decide the next contract; no seat is guaranteed.');}
+ if(careerRetirementDue(g)){g.offers=[];careerRetire(g,'Compulsory retirement before age '+AGEING.retireAt);}else{marketOpen(g);marketNews(g,p.name+' seeks an F1 comeback','A year of training is complete. Age, current ability, past results and real vacancies decide the next contract; no seat is guaranteed.');}
  foundationInit(g);worldValidate(g);
 }
 function careerStandIn(g,team){
@@ -104,7 +104,7 @@ function careerLegacyScore(g){
 function careerRetire(g,reason){
  if(g.mode!=='pro')return false;if(g.career9.retirement)return g.career9.retirement;
  if(!g.sit&&g.round>=seasonRounds(g)&&!g.lastSummary&&!g.hist.some(function(r){return r.season===g.season&&(r.league||'f1')===leagueOf(g);}))endSeason(g);
- if(careerRetirementDue(g)&&g.round>=seasonRounds(g)&&progressionPlayer(g).age<45)applyAnnualChange(g);
+ if(careerRetirementDue(g)&&g.round>=seasonRounds(g)&&progressionPlayer(g).age<AGEING.retireAt)applyAnnualChange(g);
  careerTotals(g);var p=progressionPlayer(g),legacy=careerLegacyScore(g);
  var e={id:g.career9.worldId+':'+p.uid,world:g.career9.worldId,driver:careerCopy(p),season:g.season,round:g.round,reason:reason||'Voluntary retirement',career:careerCopy(g.career),leagues:careerCopy(g.career9.totals),history:careerCopy(g.hist),races:careerCopy(g.rr||[]),teams:g.teams.map(function(t){return {key:t.key,name:t.name,history:careerCopy(t.sh||[])};}),rivals:careerCopy(g.career9.rivals),legacy:legacy};
  g.playerRetired=true;g.career9.retirement=e;g.hallOfFame=careerHallMerge(g.hallOfFame||[],[e]);marketNews(g,p.name+' retires',e.reason+'. The completed career and its records are preserved in the Hall of Fame.');return e;
@@ -158,9 +158,9 @@ endSeason=function(g){if(g.mode==='pro'&&g.sit){careerLegacyIdle(g,g.sit.focus==
 var careerOldSit=vSit;
 vSit=function(embedded){if(S.mode!=='pro')return careerOldSit(embedded);return '<div class="card stack"><h2>Existing reserve year</h2><p>Complete your training year, then review available contracts. Training uses your saved XP; no racing results are credited to you.</p><button class="btn pri" data-act="legacy-comeback">Complete year and review contracts</button></div>';};
 var careerOldNext=A['next-season'];
-A['next-season']=function(){if(S.mode==='pro'&&careerRetirementDue(S)&&S.round>=seasonRounds(S)){careerRetire(S,'Compulsory retirement before age 45');careerHallStore(S);save();UI.screen='retire';render();return;}return careerOldNext();};
+A['next-season']=function(){if(S.mode==='pro'&&careerRetirementDue(S)&&S.round>=seasonRounds(S)){careerRetire(S,'Compulsory retirement before age '+AGEING.retireAt);careerHallStore(S);save();UI.screen='retire';render();return;}return careerOldNext();};
 var careerOldRetireAction=A['retire'];
-A['retire']=function(){if(S.mode!=='pro')return careerOldRetireAction();careerRetire(S,careerRetirementDue(S)&&S.round>=seasonRounds(S)?'Compulsory retirement before age 45':careerNoSeat(S)?'Career closed after the driver market':'Voluntary retirement');careerHallStore(S);save();closeModal();UI.screen='retire';render();};
+A['retire']=function(){if(S.mode!=='pro')return careerOldRetireAction();careerRetire(S,careerRetirementDue(S)&&S.round>=seasonRounds(S)?'Compulsory retirement before age '+AGEING.retireAt:careerNoSeat(S)?'Career closed after the driver market':'Voluntary retirement');careerHallStore(S);save();closeModal();UI.screen='retire';render();};
 A['comeback-focus']=function(d){if(['simulator','racecraft','fitness'].indexOf(d.v)>=0){UI.comebackFocus=d.v;render();}};
 A['comeback-go']=function(d){if(careerComeback(S,d.v)){save();UI.screen='season';render();}};
 A['legacy-comeback']=function(){if(careerLegacyIdle(S,'simulator')){save();UI.screen='season';render();}};

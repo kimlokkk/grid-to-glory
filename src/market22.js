@@ -1,6 +1,6 @@
 'use strict';
 /* Personal money, evidence-based scouting and a persisted three-round market. */
-var MARKET8 = { academyAge:24, academyQuality:.05, release:.2, agentFee:.03,
+var MARKET8 = { costRate:.45, living:.8, maxF3:3, offerCap:{f1:4,f2:5,f3:4}, academyAge:24, academyQuality:.05, release:.2, agentFee:.03,
  license:{f2:[40,40,40,30,20,10,8,6,4,3],f3:[30,25,20,15,12,9,7,5,3,2]} };
 function marketCash(n){return Math.abs(n)<.1?'$'+Math.round(n*1000)+'K':payTxt(n);}
 function marketMoney(n){return Math.round(n*1000000)/1000000;}
@@ -38,12 +38,14 @@ function marketScore(g,t){
 }
 function marketScout(g,force){
  var m=g.market8,p=progressionPlayer(g),key=trainingKey(g);if(m.scoutKey===key&&!force)return;m.scoutKey=key;
- var target=leagueOf(g)==='f3'?'f2':'f1',v=worldView(g,target),samples=(g.results||[]).length;
+ var samples=(g.results||[]).length,tl=[leagueOf(g)==='f3'?'f2':'f1'];if(leagueOf(g)==='f3'&&m.license.earned&&p.age+1>=18)tl.push('f1');
+ tl.forEach(function(target){var v=worldView(g,target);
  v.teams.forEach(function(t){
-  var id='seat:'+target+':'+t.id,old=m.scouts[id],score=marketScore(g,t),threshold=target==='f1'?62+t.prestige*2.3:60+t.prestige*.65;
+  var id='seat:'+target+':'+t.id,old=m.scouts[id],score=marketScore(g,t),threshold=target==='f1'?62+t.prestige*2.3+(leagueOf(g)==='f3'?6:0):54+t.prestige*2.6;
   var stage=score>=threshold+3&&samples>=3?2:score>=threshold-5&&samples>=1?1:0;
   var seats=marketSeats(g,target,t.id),s={id:id,kind:'seat',league:target,team:t.id,score:score,threshold:threshold,stage:stage,trend:old?score-old.score:0,reason:'Car-relative performance, recent results and estimated potential.',blocker:target==='f1'&&(!m.license.earned||p.age+1<18)?'F1 needs age 18 and 40 licence points.':seats.open<1?'No expiring seat; a funded buyout would be required.':'A seat can open next season.',want:'Sustain pace and clean results across several races.'};
   m.scouts[id]=s;if(stage>0&&(!old||old.stage!==stage))marketNews(g,t.name+' '+(stage===2?'show strong interest':'are watching'),p.name+' is being assessed for '+target.toUpperCase()+'. '+s.blocker+' Interest is not a contract offer.');
+ });
  });
  if(leagueOf(g)==='f1'||p.age>MARKET8.academyAge)return;
  worldView(g,'f1').teams.forEach(function(t){
@@ -70,6 +72,7 @@ function marketRace(g,P){
  if(g.mode!=='pro'||g.sit)return;marketInit(g);var key=trainingKey(g),m=g.market8;if(m.receipts[key])return;m.receipts[key]=true;
  var p=progressionPlayer(g),c=p.con||{},n=seasonRounds(g);
  walletPost(g,key+':salary',(c.pay||0)/n,'Driver salary');
+ if(leagueOf(g)==='f1')walletPost(g,key+':costs',-((c.pay||0)*MARKET8.costRate+MARKET8.living)/n,'Tax, agent and living costs');
  if(!P.dnf&&P.pos===1&&c.wb)walletPost(g,key+':win',c.wb,'Contract win bonus');
  sponActive(g).forEach(function(d){walletPost(g,key+':sponsor:'+d.n,d.v/n,'Personal sponsor: '+d.n);});
  marketScout(g);
@@ -79,7 +82,7 @@ function marketSeats(g,l,team){var v=worldView(g,l),kept=v.drivers.filter(functi
  return {kept:kept,open:worldTeamSeats(l)-kept.length};}
 function marketAI(g){
  var w=g.market8.window;if(!w||w.signed)return;w.aiDeals=w.aiDeals||[];var v=worldView(g,'f1'),used={};w.aiDeals.forEach(function(x){used[x.uid]=true;});
- var pool=v.drivers.concat(v.reserves).filter(function(d){return d.uid!==g.playerUid&&!used[d.uid]&&d.age+1<45&&(!d.con||d.con.end<=g.season);});
+ var pool=v.drivers.concat(v.reserves).filter(function(d){return d.uid!==g.playerUid&&!used[d.uid]&&d.age+1<AGEING.retireAt&&(!d.con||d.con.end<=g.season);});
  v.teams.slice().sort(function(a,b){return teamPower(b)-teamPower(a);}).forEach(function(t){
   var reserve=w.offers.some(function(o){return o.league==='f1'&&o.team===t.id&&o.status==='open';})?1:0;
   if(marketFirstF1(g)&&g.market8.program&&g.market8.program.team===t.id)reserve=Math.max(1,reserve);
@@ -116,23 +119,33 @@ function marketOffer(g,l,t,guaranteed,program){
  var renewal=l===leagueOf(g)&&p.team===t.id,years=l==='f1'&&!program?Math.min(2,careerNextYears(g)):1;
  return {id:w.id+':'+l+':'+t.id+':'+(program?'program':guaranteed?'funded':'seat'),league:l,team:t.id,years:years,pay:pay,wb:0,opt:false,renew:renewal,program:!!program,protected:!!guaranteed,expires:program||guaranteed?null:Math.min(3,w.round+1),status:'open',buy:buy,kept:seats.kept.map(function(d){return d.uid;}),package:pack,loan:loan,reason:program?'Planned rookie programme vacancy.':s?s.reason:'A funded continuing junior seat.',score:s?s.score:marketScore(g,t)};
 }
+function marketF3Seasons(g){return (g.hist||[]).filter(function(r){return r.league==='f3'&&!r.inactive;}).length;}
 function marketTargets(g){var l=leagueOf(g),p=progressionPlayer(g),pos=driverStandings(g).indexOf(p)+1;
- if(l==='f3')return pos===1?['f2']:['f2','f3'];
+ if(l==='f3'){var t3=pos===1||marketF3Seasons(g)>=MARKET8.maxF3?['f2']:['f2','f3'];if(g.market8.license.earned&&p.age+1>=18)t3.push('f1');return t3;}
  if(l==='f2')return g.market8.license.earned&&p.age+1>=18?['f1']:(pos===1?[]:['f2']);return ['f1'];
 }
 function marketPublish(g){
  var m=g.market8,w=m.window;if(!w||w.signed)return;var targets=marketTargets(g),p=progressionPlayer(g),pos=driverStandings(g).indexOf(p)+1;
- targets.forEach(function(l){worldView(g,l).teams.forEach(function(t){
+ var cands=[];targets.forEach(function(l){worldView(g,l).teams.forEach(function(t){
   var id=w.id+':'+l+':'+t.id+':seat';if(w.offers.some(function(o){return o.id===id||o.league===l&&o.team===t.id&&o.protected;}))return;
-  var scout=m.scouts['seat:'+l+':'+t.id],same=l===leagueOf(g)&&t.id===p.team,guaranteed=l!=='f1'&&same&&pos!==1;
+  var scout=m.scouts['seat:'+l+':'+t.id],same=l===leagueOf(g)&&t.id===p.team,guaranteed=l!=='f1'&&same&&pos!==1&&!(l==='f3'&&marketF3Seasons(g)>=MARKET8.maxF3);
   if(!guaranteed&&(!scout||scout.score<scout.threshold+(w.round===1?2:w.round===2?0:-2)-(m.agent===g.season?1:0)))return;
   if(same&&g.fired&&!guaranteed)return;
-  var o=marketOffer(g,l,t,guaranteed,false);if(o){w.offers.push(o);if(scout)scout.negotiating=true;marketNews(g,t.name+' make a contract offer','A '+l.toUpperCase()+' race-seat offer is now available until '+(o.expires?'market round '+o.expires:'you decide')+'.');}
+  cands.push({l:l,t:t,scout:scout,guaranteed:guaranteed});
  });});
+ /* Scarcity: continuing seats always stand; elsewhere only the best few teams in each league actually call. */
+ var open={};w.offers.forEach(function(o){if(o.status==='open'&&!o.protected)open[o.league]=(open[o.league]||0)+1;});
+ ['f1','f2','f3'].forEach(function(l){
+  var mine=cands.filter(function(c){return c.l===l;}),fixed=mine.filter(function(c){return c.guaranteed;}),rest=mine.filter(function(c){return !c.guaranteed;}).sort(function(a,b){return b.t.prestige-a.t.prestige;}).slice(0,Math.max(0,MARKET8.offerCap[l]-(open[l]||0)));
+  fixed.concat(rest).forEach(function(c){var o=marketOffer(g,c.l,c.t,c.guaranteed,false);if(o){w.offers.push(o);if(c.scout)c.scout.negotiating=true;marketNews(g,c.t.name+' make a contract offer','A '+c.l.toUpperCase()+' race-seat offer is now available until '+(o.expires?'market round '+o.expires:'you decide')+'.');}});
+ });
  if(leagueOf(g)==='f3'&&pos===1&&!w.offers.some(function(o){return o.league==='f2'&&o.protected;})){
   var teams=worldView(g,'f2').teams.slice().sort(function(a,b){return a.seasonCost-b.seasonCost;}),o=marketOffer(g,'f2',teams[0],true,false);if(o){w.offers.forEach(function(x){if(x.league==='f2'&&x.team===o.team&&x.status==='open')x.status='withdrawn';});w.offers.push(o);}
  }
- if(marketFirstF1(g)&&targets.indexOf('f1')>=0&&!w.offers.some(function(o){return o.program||o.league==='f1'&&o.status==='open';})){
+ if(leagueOf(g)==='f3'&&pos!==1&&marketF3Seasons(g)>=MARKET8.maxF3&&!w.offers.some(function(o){return o.league==='f2'&&o.protected;})){
+  var last=worldView(g,'f2').teams.slice().sort(function(a,b){return a.seasonCost-b.seasonCost;})[0],lo=marketOffer(g,'f2',last,true,false);if(lo){lo.reason='Final junior opportunity: the F3 limit of three seasons has been reached.';w.offers.push(lo);}
+ }
+ if(marketFirstF1(g)&&leagueOf(g)==='f2'&&targets.indexOf('f1')>=0&&!w.offers.some(function(o){return o.program||o.league==='f1'&&o.status==='open';})){
   var program=marketProgram(g);if(program){var o=marketOffer(g,'f1',worldView(g,'f1').teams[program.team],true,true);if(o)w.offers.push(o);}
  }
  g.offers=w.offers.filter(function(o){return o.status==='open';});
@@ -144,13 +157,13 @@ function marketAdvance(g,confirmed){
  var w=g.market8.window;if(!w||w.signed||w.round>=3)return false;
  var exp=w.offers.filter(function(o){return o.status==='open'&&!o.protected&&o.expires<=w.round;});if(exp.length&&!confirmed)return 'confirm';
  exp.forEach(function(o){o.status='expired';marketNews(g,worldView(g,o.league).teams[o.team].name+' offer expires','The unsigned offer has been released back to the market.');});
- w.round++;marketAI(g);marketPublish(g);return true;
+ w.round++;marketAI(g);marketPublish(g);if(w.round>=3&&leagueOf(g)!=='f1'&&!w.offers.some(function(o){return o.status==='open'&&o.package.own<=g.wallet.balance+1e-9;})&&typeof careerRetire==='function'){careerRetire(g,'No funded seat remained');}return true;
 }
 function marketReject(g,id,confirmed){var w=g.market8.window,o=w&&w.offers.filter(function(o){return o.id===id&&o.status==='open';})[0];if(!o||o.protected)return false;if(!confirmed)return 'confirm';o.status='rejected';marketPublish(g);g.offers=w.offers.filter(function(x){return x.status==='open';});return true;}
 /* Recheck actual contracts and funds; dataset attributes never determine the deal. */
 function marketAccept(g,id){
  var m=g.market8,w=m&&m.window,o=w&&w.offers.filter(function(o){return o.id===id&&o.status==='open';})[0];if(!o||w.signed||g.round<seasonRounds(g)||careerRetirementDue(g))return false;
- if(o.league!==leagueOf(g)&&!((leagueOf(g)==='f3'&&o.league==='f2')||(leagueOf(g)==='f2'&&o.league==='f1')))return false;
+ if(o.league!==leagueOf(g)&&!((leagueOf(g)==='f3'&&(o.league==='f2'||o.league==='f1'))||(leagueOf(g)==='f2'&&o.league==='f1')))return false;
  if(o.league==='f1'&&leagueOf(g)!=='f1'&&(!m.license.earned||progressionPlayer(g).age+1<18))return false;
  var currentPackage=marketPackage(g,o.league,worldView(g,o.league).teams[o.team],o.protected);if(currentPackage.own>o.package.own+.000001)return false;
  var seats=marketSeats(g,o.league,o.team),buy=o.buy&&seats.kept.filter(function(d){return d.uid===o.buy.uid;})[0];if(seats.open<1&&!buy)return false;
@@ -187,7 +200,7 @@ function marketOfferHTML(o){var t=worldView(S,o.league).teams[o.team],p=o.packag
 function marketWindowHTML(){var w=S.market8.window;if(!w||w.season!==S.season||w.signed)return '';var offers=w.offers.filter(function(o){return o.status==='open';});return '<div class="card stack"><h2>Driver market · round '+w.round+' / 3</h2><p>Offers use the same assessment as Scout Watch. Advancing can release unsigned offers. Signing commits one seat and withdraws your other offers.</p>'+offers.map(marketOfferHTML).join('')+(w.round<3?'<button class="btn" data-act="market-next">Next market round</button>':'')+(!offers.length?'<p>No current race-seat offers. '+(marketFirstF1(S)?'Keep reviewing available junior funding and licence requirements.':'Your comeback options will be reviewed at the career transition.')+'</p>':'')+'</div>';}
 function academyHTML(){var m=S.market8,a=m.academy,p=progressionPlayer(S);return '<div class="card stack"><h3>Academy</h3>'+(a?'<p>'+esc(worldView(S,'f1').teams[a.team].name)+' · through Season '+a.until+'. '+Math.round(a.support*100)+'% junior seat funding and bounded coaching support. Exclusive membership; no guaranteed F1 seat.</p><button class="btn sm" data-act="academy-release">Review release · '+marketCash(a.release)+'</button>':(leagueOf(S)!=='f1'&&p.age<=MARKET8.academyAge?'<p>Be scouted or express interest. Further racing evidence determines selection.</p><details><summary>Explore academies</summary>'+worldView(S,'f1').teams.map(function(t){var s=m.scouts['academy:'+t.id];return '<div class="row sp"><span>'+esc(t.name)+(s&&s.requested?' · '+esc(s.decision||'Monitoring'):'')+'</span><button class="btn sm" data-act="academy-interest" data-v="'+t.id+'" '+(s&&s.requested?'disabled':'')+'>Express Interest</button></div>';}).join('')+'</details>':'<p>No active academy membership.</p>'))+m.academyOffers.filter(function(o){return o.status==='open'&&o.season===S.season;}).map(function(o){return '<button class="btn pri" data-act="academy-review" data-v="'+o.id+'">Review '+esc(worldView(S,'f1').teams[o.team].name)+' academy offer</button>';}).join('')+'</div>';}
 function scoutNegotiating(g,s){var m=g.market8,w=m.window;if(s.kind==='academy')return m.academyOffers.some(function(o){return o.team===s.team&&o.season===g.season&&o.status==='open';});return !!(w&&w.season===g.season&&!w.signed&&w.offers.some(function(o){return o.league===s.league&&o.team===s.team&&o.status==='open';}));}
-function scoutRelevant(g,s){return (s.kind==='seat'?s.league===(leagueOf(g)==='f3'?'f2':'f1'):leagueOf(g)!=='f1')&&(s.stage>0||s.requested||scoutNegotiating(g,s));}
+function scoutRelevant(g,s){return (s.kind==='seat'?(s.league===(leagueOf(g)==='f3'?'f2':'f1')||s.league==='f1'&&leagueOf(g)==='f3'&&g.market8.license.earned):leagueOf(g)!=='f1')&&(s.stage>0||s.requested||scoutNegotiating(g,s));}
 function scoutWatchHTML(){if(S.mode!=='pro'||!S.market8)return '';var m=S.market8,scouts=Object.keys(m.scouts).map(function(k){return m.scouts[k];}).filter(function(s){return scoutRelevant(S,s);});return '<div class="card stack"><h3>Scout Watch</h3><p>Observation is not an offer. Negotiations appear only after a real offer.</p>'+scouts.map(function(s){return '<p><b>'+esc(worldView(S,s.league||'f1').teams[s.team].name)+(s.kind==='academy'?' academy':' · '+s.league.toUpperCase())+'</b> · '+(scoutNegotiating(S,s)?'Negotiations':s.stage===2?'Strong interest':s.stage===1?'Watching':'Detected')+' · '+(s.trend>1?'Rising':s.trend< -1?'Falling':'Steady')+'<br>'+esc(s.reason)+'<br>'+esc(s.blocker||'Assessment pending.')+' '+esc(s.want||'')+'</p>';}).join('')+(!scouts.length?'<p>Build a racing record to attract attention.</p>':'')+'</div>';}
 function marketCareerHTML(){var m=S.market8,l=m.license,w=S.wallet,program=m.program;return '<div class="card stack"><h3>Personal wallet</h3><h2>'+marketCash(w.balance)+'</h2><p>Salary, win bonuses and personal sponsors pay you. Team budgets are separate. Junior funding is shown before signing.</p><p>F1 licence: '+(l.earned?'Earned permanently':l.points+' / 40 points')+'. Minimum debut age 18. Points come from the latest three junior seasons.</p>'+(m.commitment?'<p>Committed season funding: '+marketCash(m.commitment.package.own)+' personal + '+marketCash(m.commitment.package.academy)+' academy + '+marketCash(m.commitment.package.grant)+' programme.</p>':'')+'<details><summary>Recent transactions</summary>'+w.ledger.slice(-12).reverse().map(function(r){return '<p>'+esc(r.label)+' · '+(r.amount<0?'-':'+')+marketCash(Math.abs(r.amount))+'</p>';}).join('')+'</details><button class="btn sm" data-act="market-agent" '+(m.agent===S.season?'disabled':'')+'>'+(m.agent===S.season?'Agent active':'Hire agent · '+marketCash(MARKET8.agentFee))+'</button><p class="dim">An agent highlights existing opportunities; they cannot create seats.</p></div><div class="card stack"><h3>Seat Watch</h3>'+['f1','f2','f3'].map(function(l){var v=worldView(S,l),n=v.teams.reduce(function(n,t){return n+marketSeats(S,l,t.id).open;},0);return '<p>'+l.toUpperCase()+': '+n+' potential expiring seats for next season.</p>';}).join('')+(program?'<p>Planned F1 rookie opportunity: '+esc(worldView(S,'f1').teams[program.team].name)+' · next season. This uses an expiring contract inside the 20-car grid.</p>':'<p>No expiring rookie-programme vacancy is recorded yet.</p>')+'</div>'+academyHTML()+marketWindowHTML();}
 /* Integrations preserve Classic and use the existing season/race engine. */

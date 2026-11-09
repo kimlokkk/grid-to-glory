@@ -5,7 +5,7 @@ const { assert, chooseStyle, clickUI } = require('./flow');
   const errs = []; pg.on('pageerror', e => errs.push(e.stack.split('\n').slice(0, 4).join('|')));
   await pg.clock.install(); await pg.goto(require('url').pathToFileURL(require('path').resolve(__dirname, '../index.html')).href); await pg.clock.runFor(500);
   const has = async s => !!(await pg.$(s)); const click = s => clickUI(pg, s, true); const tick = ms => pg.clock.runFor(ms);
-  await click('[data-act=new]'); await tick(300); await pg.evaluate("A['new-go']()"); await tick(300); await chooseStyle(pg, true); await pg.evaluate("S.settings.mini=false; S.settings.ask=false; save()");
+  await click('[data-act=new]'); await tick(300); await pg.evaluate("A['career-mode']({v:'classic'}); A['new-go']()"); await tick(300); await chooseStyle(pg, true); await pg.evaluate("S.settings.mini=false; S.settings.ask=false; save()");
   async function toRace() {
     await click('[data-act=wk-start]'); await tick(300);
     for (let z = 0; z < 8; z++) { if (await has('[data-act=q-next]')) break; if (!(await click('[data-act=q-fin]'))) await click('[data-act=q-play]'); await tick(300); }

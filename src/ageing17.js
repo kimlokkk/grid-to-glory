@@ -1,8 +1,8 @@
 'use strict';
 /* Pro annual care tuning; no race-result, mood or tier multipliers. */
 var AGEING = {
-  fitness: 70, care: 0.5, minStat: 40, retirePrompt: 38, retireAt: 45,
-  bands: [[30, 0, 0], [34, 0.6, 1], [38, 1, 2], [41, 1.5, 2], [45, 2.2, 3]],
+  fitness: 70, care: 0.5, minStat: 40, retirePrompt: 36, retireAt: 42,
+  bands: [[30, 0, 0], [33, 1.8, 1], [36, 3.0, 2], [39, 4.5, 2.5], [42, 6.0, 3]],
   sensitivity: { pace: 0.7, cons: 0.2, race: 0.15, wet: 0.4, tyre: 0.2, fb: 0.05 },
   capAdjustment: 1
 };
@@ -69,6 +69,6 @@ function annualPreviewHTML() {
   if (S.mode !== 'pro') return '';
   var v = annualPreview(S);
   return '<div class="card stack" id="annual-preview"><h3>Next-season preview</h3><div class="chips">' + chip('Age', v.ageBefore + ' → ' + v.age) + chip('Fitness', v.fitnessBefore.toFixed(1) + ' → ' + v.fitness.toFixed(1)) + chip('Wear', v.wearBefore.toFixed(1) + ' → ' + v.wear.toFixed(1)) + '</div>' +
-    (v.retire ? '<p>You will turn 45. Retirement is compulsory before another racing season.</p>' : '<p class="dim">One annual change. Wear and cap adjustment overlap: the larger loss applies once. XP is retained. This preview updates after any stat purchases.</p><div class="scroll"><table class="t"><thead><tr><th>Stat</th><th>Next value</th><th>Next cap</th><th>Net</th></tr></thead><tbody>' + v.rows.map(function (r) { return '<tr><td>' + ATTRN[r.k] + '</td><td class="mono">' + r.before + ' → ' + r.after + '</td><td class="mono">' + r.capBefore + ' → ' + r.capAfter + '</td><td class="mono">' + (r.loss ? '−' + r.loss : '0') + '</td></tr>'; }).join('') + '</tbody></table></div>') +
-    (!v.retire && v.ageBefore >= AGEING.retirePrompt ? '<p class="dim">You can retire now or continue with a seat. Age 44 is your final racing season.</p>' : '') + '</div>';
+    (v.retire ? '<p>You will turn '+AGEING.retireAt+'. Retirement is compulsory before another racing season.</p>' : '<p class="dim">One annual change. Wear and cap adjustment overlap: the larger loss applies once. XP is retained. This preview updates after any stat purchases.</p><div class="scroll"><table class="t"><thead><tr><th>Stat</th><th>Next value</th><th>Next cap</th><th>Net</th></tr></thead><tbody>' + v.rows.map(function (r) { return '<tr><td>' + ATTRN[r.k] + '</td><td class="mono">' + r.before + ' → ' + r.after + '</td><td class="mono">' + r.capBefore + ' → ' + r.capAfter + '</td><td class="mono">' + (r.loss ? '−' + r.loss : '0') + '</td></tr>'; }).join('') + '</tbody></table></div>') +
+    (!v.retire && v.ageBefore >= AGEING.retirePrompt ? '<p class="dim">You can retire now or continue with a seat. Age '+(AGEING.retireAt-1)+' is your final racing season.</p>' : '') + '</div>';
 }

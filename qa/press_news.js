@@ -8,7 +8,7 @@ const path = require('node:path'), fs = require('node:fs');
   const pg=await browser.newPage({viewport:{width:390,height:844}});
   pg.on('pageerror',e=>errors.push(e.message));
   await pg.goto(pathToFileURL(path.resolve(__dirname,'../index.html')).href);
-  await pg.evaluate(()=>{seedRnd(20261106); A.new(); A['new-go']();});
+  await pg.evaluate(()=>{seedRnd(20261106); A.new(); A['career-mode']({v:'classic'}); A['new-go']();});
   await chooseStyle(pg);
   const rows=await pg.evaluate(()=>{
    const original=JSON.stringify(S), random=rnd, rows=[];

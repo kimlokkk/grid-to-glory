@@ -23,7 +23,7 @@ const path = require('node:path');
       pg.on('pageerror', e => errors.push(e.message));
       await pg.clock.install();
       await pg.goto(pathToFileURL(path.resolve(__dirname, '../index.html')).href);
-      await pg.evaluate(() => { seedRnd(20261108); A.new(); A['new-go'](); });
+      await pg.evaluate(() => { seedRnd(20261108); A.new(); A['career-mode']({v:'classic'}); A['new-go'](); });
       await chooseStyle(pg, true);
       await pg.evaluate(weather => {
         // Keep forecast noise reproducible and independent of rival creation.

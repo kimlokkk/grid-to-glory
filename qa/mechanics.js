@@ -11,7 +11,7 @@ const fs = require('node:fs');
     const pg = await browser.newPage();
     pg.on('pageerror', e => errors.push(e.message));
     await pg.goto(pathToFileURL(path.resolve(__dirname, '../index.html')).href);
-    await pg.evaluate(() => { A.new(); A['new-go'](); });
+    await pg.evaluate(() => { A.new(); A['career-mode']({v:'classic'}); A['new-go'](); });
     await chooseStyle(pg);
     const results = await pg.evaluate(() => {
       const saved = { ...P2 }, random = rnd, rows = [];
