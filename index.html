@@ -1104,13 +1104,15 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
  .home-bento .g-gs > * { grid-column: 1 / -1; }
 }
 @media (min-width: 1100px) {
- .home-bento .g-a { grid-column: span 5; }
- .home-bento .g-b { grid-column: span 7; grid-row: auto; }
- .home-bento .g-c, .home-bento .g-d, .home-bento .g-e { grid-column: span 4; }
+ .home-bento .g-a { grid-column: span 5; grid-row: span 2; }
+ .home-bento .g-a > .dcard { display: flex; flex-direction: column; justify-content: space-between; }
+ .home-bento .g-b { grid-column: span 7; grid-row: auto; justify-content: flex-start; gap: 12px; }
+ .home-bento .g-c { grid-column: span 3; }
+ .home-bento .g-d, .home-bento .g-e { grid-column: span 4; }
  .home-bento .home-roadmap { grid-column: span 8; grid-row: span 2; }
  .home-bento .g-h { grid-column: span 4; align-self: stretch; }
  .home-bento .g-gs > .home-training { grid-column: span 4; }
- .home-bento .g-gs > .home-career { grid-column: 1 / -1; }
+ .home-bento .g-gs > .home-career { grid-column: span 8; }
  .home-bento .g-gs > .nw { grid-column: 1 / -1; }
  .home-training { flex-direction: column; align-items: flex-start !important; justify-content: center; padding: 20px; }
  .home-training > .btn { margin-top: 14px; }
