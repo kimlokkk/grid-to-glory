@@ -979,6 +979,47 @@ summary { cursor: pointer; overflow-wrap: anywhere; }
  .rpos .bigp { font-size: 30px; }
  .rpos .gp { font-size: 11px; line-height: 1.2; }
 }
+
+/* Junior entry: one readable card structure on phones and desktop. */
+.w8 > .entry-intro, .w8 > .entry-grid { grid-column: 1 / -1; height: auto; }
+.entry-intro { padding: 22px; }
+.entry-eyebrow { display: block; margin-bottom: 8px; color: var(--accDeep); font: 700 11px var(--disp); letter-spacing: .12em; text-transform: uppercase; }
+.entry-intro h2 { margin-bottom: 8px; }
+.entry-intro p { max-width: 650px; color: var(--dim); font-size: 14px; line-height: 1.6; }
+.entry-rules { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; font: 600 11px var(--disp); color: var(--dim); }
+.entry-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; align-items: stretch; }
+.w8-team.entry-team { display: flex; flex-direction: column; padding: 20px; border: 1.5px solid var(--line2); border-radius: 16px; overflow: visible; box-shadow: 0 3px 12px #1b234005; }
+.entry-team.on { border-color: var(--acc); box-shadow: 0 0 0 2px var(--accSoft); }
+.entry-team:focus-visible { outline: 3px solid var(--acc); outline-offset: 4px; }
+@media (hover: hover) { .entry-team:hover { border-color: var(--acc); } }
+.entry-heading { display: flex; align-items: flex-start; gap: 12px; }
+.entry-name { flex: 1; min-width: 0; font: 700 20px/1.25 var(--disp); letter-spacing: -.015em; }
+.entry-mark { flex: none; width: 23px; height: 23px; border: 1.5px solid var(--line2); border-radius: 50%; display: grid; place-items: center; font-size: 14px; }
+.entry-team.on .entry-mark { background: var(--acc); color: var(--onAcc); border-color: var(--acc); }
+.entry-location { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 8px; color: var(--dim); font-size: 12px; line-height: 1.5; }
+.entry-location > span { margin-left: auto; font-size: 11px; }
+.entry-cost { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; padding: 15px 0; margin-top: 4px; }
+.entry-cost > span:first-child { color: var(--dim); font-size: 12px; }
+.entry-price { font: 700 20px var(--disp); }
+.entry-price small { font: 400 12px var(--body, sans-serif); color: var(--dim); }
+.entry-support { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; padding: 11px 12px; background: var(--panel2); border-radius: 10px; }
+.entry-support > span { display: flex; flex-direction: column; gap: 4px; }
+.entry-support small, .entry-drivers small { font-size: 11px; color: var(--dim); }
+.entry-support b { font: 600 14px var(--mono); }
+.entry-details { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.55; }
+.entry-selected { color: var(--accDeep); font: 600 11px var(--disp); letter-spacing: .05em; text-transform: uppercase; }
+.entry-drivers small { display: block; margin-bottom: 3px; }
+@media (max-width: 600px) {
+ .entry-grid { grid-template-columns: minmax(0,1fr); gap: 12px; }
+ .entry-team:not(.on) .entry-details { display: none; }
+ .entry-intro { padding: 18px; }
+ .entry-intro h2 { font-size: 23px; line-height: 1.15; }
+ .w8-team.entry-team { padding: 16px; }
+ .entry-name { font-size: 18px; }
+ .entry-cost { padding: 12px 0; }
+}
+
+.w8:has(.entry-grid) > .w8-nav { background: var(--bg); border-top: 1px solid var(--line); z-index: 3; }
 </style>
 <div id="app"></div><div id="modal"></div>
 <script>
@@ -9224,7 +9265,8 @@ w8Driver=function(d){var h=juniorOldDriver(d),pro=d.careerMode==='pro';if(d.prot
 };
 var juniorOldTeams=w8Team;
 w8Team=function(d){if(d.careerMode!=='pro')return juniorOldTeams(d);var g=juniorPreview(d);if(!g)return '<div class="card"><p>That name is already used in this world. Go back and choose another name.</p></div>';
- return '<div class="card"><h2>Your '+leagueOf(g).toUpperCase()+' entry package</h2><p>All teams use the same '+leagueOf(g).toUpperCase()+' car specification. Setup, crew, coaching and cost differ. Every team fields '+worldTeamSeats(leagueOf(g))+' drivers.</p></div>'+g.teams.map(function(t){var leaving=progressionPlayer(g).team===t.id?null:juniorDisplaced(g,t.id),mates=g.drivers.filter(function(x){return x.uid!==g.playerUid&&x!==leaving&&x.team===t.id;});return '<button class="w8-team '+(d.team===t.id?'on':'')+'" style="--tc:'+t.color+'" data-act="d-team" data-v="'+t.id+'"><h3>'+esc(t.name)+'</h3><span class="entry-price">'+marketCash(t.seasonCost)+' / season</span><p>'+flagE(t.nat)+' '+esc(t.base)+' · Est. '+t.founded+'</p><p>'+esc(t.blurb)+'</p><div class="chips">'+chip('Seat cost',marketCash(t.seasonCost))+chip('Setup',Math.round(t.ops.setup*100))+chip('Crew',Math.round(t.ops.crew*100))+chip('Coaching',Math.round(t.ops.coaching*100))+'</div><p>Team drivers: '+mates.map(function(x){return esc(x.name);}).join(' · ')+'</p></button>';}).join('');
+ return '<div class="card entry-intro"><span class="entry-eyebrow">Choose your team</span><h2>Your '+leagueOf(g).toUpperCase()+' entry package</h2><p>Same car. Different support. Compare seat cost, setup, crew and coaching to find your starting team.</p><div class="entry-rules"><span>'+leagueOf(g).toUpperCase()+' · spec cars</span><span>'+worldTeamSeats(leagueOf(g))+' drivers per team</span><span>One-season seat</span></div></div><div class="entry-grid">'+g.teams.map(function(t){var selected=d.team===t.id,leaving=progressionPlayer(g).team===t.id?null:juniorDisplaced(g,t.id),mates=g.drivers.filter(function(x){return x.uid!==g.playerUid&&x!==leaving&&x.team===t.id;});return '<button class="w8-team entry-team '+(selected?'on':'')+'" style="--tc:'+t.color+'" data-act="d-team" data-v="'+t.id+'" aria-pressed="'+selected+'"><span class="entry-heading"><span class="entry-name">'+esc(t.name)+'</span><span class="entry-mark" aria-hidden="true">'+(selected?'✓':'')+'</span></span><span class="entry-location">'+flagE(t.nat)+' '+esc(t.base)+'<span>Est. '+t.founded+'</span></span><span class="entry-cost"><span>Season seat</span><span class="entry-price">'+marketCash(t.seasonCost)+'<small> / season</small></span></span><span class="entry-support">'+['setup','crew','coaching'].map(function(k){return '<span><small>'+k[0].toUpperCase()+k.slice(1)+'</small><b>'+Math.round(t.ops[k]*100)+'</b></span>';}).join('')+'</span>'+'<span class="entry-details"><span class="entry-selected">'+(selected?'Selected team':'Team profile')+'</span><span>'+esc(t.blurb)+'</span><span class="entry-drivers"><small>Your teammates</small>'+mates.map(function(x){return esc(x.name);}).join(' · ')+'</span></span></button>';}).join('')+'</div>';
+
 };
 var juniorOldContract=w8Contract;
 w8Contract=function(d){if(d.careerMode!=='pro')return juniorOldContract(d);var q=juniorEntryQuote(d);if(!q)return '<p>Choose a unique driver name before continuing.</p>';
