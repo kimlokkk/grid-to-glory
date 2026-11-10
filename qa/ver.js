@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
     const pg = await b.newPage({ viewport: { width: 390, height: 844 } }), errs = [];
     pg.on('pageerror', e => errs.push(e.message));
     await pg.goto(require('url').pathToFileURL(require('path').resolve(__dirname, '../index.html')).href);
-    assert.match(await pg.locator('[data-act=chlog]').textContent(), /v2\.0\.0/);
+    assert.match(await pg.locator('[data-act=chlog]').textContent(), /v2\.1\.0/);
     const url0 = pg.url();
     await pg.click('[data-act=chlog]');
     const notes = await pg.locator('#modal').textContent();
@@ -16,10 +16,10 @@ const assert = require('node:assert/strict');
     console.log('PASS homepage version, complete major notes and historical release date');
     // Version stamps use the existing Classic fixture; public Pro creation has a contract wizard.
     await pg.evaluate(() => { closeModal(); A.new(); A['career-mode']({ v: 'classic' }); A['new-go'](); save(); });
-    assert.deepEqual(await pg.evaluate(() => { const o = JSON.parse(localStorage.getItem(KEY)); return [o.saveVer, o.appVer]; }), [2, '2.0.0']);
+    assert.deepEqual(await pg.evaluate(() => { const o = JSON.parse(localStorage.getItem(KEY)); return [o.saveVer, o.appVer]; }), [2, '2.1.0']);
     await pg.evaluate(() => { const o = JSON.parse(localStorage.getItem(KEY)); delete o.saveVer; delete o.appVer; localStorage.setItem(KEY, JSON.stringify(o)); });
     await pg.reload(); await pg.click('[data-act=continue]');
-    assert.deepEqual(await pg.evaluate(() => [S.saveVer, S.appVer, UI.screen]), [2, '2.0.0', 'hub']);
+    assert.deepEqual(await pg.evaluate(() => [S.saveVer, S.appVer, UI.screen]), [2, '2.1.0', 'hub']);
     console.log('PASS new and unstamped legacy saves use app 2.0.0 with unchanged save format 2');
     assert.equal(errs.length, 0); console.log('ERRS', JSON.stringify(errs));
   } finally { await b.close(); }

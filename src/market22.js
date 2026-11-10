@@ -44,10 +44,11 @@ function marketScout(g,force){
   var id='seat:'+target+':'+t.id,old=m.scouts[id],score=marketScore(g,t),threshold=target==='f1'?62+t.prestige*2.3+(leagueOf(g)==='f3'?6:0):54+t.prestige*2.6;
   var stage=score>=threshold+3&&samples>=3?2:score>=threshold-5&&samples>=1?1:0;
   var seats=marketSeats(g,target,t.id),s={id:id,kind:'seat',league:target,team:t.id,score:score,threshold:threshold,stage:stage,trend:old?score-old.score:0,reason:'Car-relative performance, recent results and estimated potential.',blocker:target==='f1'&&(!m.license.earned||p.age+1<18)?'F1 needs age 18 and 40 licence points.':seats.open<1?'No expiring seat; a funded buyout would be required.':'A seat can open next season.',want:'Sustain pace and clean results across several races.'};
-  m.scouts[id]=s;if(stage>0&&(!old||old.stage!==stage))marketNews(g,t.name+' '+(stage===2?'show strong interest':'are watching'),p.name+' is being assessed for '+target.toUpperCase()+'. '+s.blocker+' Interest is not a contract offer.');
+  s.oldStage=old?old.stage:0;m.scouts[id]=s;
  });
  });
- if(leagueOf(g)==='f1'||p.age>MARKET8.academyAge)return;
+ marketInterestCap(g,tl);
+ if(leagueOf(g)==='f1'||p.age>MARKET8.academyAge||m.academy)return;
  worldView(g,'f1').teams.forEach(function(t){
   var id='academy:'+t.id,old=m.scouts[id],score=marketScore(g,t),threshold=63+t.prestige*1.6,request=old&&old.requested;
   var stage=score>=threshold+3&&samples>=3?2:score>=threshold-6&&samples>=1?1:0;

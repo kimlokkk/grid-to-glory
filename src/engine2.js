@@ -386,7 +386,7 @@ function makeRace2(S, ci, gridIds, o) {
     var d = S.drivers[di], team = S.teams[d.team], cp = carPerf3(team, c, P2.v3), a3 = worldAttributes(S, d);
     if (R.setup[d.team] == null) R.setup[d.team] = worldSetup(team);
     var f = {
-      di: di, d: d, focus: driverFocus(S, di), ability: abilityEffects(S, ci, di), a: a3, tk: 0.35 * d.tyre + 0.65 * a3.save, t: team, team: d.team, perf: cp.r, perfQ: cp.q, setup: (R.setup[d.team] || 0) + (P2.v3 ? gauss() * 0.04 : 0), grid: i + 1,
+      di: di, d: d, focus: driverFocus(S, di), ability: abilityEffects(S, ci, di), a: a3, tk: 0.35 * d.tyre + 0.65 * a3.save, t: team, team: d.team, perf: cp.r, perfQ: cp.q, setup: (R.setup[d.team] || 0) + (typeof teamCharWet === 'function' ? teamCharWet(team, R) : 0) + (P2.v3 ? gauss() * 0.04 : 0), grid: i + 1,
       s: -((i + 1) * P2.gridGap + gauss() * 0.2) / c.base, sPrev: 0, lap: 1, lapStart: 0, lapNoise: 0,
       comp: 'M', eff: 0, tyreTemp: 0.3, push: 1, fuelMode: 1, energyMode: 1, en: 0.8, fuel: L * (c.distanceScale || 1) * P2.fuel0, hold: 0, pitReq: null, stops: 0, used: {}, plan: [],
       atk: 0, atkCd: 0, pF: c.base, pA: c.base, gA: 99, gB: 99, drs: false, dirty: 0, fin: false, tFin: 0,

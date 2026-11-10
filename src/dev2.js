@@ -153,13 +153,17 @@ function devWinter(S, log) {
     if (ranks[t.id] - t.dev.target >= DEV.sackGap && rnd() < DEV.sack) { var old = t.dev.tp.name; t.dev.tp = newTP(t); if (log) log.push({ sack: true, t: t.id, old: old, nw: t.dev.tp.name }); }
   });
   /* peraturan baru: sebahagian kereta diundi semula, falsafah diundi semula */
-  var reg = S.season + 1 >= S.regYear;
+  var pro = S.mode === 'pro' && S.world && S.world.era, kind = S.season + 1 >= S.regYear ? 'major' : (pro && S.regMinor && S.season + 1 >= S.regMinor ? 'minor' : null), reg = !!kind;
   if (reg) {
+    var mix = !pro ? DEV.regMix : kind === 'major' ? 0.6 : 0.3, before = powerRank(S), champId = S.teams.slice().sort(function (a, b) { return b.pts - a.pts; })[0].id;
+    var lastId = S.teams.slice().sort(function (a, b) { return teamPower(a) - teamPower(b); })[0].id;
     S.teams.forEach(function (t) {
-      PARTS.forEach(function (k) { var nv = clamp(S.target[k] + gauss() * 9, 50, 97); t.car[k] = (1 - DEV.regMix) * t.car[k] + DEV.regMix * nv; t.dev.phil[k] = rr(0.75, 1.25); });
+      PARTS.forEach(function (k) { var nv = clamp(S.target[k] + gauss() * 9, 50, 97); t.car[k] = (1 - mix) * t.car[k] + mix * nv; if (kind !== 'minor') t.dev.phil[k] = rr(0.75, 1.25); });
     });
-    S.regYear = S.season + 1 + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
-    if (log) log.push({ reg: true });
+    if (pro) regBalance(S, kind, champId, lastId, before);
+    if (kind === 'major' || !pro) S.regYear = pro ? S.world.era.next : S.season + 1 + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
+    if (pro) { S.regMinor = regNextMinor(S, kind); S.regLast = { kind: kind, season: S.season + 1 }; }
+    if (log) log.push({ reg: true, kind: kind });
   }
   S.teams.forEach(function (t) { var wsz = DEV.winter + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.rum = false; t.dev.next = null; });
   if (typeof e4Winter === 'function') e4Winter(S, log);
@@ -171,4 +175,22 @@ function devWinter(S, log) {
   }
   setTargets(S);
   return reg;
+}
+
+/* Regulation changes (Pro): a dynasty drops after a major change; minor changes shuffle the leaders a little. Preparation softens the fall. */
+function regPrep(t) { return clamp(((t.prestige || 5) - 5) * 0.04 + ((t.dev && t.dev.td) || 1) - 1 + ((t.dev && t.dev.staff) || 1) - 1, -0.2, 0.35); }
+function regBalance(S, kind, champId, lastId, before) {
+  var champ = S.teams[champId], last = S.teams[lastId];
+  function crew(t) { var ds = S.drivers.filter(function (d) { return d.team === t.id; }); return ds.length ? ds.reduce(function (a, d) { return a + baseOverall(d); }, 0) / ds.length : 70; }
+  function strength(t) { return teamPower(t) + (kind === 'major' ? 0.8 : 0.5) * crew(t); }
+  function rankOf(t) { var st = strength(t); return 1 + S.teams.filter(function (o) { return o !== t && strength(o) > st; }).length; }
+  var drop = kind === 'major' ? (rnd() < 0.5 ? 5 : 6) : before[champId] + 1 + Math.floor(rnd() * 3);
+  drop = clamp(Math.round(drop - regPrep(champ) * (kind === 'major' ? 3 : 1)), 2, 10);
+  var guard = 0; while (rankOf(champ) < drop && guard++ < 40) PARTS.forEach(function (k) { champ.car[k] = clamp(champ.car[k] - 1, 45, 99); });
+  if (kind === 'major' && last.id !== champId) { guard = 0; var lift = 7 - Math.round(regPrep(last) * 2); while (rankOf(last) > lift && guard++ < 40) PARTS.forEach(function (k) { last.car[k] = clamp(last.car[k] + 1, 45, 99); }); }
+}
+function regNextMinor(S, kind) {
+  var major = S.regYear, y = S.season + 1 + 2 + Math.floor(rnd() * 2);
+  if (Math.abs(y - major) < 2) y = major + 2 + Math.floor(rnd() * 2);
+  return y;
 }

@@ -23,6 +23,8 @@ applyAnnualChange = function (g) {
     p.capDrift = p.capDrift || 0;
     var next = clamp(p.capDrift + delta, -3, 3), move = next - p.capDrift;
     if (g.market8 && g.market8.academy && !p.capAcademy) { p.capAcademy = true; move += 1; }
+    var ml = p.mindLog;
+    if (ml && ml.season === g.season && ml.n >= Math.ceil(seasonRounds(g) / 2) && ml.sum / ml.n >= 70 && (p.capMind || 0) < 3) { p.capMind = (p.capMind || 0) + 1; move += 1; }
     if (move) PROGRESSION.stats.forEach(function (k) { p.growthCaps[k] = clamp(p.growthCaps[k] + move, 40, 99); });
     p.capDrift = next;
   }

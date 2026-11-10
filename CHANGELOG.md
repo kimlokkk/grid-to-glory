@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.0 — 10 November 2026 (playtest build)
+
+- Synchronised F3/F2/F1 worlds, market scarcity, ageing and a dynamic ceiling (Mind-based growth step).
+- Talent range 84–96 (gifted 95–97), steeper XP near cap, wider AI/regen spread. Target curve: ~80 at 20, ~86 at 25, ~90 at 30.
+- Regulation Watch: minor changes every 2–3 seasons, major every 5–6, with dynasty falls that also consider driver quality, prestige drift and a back-to-back champion development handicap.
+- Team operations (setup, coaching, pit crew) and five team characters.
+- 12 hard performance abilities and 5 junior "Asas" abilities.
+- Academy as a home: no rival academy offers once signed, seat routes through the academy, release fee for other teams, interest capped at 4–8 teams, protected seats never priced above what you hold.
+
 ## 2.0.0 — 9 November 2026
 
 - Start a Pro career at 16 in F3, earn promotion to F2 and qualify for an F1 debut. Choose your driver identity, helmet, archetype and funding background.

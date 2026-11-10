@@ -1,6 +1,12 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.0.0', date: '9 Nov 2026', save: 2 };
+var APEX = { ver: '2.1.0', date: '10 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.1.0', d: 'Playtest build', date: '10 Nov 2026', l: [
+    "Talent, XP and ageing rebalanced: a typical driver reaches ~80 at 20, ~86 at 25 and ~90 at 30.",
+    "Regulation changes now reshuffle the grid: dynasties fall, prestige drifts and back-to-back champions are handicapped.",
+    "Team operations and five team characters; 12 hard abilities plus junior basic abilities.",
+    "Academy membership is a home: seat routes through the academy, release fee to leave, interest from 4 to 8 teams, protected seats never cost more than you hold."
+  ] },
   { v: '2.0.0', d: 'Major career update', date: '9 Nov 2026', l: [
     "Start a Pro career at 16 in F3, earn promotion to F2 and qualify for an F1 debut. Choose your driver identity, helmet, archetype and funding background.",
     "Race a fixed 22-round F1 calendar with fictional GTG circuits, unique maps, profiles and strategy guides. Junior seasons use an eight-round calendar.",
