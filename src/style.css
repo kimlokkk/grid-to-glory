@@ -2405,3 +2405,4 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
   .rfull.rx .wh .wh-side { aspect-ratio: auto; width: auto; height: 46px; border-radius: 14px; flex-direction: row; display: flex; gap: 8px; }
   .rfull.rx .wh .wh-side small { position: static; transform: none; font-size: 11px; color: inherit; }
 }
+.rm-name { fill: #ffffff30; font: italic 700 15px var(--disp); text-anchor: middle; text-transform: uppercase; } .rm-sub { fill: #ffffff26; font: 700 9px var(--mono); text-anchor: middle; letter-spacing: .1em; text-transform: uppercase; }
