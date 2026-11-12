@@ -38,7 +38,7 @@ function rmDraw(R, al) {
     g.setAttribute('transform', 'translate(' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ') rotate(' + ang.toFixed(0) + ')');
     var pit = f.hold > 0 && !f.fin; if (g._pit !== pit) { g._pit = pit; g.classList.toggle('pit', pit); }
     var show = f.isP || nb[f.di] || (S.rival && f.di === S.rival.di);
-    if (show) { lb.style.display = ''; lb.setAttribute('transform', 'translate(' + a[0].toFixed(1) + ' ' + (a[1] - (f.isP ? 15 : 12)).toFixed(1) + ')'); }
+    if (show) { lb.style.display = ''; lb.setAttribute('transform', 'translate(' + a[0].toFixed(1) + ' ' + (a[1] + (f.isP ? -15 : 14)).toFixed(1) + ')'); }
     else if (lb.style.display !== 'none') lb.style.display = 'none';
   });
 }
@@ -81,9 +81,9 @@ function wheelHTML(R) {
     '<path class="wh-rib" d="M14 78H44M13 96H44M13 114H44M13 132H44M13 150H44M14 168H44M316 78H346M316 96H347M316 114H347M316 132H347M316 150H347M316 168H346"/>' +
     '<path class="wh-plate" d="M44 22 Q44 8 62 8 L298 8 Q316 8 316 22 L316 180 Q316 206 286 210 L248 214 Q236 196 180 196 Q124 196 112 214 L74 210 Q44 206 44 180Z"/>' +
     '<rect class="wh-ledbar" x="62" y="9" width="236" height="15" rx="7.5"/>' +
-    '</svg>' +
-    '<button class="wh-side wh-boost' + (p.atk > 0 ? ' on' : '') + '" data-act="r-atk"' + (canBoost(R, p) ? '' : ' disabled') + ' aria-label="Boost"><i aria-hidden="true">⚡</i><b>' + (p.atk > 0 ? 'Boost!' : 'Boost') + '</b></button>' +
-    '<button class="wh-side wh-pit' + (UI.pitOpen ? ' on' : '') + '" data-act="r-pitm" aria-label="' + (UI.pitOpen ? 'Close pit menu' : 'Pit') + '"><i aria-hidden="true">' + (UI.pitOpen ? '✕' : '🔧') + '</i><b>' + (UI.pitOpen ? 'Close' : 'Pit') + '</b></button>' +
+    '<g class="wh-mini"><circle cx="65" cy="100" r="6"/><text x="65" y="101.8">N</text><circle cx="295" cy="100" r="6"/><text x="295" y="101.8">RAD</text><circle cx="83" cy="112" r="4.2"/><text x="83" y="113.4">+</text><circle cx="277" cy="112" r="4.2"/><text x="277" y="113.4">−</text></g></svg>' +
+    '<button class="wh-side wh-boost' + (p.atk > 0 ? ' on' : '') + '" data-act="r-atk"' + (canBoost(R, p) ? '' : ' disabled') + ' aria-label="Boost"><b>OT</b><small>' + (p.atk > 0 ? 'Boost!' : 'Boost') + '</small></button>' +
+    '<button class="wh-side wh-pit' + (UI.pitOpen ? ' on' : '') + '" data-act="r-pitm" aria-label="' + (UI.pitOpen ? 'Close pit menu' : 'Pit') + '"><b>BOX</b><small>' + (UI.pitOpen ? 'Close' : 'Pit') + '</small></button>' +
     '<div class="wh-leds" aria-hidden="true">' + leds + '</div>' +
     '<div class="wh-screen' + pop + '"><div class="wh-top"><em class="wh-status">' + status + '</em>' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + '</div>' +
     (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) +
