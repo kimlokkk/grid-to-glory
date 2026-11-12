@@ -17,10 +17,10 @@ function rmBuild(R) {
     cars += '<g class="rm-car' + (me ? ' me' : '') + (S.rival && f.di === S.rival.di ? ' rv' : '') + '" id="mc' + f.di + '">' + (me ? '<circle class="rm-halo" r="11"/>' : '') + '<g transform="translate(' + (-w / 2).toFixed(1) + ' ' + (-h / 2).toFixed(1) + ')">' + carSVG(f.t, w) + '</g></g>';
     labs += '<g class="rm-lab' + (me ? ' me' : '') + (S.rival && f.di === S.rival.di ? ' rv' : '') + '" id="ml' + f.di + '" style="display:none"><rect x="-11" y="-6" width="22" height="11" rx="3"/><text y="2.6">' + esc(f.d.code) + '</text></g>';
   });
-  svg.innerHTML = '<path class="rm-run" d="' + T.d + '"/><path class="rm-kerb" d="' + T.d + '"/><path class="rm-road" d="' + T.d + '"/><path class="rm-mid" d="' + T.d + '"/>' +
+  svg.innerHTML = '<path class="rm-run" d="' + T.d + '"/><path class="rm-kerb" d="' + T.d + '"/><path class="rm-kerb2" d="' + T.d + '"/><path class="rm-road" d="' + T.d + '"/><path class="rm-mid" d="' + T.d + '"/>' +
     '<g class="rm-start" transform="translate(' + st[0].toFixed(1) + ' ' + st[1].toFixed(1) + ') rotate(' + (Math.atan2(m0.ny, m0.nx) * 180 / Math.PI).toFixed(1) + ')"><rect x="-8" y="-1.6" width="16" height="3.2"/><rect class="w" x="-8" y="-1.6" width="2" height="1.6"/><rect class="w" x="-4" y="-1.6" width="2" height="1.6"/><rect class="w" x="0" y="-1.6" width="2" height="1.6"/><rect class="w" x="4" y="-1.6" width="2" height="1.6"/><rect class="w" x="-6" y="0" width="2" height="1.6"/><rect class="w" x="-2" y="0" width="2" height="1.6"/><rect class="w" x="2" y="0" width="2" height="1.6"/><rect class="w" x="6" y="0" width="2" height="1.6"/></g>' +
     zl + '<g id="rm-cars">' + cars + '</g><g>' + labs + '</g>';
-  RM.R = R; RM.T = T; RM.cars = {}; RM.labs = {};
+  RM.R = R; RM.T = T; RM.cars = {}; RM.labs = {}; RM.svg = svg; RM.prog = document.getElementById('rmprog'); RM.pr = null; RM.hot = null;
   R.cars.forEach(function (f) { RM.cars[f.di] = document.getElementById('mc' + f.di); RM.labs[f.di] = document.getElementById('ml' + f.di); });
   var me = RM.cars[R.p.di]; if (me) me.parentNode.appendChild(me);   /* player drawn on top */
 }
@@ -28,6 +28,8 @@ function rmDraw(R, al) {
   if (RM.R !== R) { if (document.getElementById('rmap')) rmBuild(R); if (RM.R !== R) return; }
   var T = RM.T, p = R.p, ord = RUN && RUN.ord ? RUN.ord : trackOrder(R), pi = ord.indexOf(p), nb = {};
   if (pi > 0) nb[ord[pi - 1].di] = 1; if (ord[pi + 1] && !ord[pi + 1].dnf) nb[ord[pi + 1].di] = 1;
+  var hot = !!(RUN && RUN.hot && !R.sc); if (RM.hot !== hot) { RM.hot = hot; RM.svg.classList.toggle('hot', hot); }
+  if (RM.prog) { var pr = clamp((p.fin ? R.L : sAt(R, p, al)) / R.L * 100, 0, 100).toFixed(1); if (RM.pr !== pr) { RM.pr = pr; RM.prog.style.width = pr + '%'; } }
   R.cars.forEach(function (f) {
     var g = RM.cars[f.di], lb = RM.labs[f.di]; if (!g) return;
     if (f.dnf || (f.fin && !f.isP)) { if (g.style.display !== 'none') { g.style.display = 'none'; lb.style.display = 'none'; } return; }
@@ -48,19 +50,34 @@ function whRing(v, col, txt, lab) {
   var c = 2 * Math.PI * 15, f = clamp(v, 0, 1);
   return '<div class="wh-pod"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" fill="none" stroke="#ffffff1f" stroke-width="5"/><circle cx="20" cy="20" r="15" fill="none" stroke="' + col + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + (c * f).toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(-90 20 20)"/></svg><b>' + txt + '</b><small>' + lab + '</small></div>';
 }
+function whDial(cx, cy, label, manual, mode) {
+  var ang = manual ? [-42, 0, 42][mode] : -96, t = '';
+  [-96, -42, 0, 42].forEach(function (a) { t += '<line class="wh-tick" x1="0" y1="-13.5" x2="0" y2="-11" transform="rotate(' + a + ')"/>'; });
+  return '<g transform="translate(' + cx + ' ' + cy + ')"><circle class="wh-dial" r="10"/>' + t + '<g transform="rotate(' + ang + ')"><circle class="wh-knob" r="7"/><line class="wh-ptr" x1="0" y1="-7" x2="0" y2="-2.5"/></g><text class="wh-dl" y="19">' + label + '</text></g>';
+}
 function wheelHTML(R) {
   var p = R.p, o = trackOrder(R), i = o.indexOf(p), ah = i > 0 ? o[i - 1] : null, hp = tyreHealth(p, R), spare = fuelMargin(R, p), heat = tyreHeat(p);
   var gap = ah ? Math.max(0, (Math.min(ah.s, R.L) - p.s) * (p.pA || R.c.base)) : 99, lit = R.sc ? 15 : clamp(Math.round((2.5 - gap) / 2.5 * 15), 0, 15), mode = p.atk > 0 ? ' boost' : R.sc ? ' sc' : '';
   var leds = ''; for (var k = 0; k < 15; k++) leds += '<i class="' + (k < 5 ? 'g' : k < 10 ? 'r' : 'b') + (k < lit ? ' on' : '') + '"></i>';
-  var tc = COMP[p.comp] ? COMP[p.comp].col : '#fff';
+  var tc = COMP[p.comp] ? COMP[p.comp].col : '#fff', man = function (key) { return !!(p.bot && p.bot[key] != null); };
+  /* position change pop: green when you gain a place, red when you lose one */
+  var pos = i + 1, now = performance.now();
+  if (RM.posR !== R) { RM.posR = R; RM.pos = pos; RM.posT = -1e9; }
+  if (pos !== RM.pos) { RM.posD = pos < RM.pos ? 1 : -1; RM.posN = Math.abs(pos - RM.pos); RM.posT = now; RM.pos = pos; if (RM.posD > 0 && RUN && !RUN.fast && R.lap > 1) { try { snd('good'); } catch (e) { } } }
+  var pop = now - RM.posT < 1800 && R.lap > 1 ? (RM.posD > 0 ? ' up' : ' dn') : '';
   return '<div class="wh' + mode + '" role="group" aria-label="Steering wheel display"><svg class="wh-body" viewBox="0 0 360 170" aria-hidden="true">' +
+    '<defs><pattern id="whcf" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#20242f"/><rect width="3" height="3" fill="#2a2f3d"/><rect x="3" y="3" width="3" height="3" fill="#2a2f3d"/></pattern></defs>' +
+    '<path class="wh-paddle" d="M40 54 L18 62 L14 118 L40 126Z"/><path class="wh-paddle" d="M320 54 L342 62 L346 118 L320 126Z"/>' +
     '<path class="wh-grip" d="M8 58 Q4 36 24 30 L52 26 L52 150 L28 158 Q8 160 6 138Z"/><path class="wh-grip" d="M352 58 Q356 36 336 30 L308 26 L308 150 L332 158 Q352 160 354 138Z"/>' +
+    '<path class="wh-rib" d="M14 70H44M13 84H44M13 98H44M13 112H44M14 126H44M316 70H346M316 84H347M316 98H347M316 112H347M316 126H346"/>' +
     '<path class="wh-plate" d="M44 22 Q44 8 62 8 L298 8 Q316 8 316 22 L316 120 Q316 150 286 154 L248 158 Q236 136 180 136 Q124 136 112 158 L74 154 Q44 150 44 120Z"/>' +
-    '<circle class="wh-k k1" cx="70" cy="128" r="7"/><circle class="wh-k k2" cx="290" cy="128" r="7"/><circle class="wh-k k3" cx="94" cy="142" r="5.5"/><circle class="wh-k k4" cx="266" cy="142" r="5.5"/>' +
-    '<rect class="wh-pad" x="62" y="40" width="10" height="5" rx="2"/><rect class="wh-pad" x="288" y="40" width="10" height="5" rx="2"/></svg>' +
+    '<rect class="wh-ledbar" x="62" y="9" width="236" height="15" rx="7.5"/>' +
+    '<g class="wh-btn"><rect x="56" y="36" width="15" height="9" rx="3" fill="#ffd24a"/><text x="63.5" y="42.6">DRS</text><rect x="289" y="36" width="15" height="9" rx="3" fill="#5aa9ff"/><text x="296.5" y="42.6">RAD</text>' +
+    '</g>' +
+    whDial(74, 126, 'TYRE', man('push'), raceMode(p, 'push')) + whDial(286, 126, 'ERS', man('energyMode'), raceMode(p, 'energyMode')) + '</svg>' +
     '<div class="wh-leds" aria-hidden="true">' + leds + '</div>' +
     '<div class="wh-mid">' + whRing(hp, hp > 0.5 ? '#39d98a' : hp > 0.2 ? '#ffd24a' : '#ff5a4f', Math.round(hp * 100) + '%', 'Tyre ' + p.comp + (heat > 0.78 ? ' · hot' : heat < 0.35 ? ' · cold' : '')) +
-    '<div class="wh-screen">' + (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) + '<div class="wh-lap">L' + Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L + ' <i style="background:' + tc + '"></i>' + Math.floor(p.eff) + 'L</div></div>' +
+    '<div class="wh-screen' + pop + '">' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) + '<div class="wh-lap">L' + Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L + ' <i style="background:' + tc + '"></i>' + Math.floor(p.eff) + 'L</div></div>' +
     whRing(p.en, '#a78bfa', Math.round(p.en * 100) + '%', 'Energy') + '</div>' +
     '<div class="wh-foot"><span class="' + (spare < 0 ? 'bad' : spare < 0.3 ? 'mid' : '') + '">FUEL ' + (spare < 0 ? '' : '+') + spare.toFixed(1) + 'L</span><span>' + (p.atk > 0 ? 'BOOST' : R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : gap < 1 ? 'ATTACK' : 'RACE') + '</span></div></div>';
 }
@@ -94,7 +111,7 @@ cockpitHTML = function (R) {
 };
 
 /* ---------- layout ---------- */
-function rmMapCard() { return '<div class="rmapc"><svg id="rmap" class="rmap" viewBox="0 0 400 240" role="img" aria-label="Circuit map with every car"></svg></div>'; }
+function rmMapCard() { return '<div class="rmapc"><i class="rm-prog" aria-hidden="true"><u id="rmprog"></u></i><svg id="rmap" class="rmap" viewBox="0 0 400 240" role="img" aria-label="Circuit map with every car"></svg></div>'; }
 vRacePhone = function (R) {
   var t = UI.rtab === 'ked' || UI.rtab === 'radio' ? UI.rtab : 'trek';
   var h = '<div class="rfull rx tab-' + t + '"><div class="rtop5"><div class="rhead" id="strip"></div><button class="btn sm" data-act="wk-quit">Exit</button></div>' +
