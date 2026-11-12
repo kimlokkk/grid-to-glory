@@ -2373,3 +2373,16 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
   .rfull.rx .wh-dial-b { grid-template-rows: auto auto auto; } .rfull.rx .wh-dial-b svg { width: 30px; grid-row: 1 / span 3; } .rfull.rx .wh-dv { position: static; grid-column: 2; height: auto; justify-items: start; } .rfull.rx .wh-dl2 { grid-column: 2; margin: 0; justify-content: flex-start; } .rfull.rx .wh-dl2 > :not(small) { display: none; } .rfull.rx .wh-dial-b em { grid-column: 2; margin: 0; padding: 0 5px; }
   .rfull.rx .lastr5 .fr-q { -webkit-line-clamp: 1; font-size: 13px; }
 }
+
+/* wheel v4: Boost and Pit are buttons on the wheel */
+.wh-side { all: unset; box-sizing: border-box; cursor: pointer; position: absolute; top: 13.5%; bottom: 49%; width: 9.5%; display: grid; align-content: center; justify-items: center; gap: 2px; border-radius: 12px; border: 1.5px solid #0008; box-shadow: inset 0 -3px 0 #0005, 0 2px 4px #0006; text-align: center; -webkit-tap-highlight-color: transparent; transition: transform .08s; }
+.wh-side:active { transform: scale(.94); } .wh-side:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.wh-side i { font-style: normal; font-size: clamp(13px, 3.8vw, 18px); line-height: 1; } .wh-side b { font: italic 700 clamp(8px, 2.3vw, 11px) var(--disp); text-transform: uppercase; letter-spacing: .02em; }
+.wh-boost { left: 12.8%; background: #7c3aed; color: #fff; } .wh-boost.on { background: #a78bfa; animation: hpBlink .5s infinite; } .wh-boost:disabled { background: #2a2f48; color: #6b7394; box-shadow: none; cursor: default; }
+.wh-pit { right: 12.8%; background: #ffd24a; color: #0d1120; } .wh-pit.on { background: #fff; }
+@media (max-width: 899px) and (max-height: 700px) {
+  .rfull.rx .wh { display: grid; grid-template-columns: 1fr 1fr; column-gap: 6px; } .rfull.rx .wh-leds, .rfull.rx .wh .wh-screen, .rfull.rx .wh-dials { grid-column: 1 / -1; }
+  .rfull.rx .wh-leds { position: static; display: flex; justify-content: space-between; padding: 0 8%; } .rfull.rx .wh .wh-screen { margin-top: 6px; }
+  .rfull.rx .wh-side { position: static; width: auto; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; order: 9; } .rfull.rx .wh-side b { font-size: 13px; }
+}
+.wh .wh-screen { left: 25%; right: 25%; }

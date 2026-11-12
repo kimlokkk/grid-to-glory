@@ -81,7 +81,9 @@ function wheelHTML(R) {
     '<path class="wh-rib" d="M14 78H44M13 96H44M13 114H44M13 132H44M13 150H44M14 168H44M316 78H346M316 96H347M316 114H347M316 132H347M316 150H347M316 168H346"/>' +
     '<path class="wh-plate" d="M44 22 Q44 8 62 8 L298 8 Q316 8 316 22 L316 180 Q316 206 286 210 L248 214 Q236 196 180 196 Q124 196 112 214 L74 210 Q44 206 44 180Z"/>' +
     '<rect class="wh-ledbar" x="62" y="9" width="236" height="15" rx="7.5"/>' +
-    '<g class="wh-btn"><circle cx="65" cy="44" r="6" fill="#ff5a4f"/><circle cx="65" cy="66" r="6" fill="#5aa9ff"/><circle cx="65" cy="88" r="6" fill="#a78bfa"/><circle cx="295" cy="44" r="6" fill="#39d98a"/><circle cx="295" cy="66" r="6" fill="#ffd24a"/><circle cx="295" cy="88" r="6" fill="#ffffff"/></g></svg>' +
+    '</svg>' +
+    '<button class="wh-side wh-boost' + (p.atk > 0 ? ' on' : '') + '" data-act="r-atk"' + (canBoost(R, p) ? '' : ' disabled') + ' aria-label="Boost"><i aria-hidden="true">⚡</i><b>' + (p.atk > 0 ? 'Boost!' : 'Boost') + '</b></button>' +
+    '<button class="wh-side wh-pit' + (UI.pitOpen ? ' on' : '') + '" data-act="r-pitm" aria-label="' + (UI.pitOpen ? 'Close pit menu' : 'Pit') + '"><i aria-hidden="true">' + (UI.pitOpen ? '✕' : '🔧') + '</i><b>' + (UI.pitOpen ? 'Close' : 'Pit') + '</b></button>' +
     '<div class="wh-leds" aria-hidden="true">' + leds + '</div>' +
     '<div class="wh-screen' + pop + '"><div class="wh-top"><em class="wh-status">' + status + '</em>' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + '</div>' +
     (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) +
@@ -105,9 +107,7 @@ cockpitHTML = function (R) {
   var hp = tyreHealth(p, R), spare = fuelMargin(R, p);
   h += wheelHTML(R);
   var advice = raceAdvice(R, p); if (advice) h += '<p class="control-advice"><b>ENG</b> ' + esc(advice) + '</p>';
-  var noB = !canBoost(R, p);
   if (p.pitReq && p.pitOk) h += '<div class="pitnote"><span>Boxing this lap: ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</span><button class="btn sm" data-act="r-pitx">Cancel</button></div>';
-  h += '<div class="acts"><button class="btn boost' + (p.atk > 0 ? ' on' : '') + '" data-act="r-atk"' + (noB ? ' disabled' : '') + '><span aria-hidden="true">⚡</span> ' + (p.atk > 0 ? 'Boost!' : 'Boost') + '</button><button class="btn pitb' + (UI.pitOpen ? ' on' : '') + '" data-act="r-pitm"><span aria-hidden="true">🔧</span> ' + (UI.pitOpen ? 'Close' : 'Pit') + '</button></div>';
   if (UI.pitOpen && !(p.pitReq && p.pitOk)) h += '<div class="tyrow">' + ['S', 'M', 'H', 'I', 'W'].map(function (k) { return '<button class="btn" data-act="r-pit" data-v="' + k + '">' + sgTyre(k, 26) + '<span>' + TYN[k] + '</span></button>'; }).join('') + '</div>';
   if (!UI.phone) h += '<p class="rplan">Plan: ' + planText(R, p) + '</p>';
   h += '<div class="ctlrow">' + (RUN.pause ? '<button class="btn pri" data-act="r-go">' + (R.t > 0 ? '▶ Resume' : '▶ Start') + '</button>' : '<button class="btn" data-act="r-pause">❚❚ Pause</button>') +
