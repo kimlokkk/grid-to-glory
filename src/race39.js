@@ -60,11 +60,12 @@ function wheelHTML(R) {
   var gap = ah ? Math.max(0, (Math.min(ah.s, R.L) - p.s) * (p.pA || R.c.base)) : 99, lit = R.sc ? 15 : clamp(Math.round((2.5 - gap) / 2.5 * 15), 0, 15), mode = p.atk > 0 ? ' boost' : R.sc ? ' sc' : '';
   var leds = ''; for (var k = 0; k < 15; k++) leds += '<i class="' + (k < 5 ? 'g' : k < 10 ? 'r' : 'b') + (k < lit ? ' on' : '') + '"></i>';
   var tc = COMP[p.comp] ? COMP[p.comp].col : '#fff', man = function (key) { return !!(p.bot && p.bot[key] != null); };
-  /* position change pop: green when you gain a place, red when you lose one */
   var pos = i + 1, now = performance.now();
   if (RM.posR !== R) { RM.posR = R; RM.pos = pos; RM.posT = -1e9; }
   if (pos !== RM.pos) { RM.posD = pos < RM.pos ? 1 : -1; RM.posN = Math.abs(pos - RM.pos); RM.posT = now; RM.pos = pos; if (RM.posD > 0 && RUN && !RUN.fast && R.lap > 1) { try { snd('good'); } catch (e) { } } }
   var pop = now - RM.posT < 1800 && R.lap > 1 ? (RM.posD > 0 ? ' up' : ' dn') : '';
+  var status = p.atk > 0 ? 'BOOST' : R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : gap < 1 ? 'ATTACK' : 'RACE';
+  var cell = function (lab, val, cls) { return '<span class="' + (cls || '') + '"><small>' + lab + '</small><b>' + val + '</b></span>'; };
   return '<div class="wh' + mode + '" role="group" aria-label="Steering wheel display"><svg class="wh-body" viewBox="0 0 360 170" aria-hidden="true">' +
     '<defs><pattern id="whcf" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#20242f"/><rect width="3" height="3" fill="#2a2f3d"/><rect x="3" y="3" width="3" height="3" fill="#2a2f3d"/></pattern></defs>' +
     '<path class="wh-paddle" d="M40 54 L18 62 L14 118 L40 126Z"/><path class="wh-paddle" d="M320 54 L342 62 L346 118 L320 126Z"/>' +
@@ -72,14 +73,13 @@ function wheelHTML(R) {
     '<path class="wh-rib" d="M14 70H44M13 84H44M13 98H44M13 112H44M14 126H44M316 70H346M316 84H347M316 98H347M316 112H347M316 126H346"/>' +
     '<path class="wh-plate" d="M44 22 Q44 8 62 8 L298 8 Q316 8 316 22 L316 120 Q316 150 286 154 L248 158 Q236 136 180 136 Q124 136 112 158 L74 154 Q44 150 44 120Z"/>' +
     '<rect class="wh-ledbar" x="62" y="9" width="236" height="15" rx="7.5"/>' +
-    '<g class="wh-btn"><rect x="56" y="36" width="15" height="9" rx="3" fill="#ffd24a"/><text x="63.5" y="42.6">DRS</text><rect x="289" y="36" width="15" height="9" rx="3" fill="#5aa9ff"/><text x="296.5" y="42.6">RAD</text>' +
-    '</g>' +
-    whDial(74, 126, 'TYRE', man('push'), raceMode(p, 'push')) + whDial(286, 126, 'ERS', man('energyMode'), raceMode(p, 'energyMode')) + '</svg>' +
+    '<g class="wh-btn"><circle cx="66" cy="44" r="6" fill="#ff5a4f"/><circle cx="66" cy="66" r="6" fill="#5aa9ff"/><circle cx="294" cy="44" r="6" fill="#39d98a"/><circle cx="294" cy="66" r="6" fill="#ffd24a"/></g>' +
+    whDial(66, 104, 'TYRE', man('push'), raceMode(p, 'push')) + whDial(294, 104, 'ERS', man('energyMode'), raceMode(p, 'energyMode')) + '</svg>' +
     '<div class="wh-leds" aria-hidden="true">' + leds + '</div>' +
-    '<div class="wh-mid">' + whRing(hp, hp > 0.5 ? '#39d98a' : hp > 0.2 ? '#ffd24a' : '#ff5a4f', Math.round(hp * 100) + '%', 'Tyre ' + p.comp + (heat > 0.78 ? ' · hot' : heat < 0.35 ? ' · cold' : '')) +
-    '<div class="wh-screen' + pop + '">' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) + '<div class="wh-lap">L' + Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L + ' <i style="background:' + tc + '"></i>' + Math.floor(p.eff) + 'L</div></div>' +
-    whRing(p.en, '#a78bfa', Math.round(p.en * 100) + '%', 'Energy') + '</div>' +
-    '<div class="wh-foot"><span class="' + (spare < 0 ? 'bad' : spare < 0.3 ? 'mid' : '') + '">FUEL ' + (spare < 0 ? '' : '+') + spare.toFixed(1) + 'L</span><span>' + (p.atk > 0 ? 'BOOST' : R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : gap < 1 ? 'ATTACK' : 'RACE') + '</span></div></div>';
+    '<div class="wh-screen' + pop + '"><div class="wh-top"><em class="wh-status">' + status + '</em>' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + '</div>' +
+    (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) +
+    '<div class="wh-cells">' + cell('<i style="background:' + tc + '"></i>' + p.comp + ' ' + Math.floor(p.eff) + 'L', Math.round(hp * 100) + '%', hp > 0.5 ? 'ok' : hp > 0.2 ? 'mid' : 'bad') + cell('ERS', Math.round(p.en * 100) + '%', 'ers') + cell('Fuel', (spare < 0 ? '' : '+') + spare.toFixed(1), spare < 0 ? 'bad' : spare < 0.3 ? 'mid' : '') + cell('Lap', Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L) + '</div>' +
+    (heat > 0.78 ? '<i class="wh-heat">Tyres hot</i>' : '') + '</div></div>';
 }
 
 /* ---------- cockpit: wheel + controls (same actions and classes) ---------- */

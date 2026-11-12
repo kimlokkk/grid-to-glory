@@ -2271,12 +2271,6 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 @media (max-width: 380px) { .sg-go-sum .sg-ty { display: none; } .sg-go-sum > span { margin-left: 0; } }
 
 /* ===== Race weekend v3, phase 3: Race ===== */
-.rx { --bg: #0b0e1a; --panel: #141a30; --panel2: #1c2340; --fg: #f2f4fb; --dim: #9aa3c2; --line: #ffffff1a; --line2: #ffffff2e; --accDeep: #ffd24a; color: var(--fg); }
-.rfull.rx { background: #0b0e1a; } .rfull.rx::before { background: linear-gradient(90deg, #ff5a4f 0 33.3%, #ffd24a 33.3% 66.6%, #39d98a 66.6%); }
-.rx .card { background: var(--panel); border-color: var(--line); color: var(--fg); }
-.rx .rtabs { background: #141a30; } .rx .rtabs button.on { background: #ffd24a; color: #0d1120; box-shadow: none; }
-.rx .lapno { color: #fff; } .rx .badge { background: #ffffff14; color: #fff; } .rx .badge.sc { background: #ffd24a; color: #0d1120; } .rx .badge.wet { background: #2f6db5; color: #fff; }
-.rx .btn { background: #1c2340; border-color: #ffffff2e; color: #fff; } .rx .btn.on { background: #ffd24a; border-color: #ffd24a; color: #0d1120; } .rx .btn.pri { background: #ffd24a; border-color: #ffd24a; color: #0d1120; }
 
 /* circuit map */
 .rmapc { position: relative; border-radius: 16px; background: radial-gradient(120% 120% at 50% 40%, #16304a 0%, #0c1426 70%); overflow: hidden; }
@@ -2290,7 +2284,6 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 .rm-lab rect { fill: #0d1120; stroke: #ffffff4d; stroke-width: .6; } .rm-lab text { fill: #fff; font: 700 7px var(--disp); text-anchor: middle; } .rm-lab.me rect { fill: #ffd24a; stroke: none; } .rm-lab.me text { fill: #0d1120; } .rm-lab.rv rect { fill: #ff5a4f; stroke: none; }
 
 /* battle strip on dark */
-.rx .duel { background: #10162a; } .rx .duel .lbl { color: var(--dim); } .rx .btchip.on { background: #ff5a4f; color: #fff; }
 
 /* steering wheel */
 .wh { position: relative; width: 100%; max-width: 420px; margin: 0 auto; aspect-ratio: 360 / 170; color: #fff; }
@@ -2308,17 +2301,14 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 .wh-foot { position: absolute; bottom: 5%; left: 33%; right: 33%; display: flex; justify-content: space-between; font: 700 clamp(7.5px, 2vw, 9.5px) var(--mono); color: #9aa3c2; letter-spacing: .04em; } .wh-foot .mid { color: #ffd24a; } .wh-foot .bad { color: #ff5a4f; }
 
 /* controls under the wheel */
-.rx .dock { background: #10162a; box-shadow: 0 -6px 20px #0008; }
 .rx .race-control { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; align-items: center; } .rx .race-control > .row { flex-direction: column; align-items: flex-start; gap: 0; margin: 0; } .rx .race-control > .row b { font-size: 12px; } .rx .race-control small { font-size: 10px; }
-.rx .seg { background: #0b0e1a; } .rx .seg button { color: #9aa3c2; } .rx .seg button.on { background: #ffd24a; color: #0d1120; }
-.rx .race-summary button { background: #1c2340; border-color: #ffffff24; color: #fff; border-radius: 14px; } .rx .race-summary small { color: #9aa3c2; }
-.rx .control-advice { font-size: 11.5px; color: #ffd24a; } .rx .control-advice b { font-family: var(--disp); margin-right: 4px; }
+.rx .control-advice { font-size: 11.5px; color: #9a6a00; } .rx .control-advice b { font-family: var(--disp); margin-right: 4px; }
 .rx .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .rx .acts .btn { min-height: 52px; border-radius: 16px; font: italic 700 17px var(--disp); text-transform: uppercase; border: 0; box-shadow: 0 4px 0 #0007; }
 .rx .acts .boost { background: #7c3aed; color: #fff; } .rx .acts .boost.on { background: #a78bfa; animation: hpBlink .5s infinite; } .rx .acts .boost:disabled { background: #2a2f48; color: #6b7394; box-shadow: none; } .rx .acts .pitb { background: #ffd24a; color: #0d1120; } .rx .acts .pitb.on { background: #fff; }
 .rx .acts .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #0007; }
 .rx .tyrow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; } .rx .tyrow .btn { display: grid; justify-items: center; gap: 2px; padding: 6px 2px; min-height: 60px; font-size: 10.5px; }
 .rx .pitnote { background: #ffd24a; color: #0d1120; border-radius: 12px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; }
-.rx .ctlrow { display: flex; gap: 6px; flex-wrap: wrap; } .rx .rplan { font-size: 12px; color: var(--dim); }
+.rx .ctlrow { display: flex; gap: 6px; flex-wrap: wrap; } .rx .rplan { font-size: 12px; color: var(--dim); } .rx .rtabs button.on { background: #0d1120; color: #ffd24a; } .rx .btchip.on { background: #ff5a4f; color: #fff; } .rx .seg button.on { background: #0d1120; color: #ffd24a; }
 
 /* chequered flag */
 .rflag { position: relative; overflow: hidden; display: grid; gap: 6px; padding: 30px 18px 18px; border-radius: 18px; background: #141a30; color: #fff; text-align: center; animation: hpRise .5s both; }
@@ -2339,10 +2329,10 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 }
 @media (min-width: 600px) and (min-height: 800px) { .rfull.rx .rmap { max-height: 26dvh; } }
 /* desktop */
-.race5.rx { padding: 14px; border-radius: 22px; background: #0b0e1a; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.race5.rx { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .rx-left, .rx-right { display: grid; gap: 12px; align-content: start; min-width: 0; }
 .rx-strip { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; } .rx-mapcard { padding: 8px; }
-.rx-cock { display: grid; gap: 10px; padding: 14px; border-radius: 18px; background: #10162a; }
+.rx-cock { display: grid; gap: 10px; padding: 14px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
 @media (min-width: 900px) { .race5.rx { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .rx *, .rflag * { animation: none !important; } }
 
@@ -2356,6 +2346,20 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 .rm-prog { position: absolute; left: 0; right: 0; top: 0; height: 4px; background: #ffffff14; z-index: 2; } .rm-prog u { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #39d98a, #ffd24a); }
 .rmap.hot .rm-halo { fill: #ff5a4f40; stroke: #ff5a4f; animation-duration: .6s; } .rmap.hot .rm-car.me svg { filter: drop-shadow(0 0 3px #ff5a4f); }
 @media (max-width: 899px) and (max-height: 700px) { .rfull.rx .wh-pop { top: 0; } }
+
+/* wheel v2: one clean central screen like a real F1 dash */
+.wh .wh-screen { position: absolute; left: 24.5%; right: 24.5%; top: 17.5%; bottom: 21%; height: auto; display: grid; grid-template-rows: auto 1fr auto; align-content: stretch; gap: 2px; padding: 4px 7px 5px; }
+.wh-top { display: flex; justify-content: space-between; align-items: center; min-height: 11px; } .wh-status { font: 700 clamp(7px, 1.9vw, 9px) var(--mono); font-style: normal; letter-spacing: .08em; color: #39d98a; } .wh.boost .wh-status { color: #a78bfa; } .wh.sc .wh-status { color: #ffd24a; }
+.wh .wh-pop { position: static; font-size: clamp(9px, 2.6vw, 12px); padding: 0 6px; }
+.wh .wh-screen .posl { align-self: center; gap: 7px; } .wh .wh-screen .posl .bigp { font-size: clamp(22px, 6.6vw, 36px); }
+.wh .wh-screen .posl .gp { font-size: clamp(8.5px, 2.4vw, 11px); overflow: hidden; text-overflow: ellipsis; }
+.wh-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-top: 1px solid #ffffff1f; padding-top: 3px; }
+.wh-cells span { display: grid; min-width: 0; } .wh-cells small { display: flex; align-items: center; gap: 2px; font: 700 clamp(6.5px, 1.7vw, 8.5px) var(--mono); color: #9aa3c2; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; } .wh-cells small i { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.wh-cells b { font: 700 clamp(10px, 2.9vw, 14px) var(--mono); color: #fff; line-height: 1.1; white-space: nowrap; } .wh-cells .ok b { color: #39d98a; } .wh-cells .mid b { color: #ffd24a; } .wh-cells .bad b { color: #ff5a4f; } .wh-cells .ers b { color: #c4b5fd; }
+.wh-heat { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); font: 700 9px var(--mono); font-style: normal; color: #ff5a4f; white-space: nowrap; }
+@media (max-width: 899px) and (max-height: 700px) {
+  .rfull.rx .wh { height: auto; } .rfull.rx .wh .wh-screen { position: relative; inset: auto; margin-top: 14px; } .rfull.rx .wh-cells, .rfull.rx .wh-top { display: none; }
+}
 </style>
 <div id="app"></div><div id="modal"></div>
 <script>
@@ -12219,11 +12223,12 @@ function wheelHTML(R) {
   var gap = ah ? Math.max(0, (Math.min(ah.s, R.L) - p.s) * (p.pA || R.c.base)) : 99, lit = R.sc ? 15 : clamp(Math.round((2.5 - gap) / 2.5 * 15), 0, 15), mode = p.atk > 0 ? ' boost' : R.sc ? ' sc' : '';
   var leds = ''; for (var k = 0; k < 15; k++) leds += '<i class="' + (k < 5 ? 'g' : k < 10 ? 'r' : 'b') + (k < lit ? ' on' : '') + '"></i>';
   var tc = COMP[p.comp] ? COMP[p.comp].col : '#fff', man = function (key) { return !!(p.bot && p.bot[key] != null); };
-  /* position change pop: green when you gain a place, red when you lose one */
   var pos = i + 1, now = performance.now();
   if (RM.posR !== R) { RM.posR = R; RM.pos = pos; RM.posT = -1e9; }
   if (pos !== RM.pos) { RM.posD = pos < RM.pos ? 1 : -1; RM.posN = Math.abs(pos - RM.pos); RM.posT = now; RM.pos = pos; if (RM.posD > 0 && RUN && !RUN.fast && R.lap > 1) { try { snd('good'); } catch (e) { } } }
   var pop = now - RM.posT < 1800 && R.lap > 1 ? (RM.posD > 0 ? ' up' : ' dn') : '';
+  var status = p.atk > 0 ? 'BOOST' : R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : gap < 1 ? 'ATTACK' : 'RACE';
+  var cell = function (lab, val, cls) { return '<span class="' + (cls || '') + '"><small>' + lab + '</small><b>' + val + '</b></span>'; };
   return '<div class="wh' + mode + '" role="group" aria-label="Steering wheel display"><svg class="wh-body" viewBox="0 0 360 170" aria-hidden="true">' +
     '<defs><pattern id="whcf" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#20242f"/><rect width="3" height="3" fill="#2a2f3d"/><rect x="3" y="3" width="3" height="3" fill="#2a2f3d"/></pattern></defs>' +
     '<path class="wh-paddle" d="M40 54 L18 62 L14 118 L40 126Z"/><path class="wh-paddle" d="M320 54 L342 62 L346 118 L320 126Z"/>' +
@@ -12231,14 +12236,13 @@ function wheelHTML(R) {
     '<path class="wh-rib" d="M14 70H44M13 84H44M13 98H44M13 112H44M14 126H44M316 70H346M316 84H347M316 98H347M316 112H347M316 126H346"/>' +
     '<path class="wh-plate" d="M44 22 Q44 8 62 8 L298 8 Q316 8 316 22 L316 120 Q316 150 286 154 L248 158 Q236 136 180 136 Q124 136 112 158 L74 154 Q44 150 44 120Z"/>' +
     '<rect class="wh-ledbar" x="62" y="9" width="236" height="15" rx="7.5"/>' +
-    '<g class="wh-btn"><rect x="56" y="36" width="15" height="9" rx="3" fill="#ffd24a"/><text x="63.5" y="42.6">DRS</text><rect x="289" y="36" width="15" height="9" rx="3" fill="#5aa9ff"/><text x="296.5" y="42.6">RAD</text>' +
-    '</g>' +
-    whDial(74, 126, 'TYRE', man('push'), raceMode(p, 'push')) + whDial(286, 126, 'ERS', man('energyMode'), raceMode(p, 'energyMode')) + '</svg>' +
+    '<g class="wh-btn"><circle cx="66" cy="44" r="6" fill="#ff5a4f"/><circle cx="66" cy="66" r="6" fill="#5aa9ff"/><circle cx="294" cy="44" r="6" fill="#39d98a"/><circle cx="294" cy="66" r="6" fill="#ffd24a"/></g>' +
+    whDial(66, 104, 'TYRE', man('push'), raceMode(p, 'push')) + whDial(294, 104, 'ERS', man('energyMode'), raceMode(p, 'energyMode')) + '</svg>' +
     '<div class="wh-leds" aria-hidden="true">' + leds + '</div>' +
-    '<div class="wh-mid">' + whRing(hp, hp > 0.5 ? '#39d98a' : hp > 0.2 ? '#ffd24a' : '#ff5a4f', Math.round(hp * 100) + '%', 'Tyre ' + p.comp + (heat > 0.78 ? ' · hot' : heat < 0.35 ? ' · cold' : '')) +
-    '<div class="wh-screen' + pop + '">' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) + '<div class="wh-lap">L' + Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L + ' <i style="background:' + tc + '"></i>' + Math.floor(p.eff) + 'L</div></div>' +
-    whRing(p.en, '#a78bfa', Math.round(p.en * 100) + '%', 'Energy') + '</div>' +
-    '<div class="wh-foot"><span class="' + (spare < 0 ? 'bad' : spare < 0.3 ? 'mid' : '') + '">FUEL ' + (spare < 0 ? '' : '+') + spare.toFixed(1) + 'L</span><span>' + (p.atk > 0 ? 'BOOST' : R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : gap < 1 ? 'ATTACK' : 'RACE') + '</span></div></div>';
+    '<div class="wh-screen' + pop + '"><div class="wh-top"><em class="wh-status">' + status + '</em>' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + '</div>' +
+    (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) +
+    '<div class="wh-cells">' + cell('<i style="background:' + tc + '"></i>' + p.comp + ' ' + Math.floor(p.eff) + 'L', Math.round(hp * 100) + '%', hp > 0.5 ? 'ok' : hp > 0.2 ? 'mid' : 'bad') + cell('ERS', Math.round(p.en * 100) + '%', 'ers') + cell('Fuel', (spare < 0 ? '' : '+') + spare.toFixed(1), spare < 0 ? 'bad' : spare < 0.3 ? 'mid' : '') + cell('Lap', Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L) + '</div>' +
+    (heat > 0.78 ? '<i class="wh-heat">Tyres hot</i>' : '') + '</div></div>';
 }
 
 /* ---------- cockpit: wheel + controls (same actions and classes) ---------- */
