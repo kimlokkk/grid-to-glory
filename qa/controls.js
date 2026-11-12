@@ -133,7 +133,7 @@ const fs = require('node:fs');
         await clickUI(pg, selector, true);
         record(`${viewport.width}: ${key} button applies`, await pg.evaluate(({ key, value }) => RUN.R.p.bot[key] === (value < 0 ? null : value), { key, value }));
       }
-      const resourceSelector = viewport.height <= 700 ? '.race-summary button:visible' : '.race-control:visible';
+      const resourceSelector = '.wh-dials button:visible';
       record(`${viewport.width}: fuel and battery readings remain available`, await pg.locator(resourceSelector).filter({ hasText: /Fuel.*[+-]?[0-9]+\.[0-9]L/ }).count() === 1 && await pg.locator(resourceSelector).filter({ hasText: /Energy.*[0-9]+%/ }).count() === 1);
       if (viewport.height <= 700) record('small phone: race retains at least 160px of visible height', await pg.locator('.rview').evaluate(el => el.getBoundingClientRect().height >= 160));
       record(`${viewport.width}: controls fit page width`, await pg.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

@@ -55,31 +55,42 @@ function whDial(cx, cy, label, manual, mode) {
   [-96, -42, 0, 42].forEach(function (a) { t += '<line class="wh-tick" x1="0" y1="-13.5" x2="0" y2="-11" transform="rotate(' + a + ')"/>'; });
   return '<g transform="translate(' + cx + ' ' + cy + ')"><circle class="wh-dial" r="10"/>' + t + '<g transform="rotate(' + ang + ')"><circle class="wh-knob" r="7"/><line class="wh-ptr" x1="0" y1="-7" x2="0" y2="-2.5"/></g><text class="wh-dl" y="19">' + label + '</text></g>';
 }
+function whGauge(v, col) {
+  var c = 2 * Math.PI * 16, a = c * 0.75, f = clamp(v, 0, 1);
+  return '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#0c0e14" stroke="#4a5378" stroke-width="1.2"/><circle cx="20" cy="20" r="16" fill="none" stroke="#ffffff1f" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + a.toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(135 20 20)"/><circle cx="20" cy="20" r="16" fill="none" stroke="' + col + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (a * f).toFixed(1) + ' ' + c.toFixed(1) + '" transform="rotate(135 20 20)"/></svg>';
+}
 function wheelHTML(R) {
   var p = R.p, o = trackOrder(R), i = o.indexOf(p), ah = i > 0 ? o[i - 1] : null, hp = tyreHealth(p, R), spare = fuelMargin(R, p), heat = tyreHeat(p);
   var gap = ah ? Math.max(0, (Math.min(ah.s, R.L) - p.s) * (p.pA || R.c.base)) : 99, lit = R.sc ? 15 : clamp(Math.round((2.5 - gap) / 2.5 * 15), 0, 15), mode = p.atk > 0 ? ' boost' : R.sc ? ' sc' : '';
   var leds = ''; for (var k = 0; k < 15; k++) leds += '<i class="' + (k < 5 ? 'g' : k < 10 ? 'r' : 'b') + (k < lit ? ' on' : '') + '"></i>';
-  var tc = COMP[p.comp] ? COMP[p.comp].col : '#fff', man = function (key) { return !!(p.bot && p.bot[key] != null); };
+  var tc = COMP[p.comp] ? COMP[p.comp].col : '#fff';
   var pos = i + 1, now = performance.now();
   if (RM.posR !== R) { RM.posR = R; RM.pos = pos; RM.posT = -1e9; }
   if (pos !== RM.pos) { RM.posD = pos < RM.pos ? 1 : -1; RM.posN = Math.abs(pos - RM.pos); RM.posT = now; RM.pos = pos; if (RM.posD > 0 && RUN && !RUN.fast && R.lap > 1) { try { snd('good'); } catch (e) { } } }
   var pop = now - RM.posT < 1800 && R.lap > 1 ? (RM.posD > 0 ? ' up' : ' dn') : '';
   var status = p.atk > 0 ? 'BOOST' : R.sc ? (R.sc === 'SC' ? 'SAFETY CAR' : 'VSC') : gap < 1 ? 'ATTACK' : 'RACE';
-  var cell = function (lab, val, cls) { return '<span class="' + (cls || '') + '"><small>' + lab + '</small><b>' + val + '</b></span>'; };
-  return '<div class="wh' + mode + '" role="group" aria-label="Steering wheel display"><svg class="wh-body" viewBox="0 0 360 170" aria-hidden="true">' +
+  var tank = clamp(p.fuel / (R.L * raceDistance(R) * P2.fuel0), 0, 1);
+  var dial = function (key, lab, val, frac, col, names, extra) {
+    var manual = !!(p.bot && p.bot[key] != null), m = raceMode(p, key);
+    return '<button class="wh-dial-b' + (manual ? ' man' : '') + '" data-act="r-control" data-k="' + key + '" aria-label="Adjust ' + lab + ' control">' + whGauge(frac, col) + '<span class="wh-dl2"><small>' + lab + '</small>' + (extra || '') + '</span><span class="wh-dv"><b>' + val + '</b></span><em>' + (manual ? names[m] : 'Auto') + '</em></button>';
+  };
+  return '<div class="wh' + mode + '" role="group" aria-label="Steering wheel display"><svg class="wh-body" viewBox="0 0 360 230" aria-hidden="true">' +
     '<defs><pattern id="whcf" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#20242f"/><rect width="3" height="3" fill="#2a2f3d"/><rect x="3" y="3" width="3" height="3" fill="#2a2f3d"/></pattern></defs>' +
-    '<path class="wh-paddle" d="M40 54 L18 62 L14 118 L40 126Z"/><path class="wh-paddle" d="M320 54 L342 62 L346 118 L320 126Z"/>' +
-    '<path class="wh-grip" d="M8 58 Q4 36 24 30 L52 26 L52 150 L28 158 Q8 160 6 138Z"/><path class="wh-grip" d="M352 58 Q356 36 336 30 L308 26 L308 150 L332 158 Q352 160 354 138Z"/>' +
-    '<path class="wh-rib" d="M14 70H44M13 84H44M13 98H44M13 112H44M14 126H44M316 70H346M316 84H347M316 98H347M316 112H347M316 126H346"/>' +
-    '<path class="wh-plate" d="M44 22 Q44 8 62 8 L298 8 Q316 8 316 22 L316 120 Q316 150 286 154 L248 158 Q236 136 180 136 Q124 136 112 158 L74 154 Q44 150 44 120Z"/>' +
+    '<path class="wh-paddle" d="M40 62 L18 72 L14 168 L40 180Z"/><path class="wh-paddle" d="M320 62 L342 72 L346 168 L320 180Z"/>' +
+    '<path class="wh-grip" d="M8 62 Q4 36 24 30 L52 26 L52 204 L28 212 Q8 214 6 190Z"/><path class="wh-grip" d="M352 62 Q356 36 336 30 L308 26 L308 204 L332 212 Q352 214 354 190Z"/>' +
+    '<path class="wh-rib" d="M14 78H44M13 96H44M13 114H44M13 132H44M13 150H44M14 168H44M316 78H346M316 96H347M316 114H347M316 132H347M316 150H347M316 168H346"/>' +
+    '<path class="wh-plate" d="M44 22 Q44 8 62 8 L298 8 Q316 8 316 22 L316 180 Q316 206 286 210 L248 214 Q236 196 180 196 Q124 196 112 214 L74 210 Q44 206 44 180Z"/>' +
     '<rect class="wh-ledbar" x="62" y="9" width="236" height="15" rx="7.5"/>' +
-    '<g class="wh-btn"><circle cx="66" cy="44" r="6" fill="#ff5a4f"/><circle cx="66" cy="66" r="6" fill="#5aa9ff"/><circle cx="294" cy="44" r="6" fill="#39d98a"/><circle cx="294" cy="66" r="6" fill="#ffd24a"/></g>' +
-    whDial(66, 104, 'TYRE', man('push'), raceMode(p, 'push')) + whDial(294, 104, 'ERS', man('energyMode'), raceMode(p, 'energyMode')) + '</svg>' +
+    '<g class="wh-btn"><circle cx="65" cy="44" r="6" fill="#ff5a4f"/><circle cx="65" cy="66" r="6" fill="#5aa9ff"/><circle cx="65" cy="88" r="6" fill="#a78bfa"/><circle cx="295" cy="44" r="6" fill="#39d98a"/><circle cx="295" cy="66" r="6" fill="#ffd24a"/><circle cx="295" cy="88" r="6" fill="#ffffff"/></g></svg>' +
     '<div class="wh-leds" aria-hidden="true">' + leds + '</div>' +
     '<div class="wh-screen' + pop + '"><div class="wh-top"><em class="wh-status">' + status + '</em>' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + '</div>' +
     (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) +
-    '<div class="wh-cells">' + cell('<i style="background:' + tc + '"></i>' + p.comp + ' ' + Math.floor(p.eff) + 'L', Math.round(hp * 100) + '%', hp > 0.5 ? 'ok' : hp > 0.2 ? 'mid' : 'bad') + cell('ERS', Math.round(p.en * 100) + '%', 'ers') + cell('Fuel', (spare < 0 ? '' : '+') + spare.toFixed(1), spare < 0 ? 'bad' : spare < 0.3 ? 'mid' : '') + cell('Lap', Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L) + '</div>' +
-    (heat > 0.78 ? '<i class="wh-heat">Tyres hot</i>' : '') + '</div></div>';
+    '<div class="wh-lap">LAP ' + Math.max(1, Math.min(R.lap, R.L)) + '/' + R.L + (heat > 0.78 ? ' · <span class="bad">TYRES HOT</span>' : '') + '</div></div>' +
+    '<div class="wh-dials">' +
+    dial('push', 'Tyres', Math.round(hp * 100) + '%', hp, hp > 0.5 ? '#39d98a' : hp > 0.2 ? '#ffd24a' : '#ff5a4f', PUSHN, '<i class="wh-tc" style="background:' + tc + '"></i>' + p.comp + ' ' + Math.floor(p.eff) + 'L') +
+    dial('fuelMode', 'Fuel', (spare < 0 ? '' : '+') + spare.toFixed(1) + 'L', tank, spare < 0 ? '#ff5a4f' : spare < 0.3 ? '#ffd24a' : '#5aa9ff', PUSHN, Math.round(tank * 100) + '% tank') +
+    dial('energyMode', 'Energy', Math.round(p.en * 100) + '%', p.en, '#a78bfa', ['Harvest', 'Balanced', 'Deploy'], 'ERS') +
+    '</div></div>';
 }
 
 /* ---------- cockpit: wheel + controls (same actions and classes) ---------- */
@@ -93,10 +104,6 @@ cockpitHTML = function (R) {
   if (p.fin) return '<div class="rflag pod"><div class="rflag-band" aria-hidden="true"></div><small>Finished</small><h2>Across the line</h2><p>Waiting for the others to finish.</p><button class="btn wide" data-act="r-ff">Skip to the finish</button></div>';
   var hp = tyreHealth(p, R), spare = fuelMargin(R, p);
   h += wheelHTML(R);
-  h += '<div class="race-summary">' + [['push', 'Tyres', Math.round(hp * 100) + '%', PUSHN], ['fuelMode', 'Fuel', (spare < 0 ? '' : '+') + spare.toFixed(1) + 'L', PUSHN], ['energyMode', 'Energy', Math.round(p.en * 100) + '%', ['Harvest', 'Balanced', 'Deploy']]].map(function (x) {
-    var manual = p.bot && p.bot[x[0]] != null;
-    return '<button data-act="r-control" data-k="' + x[0] + '" aria-label="Adjust ' + x[1] + ' control"><b>' + x[1] + ' ' + x[2] + '</b><span>' + (manual ? 'Manual' : 'Auto') + ' · ' + x[3][raceMode(p, x[0])] + '</span>' + (x[0] === 'push' ? '<small>' + (tyreHeat(p) < 0.35 ? 'Cold' : tyreHeat(p) > 0.78 ? 'Hot' : 'Optimal') + '</small>' : '<small>Tap to adjust</small>') + '</button>';
-  }).join('') + '</div><div class="race-controls">' + raceControlsHTML(R, 'r') + '</div>';
   var advice = raceAdvice(R, p); if (advice) h += '<p class="control-advice"><b>ENG</b> ' + esc(advice) + '</p>';
   var noB = !canBoost(R, p);
   if (p.pitReq && p.pitOk) h += '<div class="pitnote"><span>Boxing this lap: ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</span><button class="btn sm" data-act="r-pitx">Cancel</button></div>';

@@ -2352,3 +2352,24 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 @media (max-width: 899px) and (max-height: 700px) {
   .rfull.rx .wh { height: auto; } .rfull.rx .wh .wh-screen { position: relative; inset: auto; margin-top: 14px; } .rfull.rx .wh-cells, .rfull.rx .wh-top { display: none; }
 }
+
+/* wheel v3: bigger wheel, the three race controls live on it as dials */
+.wh { aspect-ratio: 360 / 230; max-width: 460px; }
+.wh .wh-leds { top: 4.4%; }
+.wh .wh-screen { left: 24%; right: 24%; top: 13.5%; bottom: 49%; grid-template-rows: auto 1fr auto; }
+.wh-lap { font: 700 clamp(8px, 2.2vw, 10.5px) var(--mono); color: #9aa3c2; letter-spacing: .06em; } .wh-lap .bad { color: #ff5a4f; }
+.wh-dials { position: absolute; left: 17.5%; right: 17.5%; top: 54%; bottom: 13%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4%; }
+.wh-dial-b { all: unset; box-sizing: border-box; cursor: pointer; position: relative; display: grid; grid-template-rows: auto auto auto; justify-items: center; align-content: start; min-width: 0; color: #fff; text-align: center; -webkit-tap-highlight-color: transparent; }
+.wh-dial-b:focus-visible { outline: 2px solid #ffd24a; outline-offset: 2px; border-radius: 10px; } .wh-dial-b:active svg { transform: rotate(-12deg); }
+.wh-dial-b svg { width: min(100%, 50px); height: auto; display: block; transition: transform .12s; }
+.wh-dv { position: absolute; top: 0; left: 0; right: 0; height: min(100%, 50px); aspect-ratio: auto; display: grid; place-items: center; pointer-events: none; } .wh-dv b { font: 700 clamp(9.5px, 2.8vw, 13px) var(--mono); }
+.wh-dl2 { display: flex; align-items: center; justify-content: center; gap: 3px; margin-top: 1px; font: 700 clamp(7px, 1.9vw, 9px) var(--mono); color: #c9cfe6; white-space: nowrap; max-width: 100%; overflow: hidden; } .wh-dl2 small { font: inherit; text-transform: uppercase; color: #ffd24a; letter-spacing: .05em; margin-right: 2px; } .wh-tc { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.wh-dial-b em { font: 700 clamp(7px, 1.9vw, 9px) var(--mono); font-style: normal; text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; margin-top: 2px; border-radius: 999px; background: #ffffff14; color: #9aa3c2; } .wh-dial-b.man em { background: #ffd24a; color: #0d1120; }
+.rfull.rx .wh { max-width: none; }
+.rfull.rx .lastr5 { max-height: none; } .rfull.rx .lastr5 .fr-q { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; line-height: 1.3; }
+@media (max-width: 899px) and (max-height: 700px) {
+  .rfull.rx .wh-dials { position: static; display: grid; margin-top: 6px; gap: 6px; }
+  .rfull.rx .wh-dial-b { grid-template-columns: 30px minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-items: center; column-gap: 5px; padding: 5px 6px; border-radius: 12px; background: #0d1120; }
+  .rfull.rx .wh-dial-b { grid-template-rows: auto auto auto; } .rfull.rx .wh-dial-b svg { width: 30px; grid-row: 1 / span 3; } .rfull.rx .wh-dv { position: static; grid-column: 2; height: auto; justify-items: start; } .rfull.rx .wh-dl2 { grid-column: 2; margin: 0; justify-content: flex-start; } .rfull.rx .wh-dl2 > :not(small) { display: none; } .rfull.rx .wh-dial-b em { grid-column: 2; margin: 0; padding: 0 5px; }
+  .rfull.rx .lastr5 .fr-q { -webkit-line-clamp: 1; font-size: 13px; }
+}
