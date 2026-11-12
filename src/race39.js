@@ -17,20 +17,20 @@ function rmOval() {
 }
 function rmBuild(R) {
   var svg = document.getElementById('rmap'); if (!svg) { RM.R = null; return; }
-  var T = rmOval(), st = posAt(T, 0), m0 = T.marks[2], zl = '';
+  var T = buildTrack(R.ci), st = posAt(T, 0), m0 = T.marks[2], zl = '';
   (R.zones || []).forEach(function (z) {
-    var a = posAt(T, z.at), dx = 200 - a[0], dy = 120 - a[1], l = Math.hypot(dx, dy) || 1, nx = dx / l, ny = dy / l;
+    var a = posAt(T, z.at), b = posAt(T, (z.at + 0.004) % 1), dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
     zl += '<g class="rm-zone"><circle cx="' + a[0].toFixed(1) + '" cy="' + a[1].toFixed(1) + '" r="3.2"/><text x="' + (a[0] + nx * 15).toFixed(1) + '" y="' + (a[1] + ny * 15 + 2.5).toFixed(1) + '">' + esc(z.n) + '</text></g>';
   });
   var cars = '', labs = '';
   R.cars.forEach(function (f) {
-    var me = f.isP, w = me ? 26 : 19, h = w * CAR2.h / CAR2.w;
-    cars += '<g class="rm-car' + (me ? ' me' : '') + (S.rival && f.di === S.rival.di ? ' rv' : '') + '" id="mc' + f.di + '">' + (me ? '<circle class="rm-halo" r="11"/>' : '') + '<g transform="translate(' + (-w / 2).toFixed(1) + ' ' + (-h / 2).toFixed(1) + ')">' + carSVG(f.t, w) + '</g></g>';
+    var me = f.isP, rv = S.rival && f.di === S.rival.di;
+    cars += '<g class="rm-car' + (me ? ' me' : '') + (rv ? ' rv' : '') + '" id="mc' + f.di + '">' + (me ? '<circle class="rm-halo" r="11"/>' : '') + '<circle class="rm-dot" r="' + (me ? 6.5 : 4.6) + '" fill="' + f.t.color + '"/></g>';
     labs += '<g class="rm-lab' + (me ? ' me' : '') + (S.rival && f.di === S.rival.di ? ' rv' : '') + '" id="ml' + f.di + '" style="display:none"><rect x="-11" y="-6" width="22" height="11" rx="3"/><text y="2.6">' + esc(f.d.code) + '</text></g>';
   });
   svg.innerHTML = '<path class="rm-run" d="' + T.d + '"/><path class="rm-kerb" d="' + T.d + '"/><path class="rm-kerb2" d="' + T.d + '"/><path class="rm-road" d="' + T.d + '"/><path class="rm-mid" d="' + T.d + '"/>' +
     '<g class="rm-start" transform="translate(' + st[0].toFixed(1) + ' ' + st[1].toFixed(1) + ') rotate(' + (Math.atan2(m0.ny, m0.nx) * 180 / Math.PI).toFixed(1) + ')"><rect x="-8" y="-1.6" width="16" height="3.2"/><rect class="w" x="-8" y="-1.6" width="2" height="1.6"/><rect class="w" x="-4" y="-1.6" width="2" height="1.6"/><rect class="w" x="0" y="-1.6" width="2" height="1.6"/><rect class="w" x="4" y="-1.6" width="2" height="1.6"/><rect class="w" x="-6" y="0" width="2" height="1.6"/><rect class="w" x="-2" y="0" width="2" height="1.6"/><rect class="w" x="2" y="0" width="2" height="1.6"/><rect class="w" x="6" y="0" width="2" height="1.6"/></g>' +
-    '<text class="rm-name" x="200" y="116">' + esc(R.c.name) + '</text><text class="rm-sub" x="200" y="132">' + R.L + ' laps</text>' + zl + '<g id="rm-cars">' + cars + '</g><g>' + labs + '</g>';
+    zl + '<g id="rm-cars">' + cars + '</g><g>' + labs + '</g>';
   RM.R = R; RM.T = T; RM.cars = {}; RM.labs = {}; RM.svg = svg; RM.prog = document.getElementById('rmprog'); RM.pr = null; RM.hot = null;
   R.cars.forEach(function (f) { RM.cars[f.di] = document.getElementById('mc' + f.di); RM.labs[f.di] = document.getElementById('ml' + f.di); });
   var me = RM.cars[R.p.di]; if (me) me.parentNode.appendChild(me);   /* player drawn on top */
