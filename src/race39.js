@@ -153,3 +153,15 @@ vRace = function () {
   setTimeout(function () { if (RUN && UI.wk && UI.wk.R === RUN.R) { setupMap(RUN.R); drawCars(RUN.R, 1); paintPanels(true); } }, 0);
   return h;
 };
+
+/* ---------- wheel screen: rivals' tyres next to the gaps ---------- */
+function whTy(f) { var k = f.comp, c = COMP[k] ? COMP[k].col : '#fff'; return '<i class="gpt" style="--tyc:' + c + '" title="' + (TYN[k] || k) + ', ' + Math.floor(f.eff) + ' laps old">' + k + '<u>' + Math.floor(f.eff) + '</u></i>'; }
+posHTML = function (R) {
+  var p = R.p; if (p.dnf) return '<div class="posl"><div class="bigp">DNF</div></div>';
+  var o = trackOrder(R), i = o.indexOf(p), ah = i > 0 ? o[i - 1] : null, bh = o[i + 1] && !o[i + 1].dnf ? o[i + 1] : null, rv = S.rival ? S.rival.di : -1;
+  var line = function (f, up) {
+    var g = up ? (p.fin && f.fin ? gapTxt(R, p, f) : Math.max(0, (Math.min(f.s, R.L) - p.s) * p.pA).toFixed(1)) : (p.fin && f.fin ? gapTxt(R, f, p) : Math.max(0, (p.s - f.s) * p.pA).toFixed(1));
+    return '<span class="gpl' + (f.di === rv ? ' rv' : '') + '">' + (up ? '▲' : '▼') + ' <span class="gpn">' + esc(f.d.code || lastName(f.d)) + '</span> <b>' + g + 's</b>' + whTy(f) + '</span>';
+  };
+  return '<div class="posl"><div class="bigp">P' + (i + 1) + '</div><div class="gp">' + (ah ? line(ah, true) : '<b class="lead">Leading</b>') + '<br>' + (bh ? line(bh, false) : '<span class="dim">Last place</span>') + '</div></div>';
+};

@@ -2407,3 +2407,6 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 }
 .rm-name { fill: #ffffff30; font: italic 700 15px var(--disp); text-anchor: middle; text-transform: uppercase; } .rm-sub { fill: #ffffff26; font: 700 9px var(--mono); text-anchor: middle; letter-spacing: .1em; text-transform: uppercase; }
 .rm-dot { stroke: #fff; stroke-width: 1.4; } .rm-car.me .rm-dot { stroke: #ffd24a; stroke-width: 2.4; } .rm-car.rv .rm-dot { stroke: #ff5a4f; stroke-width: 2; } .rm-car.pit .rm-dot { stroke-dasharray: 2 2; }
+.gpl { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; } .gpl.rv .gpn { color: #ff8a80; } .gpn { font-family: var(--disp); font-weight: 700; letter-spacing: .03em; }
+.gpt { display: inline-flex; align-items: center; gap: 1px; margin-left: 4px; padding: 0 4px 0 3px; border-radius: 999px; border: 1.5px solid var(--tyc); color: var(--tyc); font: 700 .85em/1.25 var(--mono); font-style: normal; } .gpt u { text-decoration: none; color: #c9cfe6; font-weight: 500; }
+.wh-screen .lead { color: #39d98a; }
