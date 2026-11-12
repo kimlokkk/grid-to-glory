@@ -2388,10 +2388,10 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 .wh .wh-screen { left: 25%; right: 25%; }
 
 /* wheel v5: Boost and Pit as real F1 wheel buttons (round caps in a bezel) */
-.wh .wh-side { top: 16%; bottom: auto; width: 11.5%; aspect-ratio: 1; border-radius: 50%; padding: 0; gap: 0; border: 3px solid #0b0d13; box-shadow: 0 0 0 1.5px #4a5378, inset 0 3px 0 #ffffff55, inset 0 -4px 0 #0005; display: grid; place-items: center; overflow: visible; }
-.wh .wh-boost { left: 12.3%; background: radial-gradient(circle at 35% 30%, #b794ff, #7c3aed 60%, #4c1d95); color: #fff; }
-.wh .wh-pit { right: 12.3%; background: radial-gradient(circle at 35% 30%, #ffe680, #f0b429 60%, #a06d00); color: #2a1d00; }
-.wh .wh-side b { font: 800 clamp(9px, 2.7vw, 13px) var(--disp); font-style: normal; letter-spacing: .02em; text-transform: uppercase; }
+.wh .wh-side { top: 18%; bottom: auto; width: 8.6%; aspect-ratio: 1; border-radius: 50%; padding: 0; gap: 0; border: 3px solid #0b0d13; box-shadow: 0 0 0 1.5px #4a5378, inset 0 3px 0 #ffffff55, inset 0 -4px 0 #0005; display: grid; place-items: center; overflow: visible; }
+.wh .wh-boost { left: 13.8%; background: radial-gradient(circle at 35% 30%, #b794ff, #7c3aed 60%, #4c1d95); color: #fff; }
+.wh .wh-pit { right: 13.8%; background: radial-gradient(circle at 35% 30%, #ffe680, #f0b429 60%, #a06d00); color: #2a1d00; }
+.wh .wh-side b { font: 800 clamp(7.5px, 2.1vw, 10.5px) var(--disp); font-style: normal; letter-spacing: .02em; text-transform: uppercase; }
 .wh .wh-side small { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font: 700 clamp(7px, 1.9vw, 9px) var(--mono); color: #c9cfe6; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
 .wh .wh-boost:disabled { background: radial-gradient(circle at 35% 30%, #4a4f66, #2a2f48 65%); color: #7d84a3; box-shadow: 0 0 0 1.5px #3a4060, inset 0 -3px 0 #0005; } .wh .wh-boost:disabled small { color: #6b7394; }
 .wh .wh-boost.on { box-shadow: 0 0 0 1.5px #c4b5fd, 0 0 14px 3px #a78bfa, inset 0 3px 0 #ffffff66; animation: hpBlink .5s infinite; }
