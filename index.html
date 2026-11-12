@@ -2164,6 +2164,75 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 @media (min-width: 1100px) { .career-hq.cv { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } .career-hq.cv > .cv-hero, .career-hq.cv > .cv-inbox, .career-hq.cv > .cv-wide { grid-column: 1 / -1; } }
 @media (max-width: 420px) { .cv-fame-ladder { grid-template-columns: repeat(3, minmax(0, 1fr)); } .cv-radar { width: 110px; } .cv-clauses li { grid-template-columns: 22px minmax(0, 1fr); } .cv-clauses li b { grid-column: 2; } .cv-offer-pay b { font-size: 34px; } .cv-market { padding: 16px 12px; } .sv-pos { gap: 10px; } .cv-seasons > div { grid-template-columns: 30px 26px minmax(0, 1fr) 40px; } .cv-seasons .p { display: none; } }
 @media (prefers-reduced-motion: reduce) { .cv *, .sv * { animation: none !important; } }
+
+/* ===== Race weekend v3, phase 1: Qualifying ===== */
+.qv { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; --hl: #ffd24a; } .qv > * { min-width: 0; }
+.qv-main, .qv-side { display: grid; gap: 14px; align-content: start; min-width: 0; } .qv-main > *, .qv-side > * { min-width: 0; }
+.qv-banner { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 12px; padding: 18px 16px 0 20px; border-radius: 20px; color: #fff; background: radial-gradient(120% 100% at 100% 0%, #24305e 0%, #0d1120 62%); box-shadow: 0 12px 30px #0d112033; }
+.qv-banner::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #ffd24a; }
+.qv-banner h1 { font-size: clamp(24px, 6.4vw, 44px); font-style: italic; text-transform: uppercase; line-height: .95; color: #fff; margin: 6px 0 10px; overflow-wrap: break-word; }
+.qv-banner p { font-size: 12.5px; color: #ffffffa8; margin-top: 8px; }
+.qv-chips { display: flex; flex-wrap: wrap; gap: 6px; } .qv-chips span { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #ffffff14; border: 1px solid #ffffff1f; } .qv-chips .dry { background: #1f9d55; border-color: #1f9d55; } .qv-chips .wet { background: #2f6db5; border-color: #2f6db5; }
+.qv-banner-map { align-self: center; width: 96px; opacity: .9; } .qv-banner-map svg { width: 100%; height: auto; display: block; }
+.qv-steps { grid-column: 1 / -1; list-style: none; margin: 8px -16px 0 -20px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #00000059; border-top: 1px solid #ffffff1c; }
+.qv-steps li { display: grid; justify-items: center; gap: 1px; padding: 9px 4px; border-left: 1px solid #ffffff14; color: #ffffff73; min-width: 0; } .qv-steps li:first-child { border-left: 0; } .qv-steps b { font-family: var(--disp); font-style: italic; font-size: 17px; line-height: 1; } .qv-steps small { font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.qv-steps li.past { color: #39d98a; } .qv-steps li.current { background: #ffd24a; color: #0d1120; } .qv-steps li.out { color: #ff6a5f; text-decoration: line-through; text-decoration-thickness: 2px; }
+
+/* tower */
+.qv-tower { display: grid; gap: 10px; padding: 14px 12px 12px; border-radius: 20px; background: #0d1120; color: #fff; box-shadow: 0 12px 30px #0d112033; }
+.qv-tower header, .qv-gridcard header { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 4px; } .qv-tower header small, .qv-gridcard header small, .qv-start small { font-family: var(--disp); font-weight: 700; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #ffd24a; } .qv-tower h2, .qv-gridcard h2 { font-style: italic; text-transform: uppercase; font-size: 20px; line-height: 1.05; color: #fff; margin-top: 2px; }
+.qv-toggle { all: unset; box-sizing: border-box; cursor: pointer; font-size: 12px; font-weight: 700; padding: 8px 14px; min-height: 36px; border-radius: 999px; background: #ffffff14; border: 1px solid #ffffff2e; white-space: nowrap; } .qv-toggle:focus-visible { outline: 2px solid #fff; }
+.qv-result { display: grid; gap: 0; border-radius: 18px; overflow: hidden; background: #0d1120; color: #fff; box-shadow: 0 12px 30px #0d112033; }
+.qv-verdict { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; background: #1f9d55; } .qv-verdict.out { background: #c8362c; }
+.qv-verdict > b { font-family: var(--disp); font-style: italic; font-size: 40px; line-height: .9; } .qv-verdict strong { display: block; font-family: var(--disp); font-style: italic; text-transform: uppercase; font-size: 16px; line-height: 1.1; } .qv-verdict span { font-size: 12px; color: #ffffffd9; } .qv-verdict em { font-style: normal; font-family: var(--mono); font-size: 13px; font-weight: 700; }
+.qv-rows { display: grid; gap: 3px; }
+.qv-row { display: grid; grid-template-columns: 26px 5px minmax(0, 1fr) auto 66px; gap: 8px; align-items: center; padding: 7px 10px 7px 6px; border-radius: 9px; background: #171d38; font-size: 13px; min-height: 36px; }
+.qv-row > i { height: 20px; border-radius: 3px; background: var(--tc); } .qv-pos { font-family: var(--disp); font-style: italic; font-weight: 700; text-align: center; color: #ffffffb0; }
+.qv-name { display: flex; align-items: baseline; gap: 6px; min-width: 0; } .qv-name b { font-family: var(--disp); font-size: 13.5px; letter-spacing: .02em; } .qv-name > span { color: #ffffff8c; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .qv-name em { font-style: normal; font-size: 9.5px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; background: #f0b429; color: #3a2a00; white-space: nowrap; }
+.qv-time { font-family: var(--mono); font-size: 12.5px; } .qv-delta { font-family: var(--mono); font-size: 11.5px; text-align: right; color: #ffffff8c; }
+.qv-row.p1 .qv-time { color: #c084fc; font-weight: 700; } .qv-row.p1 .qv-delta { color: #c084fc; }
+.qv-row.out { background: #3a1518; } .qv-row.out .qv-pos { color: #ff8a80; }
+.qv-row.me { background: #ffd24a; color: #0d1120; box-shadow: 0 0 0 2px #fff3; } .qv-row.me .qv-pos, .qv-row.me .qv-name > span, .qv-row.me .qv-delta, .qv-row.me .qv-time { color: #0d1120; } .qv-row.me.out { background: #ff8a80; }
+.qv-gap { text-align: center; color: #ffffff59; font-size: 12px; line-height: .8; letter-spacing: .3em; }
+.qv-cut, .qv-zone { display: flex; align-items: center; gap: 8px; color: #ff6a5f; font-family: var(--disp); font-weight: 700; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; padding: 2px 4px; } .qv-cut::before, .qv-cut::after, .qv-zone::before, .qv-zone::after { content: ''; flex: 1; height: 0; border-top: 2px dashed #ff6a5f; }
+.qv-radio { font-size: 13px; padding: 9px 12px; border-left: 3px solid #39d98a; background: #171d38; color: #dfe4f5; } .qv-radio b { font-family: var(--disp); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #39d98a; margin-right: 8px; }
+
+/* run plan */
+.qv-plan { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px; }
+.qv-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.qv-opt { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 3px; padding: 10px 8px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line2); box-shadow: 0 4px 0 var(--line2); transition: transform .1s, box-shadow .1s; min-width: 0; }
+.qv-opt:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line2); } .qv-opt:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.qv-opt b { font-family: var(--disp); font-style: italic; text-transform: uppercase; font-size: 16px; line-height: 1; } .qv-opt small { font-size: 10.5px; color: var(--dim); line-height: 1.2; min-height: 2.4em; } .qv-opt > span { display: flex; justify-content: space-between; align-items: center; gap: 4px; font-size: 10.5px; color: var(--dim); white-space: nowrap; }
+.qv-pips { display: inline-flex; gap: 2px; } .qv-pips u { width: 7px; height: 10px; border-radius: 2px; background: var(--line); transform: skewX(-14deg); } .qv-pips.good u.on { background: var(--good); } .qv-pips.bad u.on { background: var(--bad); }
+.qv-opt.on { background: #0d1120; color: #fff; border-color: #ffd24a; box-shadow: 0 4px 0 #b88a12, 0 0 0 4px #ffd24a2e; } .qv-opt.on small, .qv-opt.on > span { color: #ffffffb0; } .qv-opt.on .qv-pips u { background: #ffffff24; } .qv-opt.on .qv-pips.good u.on { background: #39d98a; } .qv-opt.on .qv-pips.bad u.on { background: #ff6a5f; }
+.qv-go { display: flex; gap: 8px; } .qv-go .btn { min-height: 56px; } .qv-go-main { flex: 1; font-size: 18px; } .qv-fin { min-height: 56px; font-size: 16px; }
+
+/* final grid */
+.qv-start { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 20px 18px 20px 24px; border-radius: 20px; color: #fff; background: radial-gradient(120% 110% at 100% 0%, color-mix(in srgb, var(--tc) 55%, #0d1120) 0%, #0d1120 62%); box-shadow: 0 12px 30px #0d112033; }
+.qv-start.front { background: radial-gradient(120% 110% at 100% 0%, #6b7280 0%, #0d1120 62%); } .qv-start.pole { background: radial-gradient(120% 120% at 90% 0%, #f0b429 0%, #7a4b00 36%, #0d1120 74%); }
+.qv-start::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--tc); }
+.qv-start h1 { font-style: italic; text-transform: uppercase; font-size: clamp(26px, 7vw, 44px); line-height: .95; color: #fff; margin: 6px 0 8px; } .qv-start h1 b { font-size: 1.7em; color: #ffd24a; line-height: .8; } .qv-start p { font-size: 13px; color: #ffffffc4; }
+.qv-next { margin-top: 14px; min-height: 52px; font-size: 16px; background: #ffd24a !important; border-color: #ffd24a !important; color: #0d1120 !important; }
+.qv-start-car { justify-self: end; margin: 6px 0 -8px 0; max-width: 100%; } .qv-start-car svg { width: min(100%, 260px); height: auto; filter: drop-shadow(0 12px 10px #000a); animation: tgDrive .8s cubic-bezier(.15, .8, .25, 1) both; }
+.qv-gridcard { display: grid; gap: 12px; padding: 14px 12px 12px; border-radius: 20px; background: #20232c; color: #fff; }
+.qv-flag { width: 44px; height: 22px; border-radius: 4px; background: repeating-conic-gradient(#fff 0 25%, #0d1120 0 50%) 0 0 / 11px 11px; }
+.qv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; padding: 10px 6px 16px; border-radius: 14px; background: linear-gradient(90deg, transparent calc(50% - 1px), #ffffff24 calc(50% - 1px), #ffffff24 calc(50% + 1px), transparent calc(50% + 1px)), #2b2f3a; }
+.qv-zone { grid-column: 1 / -1; margin: 44px 0 4px; }
+.qv-slot { position: relative; display: grid; grid-template-columns: 26px auto minmax(0, 1fr); align-items: center; gap: 6px; padding: 8px 8px 6px; min-height: 76px; border: 2px solid #ffffff59; border-bottom: 0; border-radius: 6px 6px 0 0; min-width: 0; } .qv-slot.r { transform: translateY(38px); }
+.qv-slot-n { font-family: var(--disp); font-style: italic; font-weight: 700; font-size: 18px; text-align: center; color: #ffffffb0; } .qv-slot-car svg { display: block; height: 58px; width: auto; filter: drop-shadow(0 3px 3px #0008); }
+.qv-slot-id { display: grid; min-width: 0; } .qv-slot-id b { font-family: var(--disp); font-size: 13.5px; } .qv-slot-id small { font-family: var(--mono); font-size: 10.5px; color: #ffffff8c; white-space: nowrap; }
+.qv-slot.me { border-color: #ffd24a; background: #ffd24a26; box-shadow: 0 0 0 3px #ffd24a40; } .qv-slot.me .qv-slot-n, .qv-slot.me .qv-slot-id b { color: #ffd24a; }
+.qv-gridcard > .btn { margin-top: 30px; min-height: 52px; }
+
+/* readiness + objectives */
+.qv-focus { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 18px; } .qv-focus-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; } .qv-focus small { display: block; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); } .qv-focus-top b { font-family: var(--disp); font-style: italic; font-size: 30px; line-height: 1; } .qv-focus-top b i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--dim); } .qv-focus-top span { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--panel2); }
+.qv-bar { display: block; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; } .qv-bar u { display: block; height: 100%; border-radius: 5px; background: var(--good); } .qv-focus.mid .qv-bar u { background: #f0b429; } .qv-focus.bad .qv-bar u { background: var(--bad); } .qv-focus.good .qv-focus-top span { color: var(--good); } .qv-focus.bad .qv-focus-top span { color: var(--bad); }
+.qv-obj > .card { border-radius: 18px; }
+
+@media (min-width: 560px) { .qv-banner { padding: 22px 22px 0 28px; } .qv-banner-map { width: 150px; } .qv-steps { margin: 10px -22px 0 -28px; } .qv-steps b { font-size: 20px; } .qv-steps small { font-size: 10.5px; } .qv-opt { padding: 14px 12px; } .qv-opt b { font-size: 19px; } .qv-opt small, .qv-opt > span { font-size: 12px; } .qv-row { grid-template-columns: 30px 5px minmax(0, 1fr) auto 76px; padding: 8px 12px 8px 8px; font-size: 14px; } .qv-start { grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding: 26px 24px 26px 32px; } .qv-start-car { margin: 0; } .qv-grid { gap: 8px 28px; padding: 14px 28px 22px; } .qv-slot { grid-template-columns: 34px auto minmax(0, 1fr); gap: 12px; min-height: 86px; } .qv-slot-car svg { height: 68px; } .qv-slot-id b { font-size: 15px; } .qv-slot-id small { font-size: 12px; } }
+@media (min-width: 1000px) { .qv { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } .qv-banner { grid-column: 1 / -1; } .qv-main { grid-column: 1; } .qv-side { grid-column: 2; } .qv-done .qv-grid { max-width: 640px; margin-inline: auto; width: 100%; } }
+@media (max-width: 380px) { .qv-opt > span { font-size: 9.5px; } .qv-name > span { display: none; } .qv-row { grid-template-columns: 24px 5px minmax(0, 1fr) auto 60px; gap: 6px; } }
+@media (prefers-reduced-motion: reduce) { .qv * { animation: none !important; } }
 </style>
 <div id="app"></div><div id="modal"></div>
 <script>
@@ -11798,4 +11867,93 @@ vSeason = function () {
   if (p.age >= AGEING.retirePrompt && p.age < AGEING.retireAt - 1) h += '<button class="btn wide" data-act="retire">Retire from racing</button>';
   return h + '</div>';
 };
+'use strict';
+/* ===== Race weekend v3, phase 1: Qualifying ("Saturday"). Presentation only: session maths, mini game and actions are unchanged. ===== */
+var QV_OPTS = [['awal', 'Early', 'Beat the queue', [1, 3, 1]], ['biasa', 'Normal', 'Middle of the session', [2, 2, 2]], ['lewat', 'Late', 'Last-second flyer', [3, 1, 3]]];
+function qvPips(n, bad) { return '<i class="qv-pips ' + (bad ? 'bad' : 'good') + '">' + [1, 2, 3].map(function (k) { return '<u class="' + (k <= n ? 'on' : '') + '"></u>'; }).join('') + '</i>'; }
+function qvCode(d) { return (d.code || lastName(d).slice(0, 3)).toUpperCase(); }
+
+/* ---------- session banner ---------- */
+function qvBanner(wk, Q, done) {
+  var c = wk.c, si = Q.s, alive = Q.alive.indexOf(S.pi) >= 0, wet = Q.wq > 0.1;
+  var steps = QNAME.map(function (n, i) {
+    var st = done || i < si ? 'past' : i === si ? (alive ? 'current' : 'out') : (alive ? '' : 'out');
+    return '<li class="' + st + '"><b>' + n + '</b><small>' + (i === 2 ? 'Pole shootout' : (i === 0 ? S.drivers.length : QK.cut[0]) + ' cars') + '</small></li>';
+  }).join('') + '<li class="' + (done ? 'current' : '') + '"><b>Grid</b><small>Lights out</small></li>';
+  return '<section class="qv-banner"><div class="qv-banner-main"><div class="cv-eyebrow"><i></i>Round ' + (S.round + 1) + ' · Qualifying</div><h1>' + esc(c.name) + '</h1>' +
+    '<div class="qv-chips"><span class="' + (wet ? 'wet' : 'dry') + '">' + (wet ? 'Wet track' : 'Dry track') + '</span><span>' + wk.L + ' laps</span><span>' + c.km.toFixed(1) + ' km</span></div>' +
+    '<p>' + esc(wk.fc) + (wet ? ' Wet qualifying: rain skill matters.' : '') + '</p></div>' +
+    '<div class="qv-banner-map" aria-hidden="true">' + (typeof circuitSVG === 'function' ? circuitSVG(wk.ci, 170, '#ffd24a') : '') + '</div>' +
+    '<ol class="qv-steps" aria-label="Qualifying sessions">' + steps + '</ol></section>';
+}
+
+/* ---------- timing tower for the session just run ---------- */
+function qvTower(wk, Q) {
+  var si = Q.s, last = Q.res[si - 1], name = QNAME[si - 1], cut = si - 1 < 2 ? QK.cut[si - 1] : 0, pr = last.filter(function (r) { return r.di === S.pi; })[0], best = last[0].t;
+  var verdict = '';
+  if (pr) {
+    var through = !cut || pr.pos <= cut, edge = cut && last[cut] && last[cut - 1] ? (through ? last[cut].t - pr.t : pr.t - last[cut - 1].t) : 0;
+    verdict = '<div class="qv-verdict ' + (through ? 'ok' : 'out') + '"><b>P' + pr.pos + '</b><div><strong>' + (!cut ? (pr.pos === 1 ? 'Provisional pole' : 'Top-ten shootout') : through ? 'Through to ' + QNAME[si] : 'Knocked out in ' + name) + '</strong><span>' + (!cut ? (pr.pos === 1 ? 'Fastest of all' : '+' + (pr.t - best).toFixed(3) + 's off pole') : through ? edge.toFixed(3) + 's clear of the drop zone' : edge.toFixed(3) + 's short of P' + cut) + '</span></div><em>' + fmtT(pr.lap) + '</em></div>';
+  }
+  var show = {}, mine = pr ? pr.pos : 0;
+  last.forEach(function (r) { if (UI.qvFull || r.pos <= 3 || (cut && r.pos >= cut - 1 && r.pos <= cut + 2) || (mine && Math.abs(r.pos - mine) <= 1)) show[r.pos] = 1; });
+  var rows = '', prev = 0;
+  last.forEach(function (r) {
+    if (!show[r.pos]) return;
+    var d = S.drivers[r.di], t = S.teams[d.team], isMe = r.di === S.pi, out = cut && r.pos > cut;
+    if (prev && r.pos > prev + 1) rows += '<div class="qv-gap" aria-hidden="true">···</div>';
+    if (cut && r.pos === cut + 1 || (cut && prev && prev <= cut && r.pos > cut + 1)) rows += '<div class="qv-cut"><span>Drop zone</span></div>';
+    rows += '<div class="qv-row' + (isMe ? ' me' : '') + (out ? ' out' : '') + (r.pos === 1 ? ' p1' : '') + '" style="--tc:' + t.color + '"><span class="qv-pos">' + r.pos + '</span><i></i><span class="qv-name"><b>' + qvCode(d) + '</b><span>' + esc(lastName(d)) + '</span>' + (r.ev ? '<em>' + (r.ev === 'kuning' ? 'Yellow flag' : 'Traffic') + '</em>' : '') + '</span><span class="qv-time">' + fmtT(r.lap) + '</span><span class="qv-delta">' + (r.pos === 1 ? 'Fastest' : '+' + (r.t - best).toFixed(3)) + '</span></div>';
+    prev = r.pos;
+  });
+  var result = verdict ? '<section class="qv-result">' + verdict + (wk.qmsg ? '<p class="qv-radio"><b>Radio</b>' + esc(wk.qmsg.replace(/^Engineer:\s*/, '')) + '</p>' : '') + '</section>' : '';
+  return [result, '<section class="qv-tower"><header><div><small>Timing</small><h2>' + name + ' classification</h2></div><button class="qv-toggle" data-act="qv-full">' + (UI.qvFull ? 'Key rows' : 'All ' + last.length) + '</button></header><div class="qv-rows">' + rows + '</div></section>'];
+}
+
+/* ---------- run plan ---------- */
+function qvPlan(wk, Q) {
+  var si = Q.s, n = Q.alive.length, ch = wk.qch || 'biasa';
+  return '<section class="card qv-plan"><div class="tg-head"><div><small>' + QNAME[si] + ' · run plan</small><h2>' + (si < 2 ? n + ' cars, ' + (n - QK.cut[si]) + ' go out' : 'Fight for pole') + '</h2></div><span class="tg-tag">' + (si < 2 ? 'Top ' + QK.cut[si] + ' advance' : n + ' cars') + '</span></div>' +
+    '<div class="qv-opts" role="group" aria-label="When to go out">' + QV_OPTS.map(function (x) {
+      return '<button class="qv-opt ' + (ch === x[0] ? 'on' : '') + '" data-act="q-ch" data-v="' + x[0] + '" aria-pressed="' + (ch === x[0]) + '"><b>' + x[1] + '</b><small>' + x[2] + '</small><span>Grip ' + qvPips(x[3][0], false) + '</span><span>Traffic ' + qvPips(x[3][1], true) + '</span><span>Flag risk ' + qvPips(x[3][2], true) + '</span></button>';
+    }).join('') + '</div>' +
+    '<div class="qv-go"><button class="btn pri qv-go-main" data-act="q-play">' + (S.settings.mini ? 'Hot lap' : 'Run ' + QNAME[si]) + '</button>' + (S.settings.mini ? '<button class="btn" data-act="q-auto">Auto</button>' : '') + '</div>' +
+    '<details class="driver-help dg-help"><summary>How the run plan works</summary><p>Early: the track is still green and there is more traffic, but yellow flags are rare. Late: the fastest track, but one yellow flag and your lap is gone. Standard sits in the middle. Each session is two flying laps; the best one counts.</p></details></section>';
+}
+
+/* ---------- final grid ---------- */
+function qvGrid(wk) {
+  var q = wk.q, mine = q.filter(function (r) { return r.di === S.pi; })[0], pole = q[0], mate = q.filter(function (r) { return r.di !== S.pi && S.drivers[r.di].team === me().team; })[0], t = myTeam();
+  var hero = '<section class="qv-start ' + (mine.pos === 1 ? 'pole' : mine.pos <= 3 ? 'front' : '') + '" style="--tc:' + t.color + '"><div><small>Starting grid</small><h1>You start <b>P' + mine.pos + '</b></h1><p>' + (mine.pos === 1 ? 'Pole position. The engineer is in tears on the pit wall.' : (mine.sess < 2 ? 'Knocked out in ' + QNAME[mine.sess] + ' · ' : '') + '+' + (mine.t - pole.t).toFixed(3) + 's off pole') + (mate ? ' · teammate P' + mate.pos : '') + '</p><button class="btn pri qv-next" data-act="q-next">Next: strategy →</button></div><div class="qv-start-car" aria-hidden="true">' + carSVG(t, 260) + '</div></section>';
+  var slots = q.map(function (r) {
+    var d = S.drivers[r.di], tm = S.teams[d.team], isMe = r.di === S.pi, zone = r.pos === 11 ? 'Q2 exits' : r.pos === 16 ? 'Q1 exits' : '';
+    return (zone ? '<div class="qv-zone"><span>' + zone + '</span></div>' : '') + '<div class="qv-slot' + (isMe ? ' me' : '') + (r.pos % 2 ? '' : ' r') + '" style="--tc:' + tm.color + '"><span class="qv-slot-n">' + r.pos + '</span><span class="qv-slot-car" aria-hidden="true">' + carSVG(tm, 66, true) + '</span><span class="qv-slot-id"><b>' + qvCode(d) + '</b><small>' + (r.pos === 1 ? fmtT(r.lap) : '+' + (r.t - pole.t).toFixed(3)) + '</small></span></div>';
+  }).join('');
+  return hero + '<section class="qv-gridcard"><header><div><small>Formation</small><h2>The grid</h2></div><span class="qv-flag" aria-hidden="true"></span></header><div class="qv-grid">' + slots + '</div><button class="btn pri wide" data-act="q-next">Next: strategy →</button></section>';
+}
+
+/* ---------- readiness + objectives ---------- */
+function qvFocus() {
+  if (S.mode !== 'pro' || S.sit) return '';
+  var m = progressionPlayer(S).mind, v = m.locked; if (!v || v.key !== trainingKey(S)) return '';
+  var tone = v.focus < 40 ? 'bad' : v.focus < 60 ? 'mid' : 'good';
+  return '<section class="card qv-focus ' + tone + '"><div class="qv-focus-top"><div><small>Weekend focus</small><b>' + v.focus + '<i> / 100</i></b></div><span>' + (v.focus < 40 ? 'Low readiness' : v.focus < 60 ? 'Steady' : 'Sharp') + '</span></div><i class="qv-bar"><u style="width:' + clamp(v.focus, 0, 100) + '%"></u></i>' +
+    '<details class="driver-help dg-help"><summary>What is behind this number</summary><p>' + v.reasons.join(' · ') + '</p><p>' + (v.focus < 40 ? 'Low readiness: slower pace and more mistake risk. Recovery helps before your next weekend.' : 'Focus affects qualifying, race pace and mistakes. Tyre Push and Boost amplify the risk difference.') + '</p><p>Training: ' + (v.slots || []).map(function (k) { return TRAINING.focuses[k]; }).join(' + ') + ' · ' + v.spent + ' XP spent' + (v.gains && v.gains.length ? ' · ' + v.gains.join(', ') : '') + '</p></details></section>';
+}
+
+var qvOldQuali = vQuali;
+vQuali = function () {
+  var wk = UI.wk, Q = wk.Q || (wk.Q = qkInit(S, wk.ci, qualiWet(wk.w))), done = !!wk.q, si = Q.s, alive = Q.alive.indexOf(S.pi) >= 0;
+  var main = '', side = qvFocus() + '<div class="qv-obj">' + objCard(wk) + '</div>';
+  if (done) main = qvGrid(wk);
+  else {
+    var tw = si > 0 ? qvTower(wk, Q) : ['', ''];
+    main += tw[0];
+    if (si < 3 && alive) main += qvPlan(wk, Q);
+    else main += '<button class="btn pri wide qv-fin" data-act="q-fin">' + (alive ? 'View the grid →' : 'Simulate the rest of qualifying →') + '</button>';
+    main += tw[1];
+  }
+  return wkHead(true) + '<div class="qv' + (done ? ' qv-done' : '') + '">' + qvBanner(wk, Q, done) + '<div class="qv-main">' + main + '</div><div class="qv-side">' + side + '</div></div>';
+};
+A['qv-full'] = function () { UI.qvFull = !UI.qvFull; render(); };
 </script>

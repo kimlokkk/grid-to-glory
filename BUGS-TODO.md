@@ -32,3 +32,6 @@ Career wallet shows the per-round net so the player can see it.
 lap event falls through to the literal string `'trafik'`.
 
 **Suggested fix:** change that literal to `'traffic'`.
+
+**Status (2026-11-12):** no longer visible. The new qualifying screen (`src/quali37.js`) replaces this table and
+prints "Traffic". The old literal is still in `src/ui5.js` but that code path is no longer rendered.
