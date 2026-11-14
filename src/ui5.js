@@ -96,6 +96,7 @@ function objCard(wk) {
 }
 /* ---------- strategi ---------- */
 function planText(R, p) {
+  if (p.pitReq && p.pitOk) return 'box this lap → ' + TYN[p.pitReq];
   if (!p.plan.length) return (p.comp === 'I' || p.comp === 'W') ? 'Weather-dependent, your engineer will call it when the track changes.' : 'No stop planned.';
   var plan = p.plan.map(function (s) { return 'pit lap ' + s.lap + ' → ' + TYN[s.comp]; }).join(', ');
   return R.w.type !== 'kering' || R.wet > 0.04 ? 'dry baseline: ' + plan + '. Weather may change the stops and tyres' : plan;
@@ -460,6 +461,8 @@ function paintPanels(force) {
   if (!force && now - RUN.tSig < 250) return;
   RUN.tSig = now; var R = RUN.R;
   setHTML('strip', stripHTML(R)); setHTML('cockpit', cockpitHTML(R)); if (UI.phone) { setHTML('posb', posHTML(R)); setHTML('planb', 'Plan: ' + planText(R, R.p)); } setHTML('towerb', towerHTML(R)); setHTML('radiob', radioHTML(R)); setHTML('lastr', lastRadioHTML(R));
+  if (typeof paintPitSheet === 'function') paintPitSheet(R);
+  if (typeof paintRaceWeather === 'function') paintRaceWeather(R);
 }
 function vRacePhone(R) {
   var t = UI.rtab || 'trek';
@@ -477,7 +480,7 @@ function vRacePhone(R) {
 }
 function isPhone() { return window.innerWidth < 900; }
 window.addEventListener('resize', function () { if (UI.screen === 'wk' && UI.wk && UI.wk.step === 'race' && isPhone() !== !!UI.phone) render(); });
-A['rtab'] = function (d) { UI.rtab = d.v; UI.rtabT = performance.now(); var f = document.querySelector('.rfull'); if (f) { f.className = 'rfull tab-' + d.v; document.querySelectorAll('.rtabs button').forEach(function (b) { b.className = b.dataset.v === d.v ? 'on' : ''; }); } paintPanels(true); };
+A['rtab'] = function (d) { UI.rtab = d.v; UI.rtabT = performance.now(); var f = document.querySelector('.rfull'); if (f) { ['trek', 'lap', 'ked', 'radio'].forEach(function (t) { f.classList.toggle('tab-' + t, t === d.v); }); document.querySelectorAll('.rtabs button').forEach(function (b) { b.className = b.dataset.v === d.v ? 'on' : ''; }); } paintPanels(true); };
 function vRace() {
   var R = UI.wk.R;
   UI.phone = isPhone(); RUN && (RUN.sig = '');

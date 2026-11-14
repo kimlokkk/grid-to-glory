@@ -1,9 +1,32 @@
 #!/bin/bash
 cd "$(dirname "$0")"
+for game_art in src/assets/start-track-v4.webp src/assets/start-cockpit-v4.webp src/assets/start-rival-v4.webp src/assets/pit-floor-v1.webp src/assets/pit-car-v1.webp src/assets/pit-crew-v1.webp src/assets/drive-corner-v1.webp src/assets/drive-wet-v1.webp src/assets/drive-radar-v1.webp; do
+  [ -s "$game_art" ] || { echo "Missing mini-game artwork: $game_art" >&2; exit 1; }
+done
 {
   cat src/head.html
-  echo '<style>'; cat src/style.css; echo '</style>'
+  echo '<style>'; cat src/style.css
+  printf '\n:root{--mx-start-backdrop:url(data:image/webp;base64,'
+  base64 < src/assets/start-track-v4.webp | tr -d '\n'
+  printf ');--mx-start-player-image:url(data:image/webp;base64,'
+  base64 < src/assets/start-cockpit-v4.webp | tr -d '\n'
+  printf ');--mx-start-rival-image:url(data:image/webp;base64,'
+  base64 < src/assets/start-rival-v4.webp | tr -d '\n'
+  printf ');--mx-pit-floor-image:url(data:image/webp;base64,'
+  base64 < src/assets/pit-floor-v1.webp | tr -d '\n'
+  printf ');--mx-pit-car-image:url(data:image/webp;base64,'
+  base64 < src/assets/pit-car-v1.webp | tr -d '\n'
+  printf ');--mx-pit-crew-image:url(data:image/webp;base64,'
+  base64 < src/assets/pit-crew-v1.webp | tr -d '\n'
+  printf ');--mx-drive-corner-image:url(data:image/webp;base64,'
+  base64 < src/assets/drive-corner-v1.webp | tr -d '\n'
+  printf ');--mx-drive-wet-image:url(data:image/webp;base64,'
+  base64 < src/assets/drive-wet-v1.webp | tr -d '\n'
+  printf ');--mx-drive-radar-image:url(data:image/webp;base64,'
+  base64 < src/assets/drive-radar-v1.webp | tr -d '\n'
+  printf ');}\n'
+  echo '</style>'
   echo '<div id="app"></div><div id="modal"></div>'
-  echo '<script>'; cat src/data.js src/foundation15.js src/progression16.js src/ageing17.js src/training18.js src/evaluation19.js src/abilities20.js src/world21.js src/sim.js src/career.js src/engine2.js src/quali2.js src/dev2.js src/story.js src/ui1.js src/ui4.js src/minigames.js src/ui5.js src/ui6.js src/ui3.js src/mg3.js src/cardata.js src/pit6.js src/calib.js src/radio6.js src/mgr7.js src/news7.js src/drv10.js src/con12.js src/mkt12.js src/fin12.js src/obj12.js src/rep12.js src/spon12.js src/tm12.js src/sit12.js src/fac12.js src/fnl13.js src/th13.js src/ver13.js src/team11.js src/start9.js src/flags.js src/home8.js src/onb14.js src/hub14.js src/hub16.js src/strat14.js src/con14.js src/snd14.js src/jr14.js src/market22.js src/career23.js src/junior24.js src/content25.js src/season26.js src/driver27.js src/team28.js src/career29.js src/sync30.js src/patch31.js src/home32.js src/season33.js src/driver34.js src/team35.js src/career36.js src/quali37.js src/strat38.js src/race39.js; echo '</script>'
+  echo '<script>'; cat src/data.js src/foundation15.js src/progression16.js src/ageing17.js src/training18.js src/evaluation19.js src/abilities20.js src/world21.js src/sim.js src/career.js src/engine2.js src/quali2.js src/dev2.js src/story.js src/ui1.js src/ui4.js src/minigames.js src/ui5.js src/ui6.js src/ui3.js src/mg3.js src/cardata.js src/pit6.js src/calib.js src/radio6.js src/mgr7.js src/news7.js src/drv10.js src/con12.js src/mkt12.js src/fin12.js src/obj12.js src/rep12.js src/spon12.js src/tm12.js src/sit12.js src/fac12.js src/fnl13.js src/th13.js src/ver13.js src/team11.js src/start9.js src/flags.js src/home8.js src/onb14.js src/hub14.js src/hub16.js src/strat14.js src/con14.js src/snd14.js src/jr14.js src/market22.js src/career23.js src/junior24.js src/content25.js src/season26.js src/driver27.js src/team28.js src/career29.js src/sync30.js src/patch31.js src/home32.js src/season33.js src/driver34.js src/team35.js src/career36.js src/quali37.js src/strat38.js src/race39.js src/result40.js src/mini41.js src/paddock42.js; echo '</script>'
 } > index.html
 wc -c index.html

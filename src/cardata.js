@@ -110,16 +110,17 @@ var HPAT = [
   function (a) { return '<path d="M96 0h22l130 341h-22z" fill="' + a + '"/><path d="M140 0h22l130 341h-22z" fill="' + a + '"/><path d="M184 0h22l130 341h-22z" fill="' + a + '"/>'; },
   function (a, b) { return '<path d="M0 0h360v341H0z" fill="' + a + '" opacity=".0"/><path d="M0 120C80 40 250 20 360 80V0H0z" fill="' + a + '"/><path d="M0 132C80 52 250 32 360 92v-8C250 24 80 44 0 124z" fill="' + b + '"/>'; }
 ];
-function helmetLivery(d) {
-  var t = S && S.teams && d.team != null ? S.teams[d.team] : null, g = h32('helm' + d.name + d.id) >>> 0, tc = t ? t.color : '#e2342b';
-  var c1 = HPAL[g % HPAL.length], c2 = ((typeof S !== 'undefined' && S && d.id === S.pi) || (g >>> 5) % 10 < 6) ? tc : HPAL[(g >>> 9) % HPAL.length], c3 = HPAL[(g >>> 13) % HPAL.length];
+function helmetLivery(d, view) {
+  var game = view || S;
+  var t = game && game.teams && d.team != null ? game.teams[d.team] : null, g = h32('helm' + d.name + d.id) >>> 0, tc = t ? t.color : '#e2342b';
+  var c1 = HPAL[g % HPAL.length], c2 = ((game && d.id === game.pi) || (g >>> 5) % 10 < 6) ? tc : HPAL[(g >>> 9) % HPAL.length], c3 = HPAL[(g >>> 13) % HPAL.length];
   if (c1 === c2) c1 = c2 === '#ffffff' ? '#1b2340' : '#ffffff';
   if (c3 === c1 || c3 === c2) c3 = (c1 === '#ffffff' || c2 === '#ffffff') ? '#1b2340' : '#ffffff';
   return { c1: c1, c2: c2, c3: c3, p: (g >>> 17) % HPAT.length, v: (g >>> 21) % 4, p2: (g >>> 24) % 3 };
 }
-function helmetSVG(d, size, tile) {
+function helmetSVG(d, size, tile, view) {
   ensureHelmSprite();
-  var L = d.helm || helmetLivery(d), s = size || 56, num = d.num != null ? d.num : '';
+  var L = d.helm || helmetLivery(d, view), s = size || 56, num = d.num != null ? d.num : '';
   var deco = HPAT[L.p](L.c2, L.c3);
   if (L.p2 === 1) deco += '<path d="M0 238L360 204v6L0 244z" fill="' + L.c3 + '"/>';
   if (L.p2 === 2) deco += '<path d="M300 40l60 0v80l-60-30z" fill="' + L.c3 + '" opacity=".9"/>';
