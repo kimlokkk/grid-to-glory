@@ -159,14 +159,7 @@ cockpitHTML = function (R) {
   }
   if (p.dnf) return '<div class="rflag out"><small>Retired</small><h2>You\'re out of the race</h2><p>' + esc(p.dnf) + '.</p><button class="btn wide" data-act="r-ff">Skip to the finish</button></div>';
   if (p.fin) return '<div class="rflag pod"><div class="rflag-band" aria-hidden="true"></div><small>Finished</small><h2>Across the line</h2><p>Waiting for the others to finish.</p><button class="btn wide" data-act="r-ff">Skip to the finish</button></div>';
-  var hp = tyreHealth(p, R), spare = fuelMargin(R, p);
   h += wheelHTML(R);
-  var alert = raceAlert(R);
-  if (alert) {
-    var active = alert.key && raceMode(p, alert.key) === alert.value;
-    h += '<div class="rx-alert ' + alert.cls + '"><i aria-hidden="true">!</i><div><small>Engineer · ' + esc(alert.title) + '</small><b>' + esc(alert.detail) + '</b></div>' +
-      (active ? '<span class="rx-alert-active">' + (alert.key === 'energyMode' ? 'Harvest active' : 'Save active') + '</span>' : '<button class="btn sm" data-act="' + (alert.pit ? 'r-pitm' : 'r-mode') + '"' + (alert.key ? ' data-k="' + alert.key + '" data-v="' + alert.value + '"' : '') + '>' + alert.action + '</button>') + '</div>';
-  }
   if (!UI.phone) h += '<p class="rplan">Plan: ' + planText(R, p) + '</p>';
   h += '<div class="ctlrow">' + (RUN.pause ? '<button class="btn pri" data-act="r-go">' + (R.t > 0 ? '▶ Resume' : '▶ Start') + '</button>' : '<button class="btn" data-act="r-pause">❚❚ Pause</button>') +
     (UI.phone ? '<button class="btn sm" data-act="r-playback" aria-label="Choose race playback speed">Playback · ' + (RUN.highlights ? 'Highlights' : RUN.fast ? 'Fast' : RUN.spd + '×') + '</button>' :
