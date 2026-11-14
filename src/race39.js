@@ -138,7 +138,7 @@ function wheelHTML(R) {
     '<rect class="wh-ledbar" x="62" y="9" width="236" height="15" rx="7.5"/>' +
     '<g class="wh-mini"><circle cx="65" cy="100" r="6"/><text x="65" y="101.8">N</text><circle cx="295" cy="100" r="6"/><text x="295" y="101.8">RAD</text><circle cx="83" cy="112" r="4.2"/><text x="83" y="113.4">+</text><circle cx="277" cy="112" r="4.2"/><text x="277" y="113.4">−</text></g></svg>' +
     '<button class="wh-side wh-boost' + (p.atk > 0 ? ' on' : '') + '" data-act="r-atk"' + (canBoost(R, p) ? '' : ' disabled') + ' aria-label="Boost" title="' + boost.detail + '"><b>OT</b><small>' + boost.label + '</small></button>' +
-    '<button class="wh-side wh-pit' + (UI.pitOpen ? ' on' : '') + '" data-act="r-pitm" aria-label="' + (UI.pitOpen ? 'Close pit menu' : 'Pit') + '"><b>BOX</b><small>' + (UI.pitOpen ? 'Close' : 'Pit') + '</small></button>' +
+    '<button class="wh-side wh-pit' + (UI.pitOpen ? ' on' : '') + '" data-act="r-pitm"' + (R.done || p.fin || p.dnf || p.hold > 0 ? ' disabled' : '') + ' aria-label="' + (UI.pitOpen ? 'Close pit menu' : 'Pit') + '"><b>BOX</b><small>' + (UI.pitOpen ? 'Close' : 'Pit') + '</small></button>' +
     '<div class="wh-leds" aria-hidden="true">' + leds + '</div>' +
     '<div class="wh-screen' + pop + '"><div class="wh-top"><em class="wh-status">' + status + '</em>' + (pop ? '<em class="wh-pop">' + (RM.posD > 0 ? '▲ +' : '▼ −') + RM.posN + '</em>' : '') + '</div>' +
     (UI.phone ? '<div class="rpos" id="posb"></div>' : posHTML(R)) +
@@ -177,21 +177,24 @@ cockpitHTML = function (R) {
 
 function racePitSheet(R) {
   var p = R.p, rem = Math.max(1, R.L - p.lap + 1), queued = p.pitReq && p.pitOk, pick = queued ? p.pitReq : chooseComp(p, R, rem);
+  var selected = UI.pitDraft && UI.pitDraft.run === RUN ? UI.pitDraft.comp : null;
   var loss = (R.c.pit * P2.pitS + (p.crewT == null ? 0 : p.crewT - 2.4)) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1);
   return '<div class="rx-pit-overlay"><button class="rx-pit-shade" data-act="r-pitm" aria-label="Close pit wall"></button><section class="rx-pit-sheet" role="dialog" aria-modal="true" aria-labelledby="rx-pit-title">' +
     '<div class="rx-pit-head"><span><i></i>PIT WALL / LAP ' + p.lap + '</span><button class="btn sm" id="rx-pit-close" data-act="r-pitm" aria-label="Close pit menu">✕</button></div>' +
-    '<h2 id="rx-pit-title">' + (queued ? 'Box, box.' : 'Make the call.') + '</h2><p>' + (queued ? TYN[p.pitReq] + ' tyres ready. Boxing at the end of this lap.' : 'Fresh rubber. A new chance to attack.') + '</p>' +
+    '<div class="rx-pit-body"><h2 id="rx-pit-title">' + (queued ? 'Pit call confirmed.' : 'Choose your tyres.') + '</h2><p>' + (queued ? TYN[p.pitReq] + ' tyres ready. Boxing at the end of this lap.' : 'Pick a compound, then confirm your pit call. The race is paused.') + '</p>' +
     '<div class="rx-pit-stats"><span><small>To the flag</small><b>' + rem + ' laps</b></span><span><small>Est. pit loss</small><b>≈ ' + loss.toFixed(1) + 's</b></span><span><small>Current tyres</small><b>' + p.comp + ' · ' + Math.round(tyreHealth(p, R) * 100) + '%</b></span></div>' +
     (queued ? '<button class="btn wide" data-act="r-pitx">Cancel pit call · stay out</button>' : '<div class="rx-pit-pick"><span>Engineer\'s pick</span><b>' + TYN[pick] + '</b><small>For the remaining distance</small></div><div class="tyrow rx-pit-tyres">' + ['S', 'M', 'H', 'I', 'W'].map(function (k) {
-      return '<button class="btn' + (k === pick ? ' recommended' : '') + '" data-act="r-pit" data-v="' + k + '" aria-label="Box for ' + TYN[k] + '">' + (k === pick ? '<em>Pick</em>' : '') + sgTyre(k, 40) + '<b>' + TYN[k] + '</b><small>' + (SLICK[k] ? '≈ ' + Math.round(tyreLife(p, R, k) / raceDistance(R)) + 'L life' : k === 'I' ? 'Damp / wet' : 'Heavy rain') + '</small></button>';
-    }).join('') + '</div>') +
-    '<p class="rx-pit-note">' + (R.sc ? R.sc + ' · reduced pit loss. ' : '') + 'Estimate assumes a 2.4s service; crew and traffic can change it.' + (mandOf(p) ? ' Two dry compounds still required.' : '') + '</p><div class="rx-pit-foot"><span><i class="' + (RUN.pause ? 'paused' : '') + '"></i>' + (RUN.pause ? 'Race paused' : 'Race live') + '</span><button class="btn" data-act="r-pitm">Back to race →</button></div></section></div>';
+      return '<button class="btn' + (k === pick ? ' recommended' : '') + (k === selected ? ' selected' : '') + '" data-act="r-pit" data-v="' + k + '" aria-pressed="' + (k === selected) + '" aria-label="Select ' + TYN[k] + ' tyres">' + (k === selected ? '<em>✓</em>' : k === pick ? '<em>Pick</em>' : '') + sgTyre(k, 40) + '<b>' + TYN[k] + '</b><small>' + (SLICK[k] ? '≈ ' + Math.round(tyreLife(p, R, k) / raceDistance(R)) + 'L life' : k === 'I' ? 'Damp / wet' : 'Heavy rain') + '</small></button>';
+    }).join('') + '</div><div class="rx-pit-selection" role="status"><b>' + (selected ? TYN[selected] + ' selected' : 'No tyres selected') + '</b><span>' + (selected ? 'Confirm below to box this lap.' : 'No pit call is sent until you confirm.') + '</span></div>') +
+    '<p class="rx-pit-note">' + (R.sc ? R.sc + ' · reduced pit loss. ' : '') + 'Estimate assumes a 2.4s service; crew and traffic can change it.' + (mandOf(p) ? ' Two dry compounds still required.' : '') + (!queued && S.settings.mini && !RUN.fast ? ' The pit-stop challenge starts after you confirm.' : '') + '</p></div><div class="rx-pit-foot"><span><i class="paused"></i>Race paused</span><div class="rx-pit-actions"><button class="btn" data-act="r-pitm">Back to race →</button>' + (!queued ? '<button class="btn rx-pit-confirm" data-act="r-pit-confirm"' + (!selected ? ' disabled' : '') + '>' + (selected ? 'Confirm pit · ' + TYN[selected] : 'Confirm pit') + '</button>' : '') + '</div></div></section></div>';
 }
 function paintPitSheet(R) {
   var root = document.getElementById('rxpit'); if (!root) return;
   if (R.done || R.p.fin || R.p.dnf || document.querySelector('#modal [data-act="pc-yes"]')) UI.pitOpen = false;
   var focus = document.activeElement, restore = root.contains(focus) && focus.dataset ? { act: focus.dataset.act, v: focus.dataset.v, id: focus.id } : null;
+  var body = root.querySelector('.rx-pit-body'), scroll = body ? body.scrollTop : 0;
   setHTML('rxpit', UI.pitOpen ? racePitSheet(R) : '');
+  body = root.querySelector('.rx-pit-body'); if (body) body.scrollTop = scroll;
   if (restore && !focus.isConnected) {
     var buttons = root.querySelectorAll('button');
     for (var i = 0; i < buttons.length; i++) if (buttons[i].id === restore.id && buttons[i].dataset.act === restore.act && buttons[i].dataset.v === restore.v) { buttons[i].focus({ preventScroll: true }); break; }
@@ -199,13 +202,11 @@ function paintPitSheet(R) {
 }
 var rmPitToggle = A['r-pitm'];
 A['r-pitm'] = function () { rmPitToggle(); var close = document.getElementById('rx-pit-close'); if (close) close.focus(); else { var pit = document.querySelector('[data-act="r-pitm"].wh-pit'); if (pit) pit.focus(); } };
-var rmPitCancel = A['r-pitx'];
-A['r-pitx'] = function () { UI.pitOpen = false; rmPitCancel(); };
 document.addEventListener('keydown', function (e) {
   var sheet = document.querySelector('.rx-pit-sheet'); if (!sheet) return;
   if (e.key === 'Escape') { e.preventDefault(); A['r-pitm'](); }
   if (e.key === 'Tab') {
-    var buttons = sheet.querySelectorAll('button'), first = buttons[0], last = buttons[buttons.length - 1];
+    var buttons = sheet.querySelectorAll('button:not([disabled])'), first = buttons[0], last = buttons[buttons.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }

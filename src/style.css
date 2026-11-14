@@ -3486,3 +3486,24 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 /* Keep the full car clear of the team wordmark at every width. */
 @media(min-width:701px){.pd-team-hero{min-height:300px;padding-right:54%}.pd-team-hero .pd-identity h2{font-size:clamp(30px,3vw,40px)}.pd-team-hero .pd-car{width:52%;right:2%;bottom:22px;transform:rotate(-5deg)}}
 @media(max-width:700px){.pd-team-hero .pd-car{width:88%;right:4%;transform:rotate(-4deg)}}
+
+/* Manual pit calls: choose first, then explicitly confirm. */
+.rx-pit-tyres .recommended{border-style:dashed;background:#ffffff08;box-shadow:none}
+.rx-pit-tyres .selected{border:2px solid #ffd24a;background:#ffd24a20;box-shadow:0 0 0 2px #ffd24a18}
+.rx-pit-tyres .selected b{color:#ffd24a}
+.rx-pit-selection{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin-bottom:14px;border:1px solid #ffffff20;border-radius:9px;background:#ffffff06}
+.rx-pit-selection b{font:700 13px var(--disp);color:#ffd24a}
+.rx-pit-selection span{font-size:10px;color:#aebcd2;text-align:right}
+.rx-pit-foot{flex-direction:column;align-items:stretch;gap:13px}
+.rx-pit-foot>span{font-size:9px}
+.rx-pit-actions{display:flex;gap:9px}
+.rx-pit-actions>.btn{flex:1;min-width:0;padding:12px 10px;font-size:12px;background:#ffffff09;color:#d9e3f5;border-color:#ffffff30;box-shadow:none}
+.rx-pit-actions>.rx-pit-confirm{flex:1.25;background:#ffd24a;border-color:#ffd24a;color:#11182a}
+.rx-pit-actions>.rx-pit-confirm:disabled{background:#ffffff10;border-color:#ffffff15;color:#7d8aa1;opacity:1;cursor:not-allowed}
+.wh-pit:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:350px){.rx-pit-selection{align-items:flex-start;flex-direction:column;gap:5px}.rx-pit-selection span{text-align:left}.rx-pit-actions>.btn{font-size:11px;padding:12px 6px}.rx-pit-sheet{padding-left:14px;padding-right:14px}}
+/* Keep both decisions visible even when the phone sheet needs to scroll. */
+.rx-pit-sheet{display:flex;flex-direction:column;overflow:hidden}
+.rx-pit-head,.rx-pit-foot{flex-shrink:0}
+.rx-pit-body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:1px 1px 8px}
+.rx-pit-body>p{color:#bcc6d9;font-size:13px;margin:0 0 16px}

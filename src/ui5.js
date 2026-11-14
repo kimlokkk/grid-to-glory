@@ -161,6 +161,7 @@ function applyStart(react, jump, q) {
 var RUN = null;
 function initRun() {
   var R = UI.wk.R;
+  UI.pitOpen = false; UI.pitDraft = null;
   RUN = { R: R, acc: 0, last: 0, spd: UI.spd2 || 2, pause: true, fast: false, highlights: false, highlightUntil: 0, wait: false, logI: 0, radio: R.radio || [], mgCd: 0, sig: '', tSig: 0, fin: false };
   R.radio = RUN.radio; RUN.stops = R.p.stops;
   R.cars.forEach(function (f) { f.sPrev = f.s; });
@@ -254,13 +255,24 @@ function pitCard(R, p) {
   showModal('<div><span class="badge ' + (p.why === 'sc' ? 'sc' : p.why === 'cuaca' ? 'wet' : '') + '">Radio · Lap ' + p.lap + '</span></div><h2>' + w[0] + '</h2><p>' + body + '</p><div class="evopts">' + opts + '</div>');
 }
 function pitResolve(k) {
-  var R = RUN.R, p = R.p;
+  var run = RUN, R = run.R, p = R.p, token = run.pitToken = (run.pitToken || 0) + 1;
   closeModal();
-  if (k === null) { p.pitReq = null; p.noPitUntil = p.lap + 2; p.plan = []; radio(R, 'Okay, staying out. ' + (tyreHealth(p, R) < 0.2 ? 'Those tyres are hanging on by a thread, just so you know.' : 'I trust you.'), 'e'); RUN.wait = false; resume(); return; }
+  if (k === null) { raceClearPitQuality(run); p.pitReq = null; p.pitOk = false; p.crewT = null; p.noPitUntil = p.lap + 2; p.plan = []; radio(R, 'Okay, staying out. ' + (tyreHealth(p, R) < 0.2 ? 'Those tyres are hanging on by a thread, just so you know.' : 'I trust you.'), 'e'); run.wait = false; resume(); return; }
   p.pitReq = k; p.pitOk = true; p.plan = []; radio(R, 'Box, box. ' + TYN[k] + ' ready and waiting.', 'e', 1);
   UI.mgCtx = { k: 'pit', comp: k };
-  if (S.settings.mini && !RUN.fast) pitAny(function (stop, q) { p.crewT = stop; if (q != null) UI.wk.mg.pn.push(q); RUN.wait = false; resume(); });
-  else { RUN.wait = false; resume(); }
+  if (S.settings.mini && !run.fast) pitAny(function (stop, q) {
+    // An abandoned/replaced call must never revive a stop or resume another race.
+    if (RUN !== run || run.pitToken !== token || p.pitReq !== k || !p.pitOk || p.fin || p.dnf) return;
+    run.pitToken++; p.crewT = stop;
+    if (q != null) { var scores = UI.wk.mg.pn; run.pitQuality = { stops: p.stops, scores: scores, index: scores.length }; scores.push(q); }
+    run.wait = false; resume();
+  });
+  else { run.wait = false; resume(); }
+}
+function raceClearPitQuality(run) {
+  var quality = run.pitQuality;
+  if (quality && run.R.p.stops === quality.stops) quality.scores.splice(quality.index, 1);
+  run.pitQuality = null;
 }
 A['pc-yes'] = function () { pitResolve(RUN.R.p.pitReq); };
 A['pc-alt'] = function (d) { pitResolve(d.v); };
@@ -498,7 +510,20 @@ function vRace() {
 }
 A['tw2'] = function (d) { UI.tw = d.v; render(); };
 A['tw-full'] = function () { UI.twFull = !UI.twFull; render(); };
-A['r-pitm'] = function () { UI.pitOpen = !UI.pitOpen; paintPanels(true); };
+function raceClosePitMenu() {
+  var draft = UI.pitDraft;
+  UI.pitOpen = false; UI.pitDraft = null;
+  if (draft && draft.run === RUN) { RUN.pause = draft.wasPaused; RUN.last = 0; }
+  paintPanels(true);
+  if (draft && draft.run === RUN && !RUN.pause && !RUN.wait && !RUN.R.done) resume();
+}
+A['r-pitm'] = function () {
+  if (UI.pitOpen) { raceClosePitMenu(); return; }
+  if (!RUN || RUN.wait || RUN.R.done || RUN.R.p.fin || RUN.R.p.dnf || RUN.R.p.hold > 0 || $modal.innerHTML) return;
+  var wasPaused = RUN.pause; stopRace();
+  UI.pitDraft = { run: RUN, wasPaused: wasPaused, comp: null };
+  UI.pitOpen = true; paintPanels(true);
+};
 A['r-go'] = function () { RUN.pause = false; resume(); };
 A['r-pause'] = function () { RUN.pause = true; RUN.fast = false; RUN.highlights = false; paintPanels(true); };
 A['r-spd'] = function (d) { RUN.spd = +d.v; UI.spd2 = RUN.spd; RUN.fast = false; RUN.highlights = false; paintPanels(true); };
@@ -511,8 +536,25 @@ A['r-control'] = function (d) {
 };
 A['r-mode'] = function (d) { var R = RUN.R; if (setRaceMode(R, R.p, d.k, +d.v)) { if (document.getElementById('resource-control')) closeModal(); paintPanels(true); } };
 A['r-atk'] = function () { var R = RUN.R; if (!activateBoost(R, R.p)) return; cap('Boost!', 'pass'); paintPanels(true); };
-A['r-pit'] = function (d) { var R = RUN.R, p = R.p; if (p.fin || p.dnf) return; UI.pitOpen = false; RUN.wait = true; p.pitReq = d.v; p.why = 'manual'; pitResolve(d.v); };
-A['r-pitx'] = function () { var p = RUN.R.p; p.pitReq = null; p.pitOk = false; p.noPitUntil = p.lap + 1; p.crewT = null; paintPanels(true); };
+A['r-pit'] = function (d) {
+  if (!RUN || !UI.pitOpen || !UI.pitDraft || UI.pitDraft.run !== RUN || RUN.wait || RUN.R.p.pitOk || !TYN[d.v]) return;
+  UI.pitDraft.comp = d.v; paintPanels(true);
+};
+A['r-pit-confirm'] = function () {
+  var draft = UI.pitDraft;
+  if (!RUN || !UI.pitOpen || !draft || draft.run !== RUN || RUN.wait || !TYN[draft.comp] || RUN.R.done || RUN.R.p.fin || RUN.R.p.dnf || RUN.R.p.hold > 0 || RUN.R.p.pitOk) return;
+  RUN.wait = true; RUN.R.p.why = 'manual';
+  // Remove the sheet before the pit challenge can open its modal.
+  raceClosePitMenu(); pitResolve(draft.comp);
+};
+A['r-pitx'] = function () {
+  if (!RUN || RUN.wait) return;
+  var p = RUN.R.p, called = !!p.pitReq; RUN.pitToken = (RUN.pitToken || 0) + 1; raceClearPitQuality(RUN);
+  p.pitReq = null; p.pitOk = false; p.noPitUntil = p.lap + 1; p.crewT = null; p.why = null;
+  if (called) radio(RUN.R, 'Pit call cancelled. Staying out.', 'e', 1);
+  raceClosePitMenu();
+  var button = document.querySelector('.wh-pit'); if (button) button.focus({ preventScroll: true });
+};
 
 /* ---------- tamat ---------- */
 function finishRun(R) {
