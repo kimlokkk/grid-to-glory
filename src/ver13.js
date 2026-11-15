@@ -1,6 +1,24 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.1.0', date: '10 Nov 2026', save: 2 };
+var APEX = { ver: '2.2.0', date: '15 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.2.0', d: 'The paddock update', date: '15 Nov 2026', l: [
+    "New cartoon garage main menu with your team’s SVG livery, saved driver, league, championship standing and next race. Continue Career takes centre stage; Save Data and Hall of Fame remain one tap away.",
+    "Create Driver is now a four-step studio: live identity preview, race number picker, driving style cards, helmet designs, colours and visor, team garages and contract review. Phone players get a pinned helmet preview while editing.",
+    "Review your real funding package, academy support and exact contract amounts before signing. Existing-career backup and replacement confirmation remain available in setup.",
+    "Home becomes the Race Day Paddock: next-race hero and forecast, driver licence, championship timing tower, missions, Road to F1, rival poster and a lights-out weekend introduction.",
+    "Season gets a race calendar map, podium standings, event result cards and a trophy cabinet.",
+    "Pro Driver Garage adds an Overall radar, XP skill shop, tier ladder, ability slots, circuit collection and training rings.",
+    "Team Garage brings team-liveried cars, an F1 car blueprint and R&D workshop, finances and facilities, pit wall, pace comparison, line-up, teammate battle, contracts and history. Junior teams show their crew and seat support.",
+    "Career becomes the Driver’s Office with contract and inbox cards, wallet flow, fame, sponsors, scouting and academy status. Market offers and contract documents compare your current seat with the proposed deal.",
+    "Season-end review adds a champion celebration, podium, constructors comparison, objective verdicts, sponsor reactions and market choices, with detailed driver records still available.",
+    "Qualifying adds session progress, run-plan cards, verdicts, a clearer timing tower and staggered final-grid slots. Strategy shows stint timelines, planned pit laps, rain forecast bands, tyre choices and a clear To the Grid action.",
+    "Race cockpit polish: real circuit layouts with team-coloured dots, readable battles, steering-wheel tyre/fuel/energy dials, rival tyre compound and age, OT and BOX controls and position celebrations. Live weather and forecast details are available from the race screen.",
+    "BOX flow repaired: select your tyre, explicitly confirm the stop, or return to the race without queuing it. Cancelling a queued stop clears the pit request and avoids an unwanted pit mini-game. Resource warnings stay on the steering screen; the extra warning bar is removed.",
+    "Mini-games gain larger game scenes and clear touch controls. Cartoon artwork covers the start grid, pit lane and driving challenges, with team SVG liveries kept on the cars. Overtake and cover scenes use track and radar views.",
+    "After-race results add winner, podium, points, recovery and retirement presentations, rewards, race highlights and full classification access, followed by the existing press conference and news flow.",
+    "Season News becomes Paddock Wire with feature stories and article views. World browsing and driver/team profiles gain clearer cards, league navigation, stats and team liveries.",
+    "Phone and desktop layouts refined throughout the redesigned screens. Existing career saves, race rules, mini-game timing and scoring remain supported without a new save format."
+  ] },
   { v: '2.1.0', d: 'Playtest build', date: '10 Nov 2026', l: [
     "Talent, XP and ageing rebalanced: a typical driver reaches ~80 at 20, ~86 at 25 and ~90 at 30.",
     "Regulation changes now reshuffle the grid: dynasties fall, prestige drifts and back-to-back champions are handicapped.",

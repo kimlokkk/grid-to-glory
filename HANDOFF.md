@@ -1,3 +1,16 @@
+# Release status update — 15 Nov 2026
+
+The historical handoff below records the state on 13 Nov and is retained for context. Its claims that main/live are untouched and UI work is unpushed are obsolete.
+
+- Release v2.2.0 includes the original UI v3 Home, Season, Driver, Team, Career, qualifying, strategy and race work, plus result40, mini41, paddock42, create43 and menu44.
+- Main already includes the explicit BOX tyre/confirm/cancel repair and the removal of the external resource warning bar. Steering-screen warnings remain.
+- This release adds the cartoon garage menu and Create Driver studio. What’s New now lists completed work from this handoff and subsequent sessions. Save schema remains version 2.
+- New art: src/assets/menu-garage-v1.webp. build.sh embeds this and existing mini-game art into standalone index.html.
+- Combined release validation: creator 111 checks / 14 layouts passed at each of 320×568, 390×844 and 1440×900; menu 40 checks passed; What’s New v2.2.0 inspected in-browser. JS syntax, build and whitespace checks passed. Browser fixtures remain outside the repository.
+- Remaining backlog: Settings redesign, incomplete Classic/reserve presentation, older season-wrap detail styling, dense race-map label overlap and real-device animation checks. The economy issues in BUGS-TODO.md remain separate work; this release does not claim to fix them. Historical QA notes below are not a claim that the full qa/ suite has passed.
+
+---
+
 # Grid to Glory: UI v3 handoff
 
 Written 2026-11-13 so another assistant (or person) can continue the UI redesign.
