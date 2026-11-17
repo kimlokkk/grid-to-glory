@@ -175,7 +175,7 @@ A['market-review'] = function (d) {
     '<div class="cv-sign"><div><small>Driver signature</small><span class="cv-sig">' + esc(pl.name) + '</span></div><div><small>Valid until</small><b>' + (o.protected ? 'You decide' : 'Market round ' + o.expires) + '</b></div></div>' +
     '<p class="cv-doc-note">Signing withdraws every other seat offer.</p>' +
     '<button class="btn pri wide cv-sign-btn" data-act="market-sign" data-v="' + o.id + '">✍ Sign contract</button><button class="btn wide" data-act="mclose">Back</button></div>');
-  var m = document.querySelector('#modal .mbox'); if (m) m.classList.add('mbpf');
+  /* contract sheet keeps the default modal padding; mbpf (zero padding) is only for full-bleed profile popups */
 };
 
 /* ---------- career page ---------- */
