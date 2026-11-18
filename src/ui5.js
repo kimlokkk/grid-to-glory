@@ -188,6 +188,7 @@ A['r-highlights'] = function () { if (!RUN || RUN.R.done) return; RUN.highlights
 function asking() { return S.settings.ask && !RUN.auto; }
 function stepOne(R) {
   var p = R.p;
+  if (!p.fin && RUN.pitPending && !RUN.fast && pitEntryCheck(R, p)) return;
   if (!p.fin && asking() && S.settings.mini && !RUN.fast) { if (miniCheck(R, p)) return; }
   p.bot = p.bot || {}; p.bot.noAttack = p.bot.energyMode != null;
   tick2(R);
@@ -195,7 +196,7 @@ function stepOne(R) {
   mgWatch(R, p);
   if (p.rsb && R.restartT <= 0) p.rsb = 0;
   if (p.mgExp != null && p.s > p.mgExp) { p.mgAtk = 0; p.mgDef = 0; p.mgExp = null; }
-  if (p.stops !== RUN.stops) { RUN.stops = p.stops; p.pitOk = false; }
+  if (p.stops !== RUN.stops) { RUN.stops = p.stops; p.pitOk = false; RUN.pitPending = null; }
   if (p.pitReq && !p.pitOk && !p.fin) {
     if (asking()) pitCard(R, p);
     else p.pitOk = true;
@@ -249,7 +250,7 @@ function pitCard(R, p) {
   RUN.wait = true;
   var w = WHYT[p.why] || ['Engineer wants to pit', 'Fresh tyres are faster for the rest of the race.'], hp = Math.round(tyreHealth(p, R) * 100), ah = nearAhead(R, p);
   var body = w[1] + ' Currently on ' + TYN[p.comp] + ', ' + Math.floor(p.eff) + ' laps old, ' + hp + '% left. Recommended: <b>' + TYN[p.pitReq] + '</b>.' + (p.why === 'undercut' && ah ? ' Target: ' + ah.d.code + '.' : '') + (mandOf(p) ? ' <span class="warn">You haven\'t used two dry compounds yet.</span>' : '');
-  var opts = '<button class="opt" data-act="pc-yes"><div class="t">Yes, box: ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</div><div class="s">Pit at the end of this lap.</div></button>';
+  var opts = '<button class="opt" data-act="pc-yes"><div class="t">Yes, box: ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</div><div class="s">Pit at the end of this lap.' + (S.settings.mini && !RUN.fast ? ' Pit-stop challenge as you enter the lane; cancel any time before.' : '') + '</div></button>';
   ['S', 'M', 'H', 'I', 'W'].forEach(function (k) { if (k !== p.pitReq && (SLICK[k] === SLICK[p.pitReq] || R.wet > 0.1)) opts += '<button class="opt" data-act="pc-alt" data-v="' + k + '"><div class="t">Box, but ' + tyc(k) + ' ' + TYN[k] + '</div><div class="s">Your call.</div></button>'; });
   opts += '<button class="opt" data-act="pc-no"><div class="t">No, stay out</div><div class="s">Engineer will ask again in 2 laps.</div></button>';
   showModal('<div><span class="badge ' + (p.why === 'sc' ? 'sc' : p.why === 'cuaca' ? 'wet' : '') + '">Radio · Lap ' + p.lap + '</span></div><h2>' + w[0] + '</h2><p>' + body + '</p><div class="evopts">' + opts + '</div>');
@@ -257,17 +258,31 @@ function pitCard(R, p) {
 function pitResolve(k) {
   var run = RUN, R = run.R, p = R.p, token = run.pitToken = (run.pitToken || 0) + 1;
   closeModal();
+  run.pitPending = null;
   if (k === null) { raceClearPitQuality(run); p.pitReq = null; p.pitOk = false; p.crewT = null; p.noPitUntil = p.lap + 2; p.plan = []; radio(R, 'Okay, staying out. ' + (tyreHealth(p, R) < 0.2 ? 'Those tyres are hanging on by a thread, just so you know.' : 'I trust you.'), 'e'); run.wait = false; resume(); return; }
   p.pitReq = k; p.pitOk = true; p.plan = []; radio(R, 'Box, box. ' + TYN[k] + ' ready and waiting.', 'e', 1);
+  /* The pit-stop challenge is played when the car actually enters the pit lane (pitEntryCheck), not now.
+     Until then the call can still be cancelled. */
+  if (S.settings.mini && !run.fast) run.pitPending = { k: k, token: token };
+  run.wait = false; resume();
+}
+/* Called before every race step: pauses just before the player's car reaches the pit entry and runs the pit-stop challenge. */
+function pitEntryCheck(R, p) {
+  var run = RUN, pend = run.pitPending; if (!pend) return false;
+  if (pend.token !== run.pitToken || p.pitReq !== pend.k || !p.pitOk || p.fin || p.dnf) { run.pitPending = null; return false; }
+  if (run.wait || p.hold > 0 || p.lap >= R.L) return false;
+  var pitS = pitEntryS(p.s), step = R.dt / Math.max(0.5 * R.c.base, p.pA || R.c.base);   // laps covered by one tick
+  if (pitS - p.s > step * 1.5) return false;
+  var k = pend.k, token = pend.token; run.pitPending = null; run.wait = true;
   UI.mgCtx = { k: 'pit', comp: k };
-  if (S.settings.mini && !run.fast) pitAny(function (stop, q) {
+  pitAny(function (stop, q) {
     // An abandoned/replaced call must never revive a stop or resume another race.
     if (RUN !== run || run.pitToken !== token || p.pitReq !== k || !p.pitOk || p.fin || p.dnf) return;
     run.pitToken++; p.crewT = stop;
     if (q != null) { var scores = UI.wk.mg.pn; run.pitQuality = { stops: p.stops, scores: scores, index: scores.length }; scores.push(q); }
     run.wait = false; resume();
   });
-  else { run.wait = false; resume(); }
+  return true;
 }
 function raceClearPitQuality(run) {
   var quality = run.pitQuality;
@@ -549,7 +564,7 @@ A['r-pit-confirm'] = function () {
 };
 A['r-pitx'] = function () {
   if (!RUN || RUN.wait) return;
-  var p = RUN.R.p, called = !!p.pitReq; RUN.pitToken = (RUN.pitToken || 0) + 1; raceClearPitQuality(RUN);
+  var p = RUN.R.p, called = !!p.pitReq; RUN.pitToken = (RUN.pitToken || 0) + 1; RUN.pitPending = null; raceClearPitQuality(RUN);
   p.pitReq = null; p.pitOk = false; p.noPitUntil = p.lap + 1; p.crewT = null; p.why = null;
   if (called) radio(RUN.R, 'Pit call cancelled. Staying out.', 'e', 1);
   raceClosePitMenu();

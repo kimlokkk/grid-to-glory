@@ -91,6 +91,8 @@ function lossAt(f, R, k, eff) {
 }
 function tyreHealth(f, R) { return clamp(1 - f.eff / tyreLife(f, R), 0, 1); }
 function stintCost(f, R, k, eff0, n) { var t = 0; for (var a = 0; a < n; a++) t += lossAt(f, R, k, eff0 + (a + 0.5) * raceDistance(R)); return t; }
+/* where on the lap (in lap units) the next pit entry is: 0.97 of the current lap, or of the next one when already past it */
+function pitEntryS(s) { return Math.floor(s + 0.03) + 0.97; }
 function pitLossOf(f, R) { return R.c.pit * P2.pitS + (f.crewT != null ? f.crewT : crewTime(f)) - 2.4; }
 
 /* ---------- pace: satu formula untuk semua ---------- */
@@ -556,7 +558,7 @@ function tick2(R) {
       f.tyreTemp = clamp(tyreHeat(f) + (target - tyreHeat(f)) * (1 - Math.exp(-distance * raceDistance(R) * 0.8)), 0, 1.2);
       f.en = clamp(f.en + distance * raceDistance(R) * (enr > 0 ? enr * f.t.car.engine / 80 : enr), 0, 1);
     }
-    var dl = tm / f.pA, pitS = Math.floor(f.sPrev + 0.03) + 0.97;
+    var dl = tm / f.pA, pitS = pitEntryS(f.sPrev);
     if (f.pitReq && f.lap < L && f.sPrev < pitS && f.s + dl >= pitS) {
       dl = pitS - f.sPrev; drive(dl); tm = Math.max(0, tm - dl * f.pA);
       f.s = pitS; var entryT = R.t + dt - tm;
