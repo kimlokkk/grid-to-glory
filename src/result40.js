@@ -108,6 +108,7 @@ vResult = function () {
     rvFold('objectives', 'Team objectives', 'Objective bonus +' + (wk.jr.xp || 0) + ' XP', parts.objectives) +
     rvFold('performance', 'Driver performance', 'Assessment · tier · teammate record', parts.evaluation) +
     rvFold('moments', 'Race radio & key moments', 'The important calls, in order', rvMoments(wk.old)) +
+    rvFold('storypack', 'Story pack', 'Copy this race and season as text', '<p class="dim">Cars, teams, staff, drivers, news, full qualifying and race results and the race log, as one block of text.</p><button class="btn wide" data-act="sp-open" data-v="latest">Copy story pack</button>') +
     rvFold('garage', 'Garage update', 'Team development after this round', wk.rep.rd && wk.rep.rd.length ? '<p>' + wk.rep.rd.map(esc).join(' · ') + '</p>' : '');
   setTimeout(function () { if (UI.wk === wk && wk.step === 'result') rvAnimate(wk); }, 0);
   return '<div class="rv40" style="--tc:' + S.teams[P.car.d.team].color + '">' + wkHead(false) + '<div class="rv-top">' + rvHero(wk, P, outcome, fresh) + '<div class="rv-summary">' + rvRewards(wk, P, fresh) + rvRaceStory(wk, P) + '</div></div>' +

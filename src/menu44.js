@@ -28,7 +28,7 @@ vMenu=function() {
 A['mm-hall']=function(){showModal(careerHallHTML(careerHallRead())+'<button class="btn wide" data-act="mclose">Back to menu</button>');};
 A['mm-save']=function() {
   var c=mmCareer44(loadSave());
-  showModal('<h2>Save data</h2><p class="dim" style="margin:12px 0 20px">Keep a backup of your career or bring one from another device.</p><div class="stack">'+(c?'<button class="btn pri wide" data-act="export">Export saved career</button>':'')+'<button class="btn wide" data-act="import">Import save code</button><button class="btn wide" data-act="mclose">Back to menu</button></div>');
+  showModal('<h2>Save data</h2><p class="dim" style="margin:12px 0 20px">Keep a backup of your career or bring one from another device.</p><div class="stack">'+(c?'<button class="btn pri wide" data-act="export">Export saved career</button>':'')+'<button class="btn wide" data-act="import">Import save code</button>'+(c?'<button class="btn wide" data-act="sp-open">Copy story pack</button>':'')+'<button class="btn wide" data-act="mclose">Back to menu</button></div>');
 };
 /* The base UI performs its first render before presentation modules load. */
 if(UI.screen==='menu')render();

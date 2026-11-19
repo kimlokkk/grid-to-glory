@@ -598,7 +598,9 @@ function commitRace(wk) {
   if (S.mode === 'pro') bonus = proManualBonus(wk.mg);
   wk.old = oldShape(wk.R); wk.jr = judgeRace(wk, wk.R);
   if (wk.press === undefined) wk.press = typeof pressMake === 'function' ? pressMake(S, wk.old.cls.filter(function (x) { return x.car.isP; })[0], wk.R.ci) : null;
-  wk.rep = finishRace(S, wk.old, bonus); S.xp += wk.jr.xp; save();
+  wk.rep = finishRace(S, wk.old, bonus); S.xp += wk.jr.xp;
+  if (typeof storyRecord === 'function') { try { storyRecord(S, wk); } catch (e) { } }
+  save();
 }
 A['r-done'] = function () {
   var wk = UI.wk; if (wk.step === 'result') return; stopRace();
