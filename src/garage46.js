@@ -143,6 +143,9 @@ function rgGarage(S) {
   if (!rgIsF1(S) || S.sit || !S.teams) return;
   var rnd0 = S.round, last = rnd0 >= seasonRounds(S), made = 0, push = function (o) { o.k = 'garage'; o.s = S.season; o.r = S.round; pushNews(S, o); made++; };
   S.rgSeen = S.rgSeen && S.rgSeen.s === S.season ? S.rgSeen : { s: S.season, keys: {} };
+  /* car power of every team after each round: feeds the Team outlook graph (current season only) */
+  if (!S.rgTrend || S.rgTrend.season !== S.season) S.rgTrend = { season: S.season, pts: [] };
+  if (!S.rgTrend.pts.some(function (x) { return x.r === S.round; })) S.rgTrend.pts.push({ r: S.round, p: S.teams.map(function (t) { return rgR1(teamPower(t)); }) });
   /* saves from before 2.4.0 have no winter snapshot: start measuring from now */
   if (!S.rgStart || S.rgStart.season !== S.season) S.rgStart = { season: S.season, cars: rgSnap(S).map(function (p) { return p.map(rgR1); }), late: true };
   /* money: a team crosses into a new budget state (at most one story per four rounds) */
@@ -358,14 +361,35 @@ function rgOutlook(id) {
   if (o.warn) { if (o.warn.band === 'exposed' || o.warn.band === 'watch') o.tags.push(['Exposed to new rules', 'bad']); else if (o.warn.band === 'clean' || o.warn.band === 'upside') o.tags.push(['Gains from new rules', 'good']); if (o.warn.ready) o.tags.push(['Well prepared', 'good']); if (o.warn.stretched) o.tags.push(['Stretched', 'bad']); }
   return o;
 }
+function rgSeries(id) {
+  var out = [], st = S.rgStart && S.rgStart.season === S.season && !S.rgStart.late ? S.rgStart : null;
+  if (st && st.cars) out.push({ r: 0, v: rgPow(st.cars[id]), a: st.cars.reduce(function (a, c) { return a + rgPow(c); }, 0) / st.cars.length });
+  var tr = S.rgTrend && S.rgTrend.season === S.season ? S.rgTrend.pts : [];
+  tr.forEach(function (x) { if (!out.some(function (y) { return y.r === x.r; })) out.push({ r: x.r, v: x.p[id], a: x.p.reduce(function (a, b) { return a + b; }, 0) / x.p.length }); });
+  return out.sort(function (a, b) { return a.r - b.r; });
+}
+function rgSpark(ser) {
+  var W = 300, H = 76, px = 14, py = 10;
+  if (ser.length < 2) return '<div class="rg-spark empty"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true"><line x1="' + px + '" y1="' + H / 2 + '" x2="' + (W - px) + '" y2="' + H / 2 + '"/></svg><span>The graph fills in after a few races</span></div>';
+  var vals = ser.map(function (x) { return x.v; }).concat(ser.map(function (x) { return x.a; })), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), mid = (lo + hi) / 2, span = Math.max(hi - lo, 4); lo = mid - span / 2; hi = mid + span / 2;
+  var r0 = ser[0].r, r1 = Math.max(ser[ser.length - 1].r, r0 + 1);
+  var X = function (r) { return px + (r - r0) / (r1 - r0) * (W - 2 * px); }, Y = function (v) { return H - py - (v - lo) / (hi - lo) * (H - 2 * py); };
+  var line = ser.map(function (x, i) { return (i ? 'L' : 'M') + X(x.r).toFixed(1) + ' ' + Y(x.v).toFixed(1); }).join(''), avg = ser.map(function (x, i) { return (i ? 'L' : 'M') + X(x.r).toFixed(1) + ' ' + Y(x.a).toFixed(1); }).join('');
+  var last = ser[ser.length - 1], area = line + 'L' + X(last.r).toFixed(1) + ' ' + (H - py + 4) + 'L' + X(r0).toFixed(1) + ' ' + (H - py + 4) + 'Z';
+  return '<div class="rg-spark"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Car power this season"><path class="ar" d="' + area + '"/><path class="av" d="' + avg + '"/><path class="ln" d="' + line + '"/></svg>' +
+    '<i class="dot" style="left:' + (X(last.r) / W * 100).toFixed(1) + '%;top:' + (Y(last.v) / H * 100).toFixed(1) + '%"></i><div class="rg-spark-k"><span><b></b>This car</span><span><b class="a"></b>Grid average</span></div></div>';
+}
 function rgOutlookHTML(id) {
   var o = rgOutlook(id); if (!o) return '';
-  var trend = o.d == null ? 'Not measured yet' : (o.d >= 0.5 ? '▲ ' : o.d <= -0.5 ? '▼ ' : '') + rgSgn(rgR1(o.d)) + ' power since winter' + (o.dr ? ' (' + (o.dr > 0 ? 'up ' : 'down ') + Math.abs(o.dr) + ' place' + (Math.abs(o.dr) > 1 ? 's' : '') + ')' : '');
-  return '<div class="rg-out" aria-label="Team outlook"><div class="rg-out-h"><small>Team outlook</small><b>P' + o.rank + '<i> of ' + o.n + ' on car pace</i></b></div>' +
-    '<ul class="rg-out-l"><li><span>Trend</span><b class="' + (o.d == null ? '' : o.d >= 0.5 ? 'up' : o.d <= -0.5 ? 'dn' : '') + '">' + trend + '</b></li>' +
-    (o.fin ? '<li><span>Money</span><b class="' + (o.fin.k === 'bad' ? 'dn' : o.fin.k === 'good' || o.fin.k === 'cap' ? 'up' : '') + '">' + o.fin.txt + '</b></li>' : '') +
-    (o.warn ? '<li><span>New rules</span><b class="' + (o.warn.band === 'exposed' || o.warn.band === 'watch' ? 'dn' : o.warn.band === 'steady' ? '' : 'up') + '">' + RG_BANDS[o.warn.band].l + '</b></li>' : '') +
-    (o.tg ? '<li><span>Board target</span><b>P' + o.tg + '</b></li>' : '') + '</ul>' +
+  var ser = rgSeries(id), has = o.d != null, cls = !has ? '' : o.d >= 0.5 ? 'up' : o.d <= -0.5 ? 'dn' : '';
+  var order = S.teams.map(function (t) { return { id: t.id, v: teamPower(t) }; }).sort(function (a, b) { return b.v - a.v; });
+  var pos = '<span class="rg-field" aria-hidden="true">' + order.map(function (x) { return '<i class="' + (x.id === id ? 'me' : '') + '"></i>'; }).join('') + '</span>';
+  var chips = [['Trend', has ? (cls === 'up' ? '▲ ' : cls === 'dn' ? '▼ ' : '') + rgSgn(rgR1(o.d)) : '–', cls, has ? (o.dr ? (o.dr > 0 ? 'Up ' : 'Down ') + Math.abs(o.dr) + (Math.abs(o.dr) > 1 ? ' places' : ' place') : 'Same place') + ' since winter' : 'From the next race']];
+  if (o.fin) chips.push(['Money', o.fin.txt, o.fin.k === 'bad' ? 'dn' : o.fin.k === 'good' || o.fin.k === 'cap' ? 'up' : '', 'Budget status']);
+  if (o.warn) chips.push(['New rules', RG_BANDS[o.warn.band].l, o.warn.band === 'exposed' || o.warn.band === 'watch' ? 'dn' : o.warn.band === 'steady' ? '' : 'up', RG_BANDS[o.warn.band].t]);
+  if (o.tg) chips.push(['Board target', 'P' + o.tg, '', 'In the constructors’']);
+  return '<div class="rg-out" aria-label="Team outlook"><div class="rg-out-h"><div><small>Team outlook</small><b>P' + o.rank + '</b><i>of ' + o.n + ' on car pace</i></div>' + pos + '</div>' + rgSpark(ser) +
+    '<div class="rg-out-g">' + chips.map(function (c) { return '<div class="' + c[2] + '"><small>' + c[0] + '</small><b>' + c[1] + '</b><span>' + c[3] + '</span></div>'; }).join('') + '</div>' +
     (o.tags.length ? '<div class="rg-tags">' + o.tags.map(function (x) { return '<u class="' + x[1] + '">' + x[0] + '</u>'; }).join('') + '</div>' : '') +
     '<p class="rg-out-n">Cars are rebuilt every winter, so this is today’s picture, not a promise.</p></div>';
 }
