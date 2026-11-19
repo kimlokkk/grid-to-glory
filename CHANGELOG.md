@@ -2,7 +2,7 @@
 
 ## 2.4.1 — 19 November 2026 (contract outlook)
 
-- Team outlook on F1 contract offer cards (classic offers and the pro market): car-pace rank, trend since winter, money, new-rules exposure, board target and tags.
+- Team outlook on F1 contract offer cards (classic offers and the pro market): car-pace rank and field position, per-race car-power graph against the grid average, trend since winter, money, new-rules exposure, board target and tags.
 
 ## 2.4.0 — 19 November 2026 (Garage Watch)
 

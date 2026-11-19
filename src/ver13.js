@@ -2,8 +2,8 @@
 var APEX = { ver: '2.4.1', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
   { v: '2.4.1', d: 'Contract outlook', date: '19 Nov 2026', l: [
-    "Every F1 contract offer now carries a Team outlook: car-pace rank, trend since winter, money status, exposure to announced regulation changes and the board target, with quick tags like Rising, Falling or Gains from new rules.",
-    "It is today's picture. Cars are rebuilt every winter, so treat it as a guide and not a promise."
+    "Every F1 contract offer now carries a Team outlook card: car-pace rank with the team's place in the field, a graph of its car power race by race against the grid average, trend since winter, money status, exposure to announced regulation changes and the board target, with quick tags like Rising, Falling or Gains from new rules.",
+    "The graph starts filling from your next race, so older saves show it after a few rounds. Cars are rebuilt every winter, so treat the outlook as a guide and not a promise."
   ] },
   { v: '2.4.0', d: 'Garage Watch', date: '19 Nov 2026', l: [
     "New Regs page in Season and a Home banner: Regulation Watch tells you what is coming, one season ahead, for major and minor changes alike, with a rough exposure read for every team (Exposed, Watch, Steady, Upside, Clean sheet) plus title leader, slowest car, well prepared and stretched tags.",
