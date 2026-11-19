@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.1 — 19 November 2026 (app icon)
+
+- New Grid to Glory logo (gold italic G, navy, chequered strip) as favicon (SVG + PNG fallback) and apple-touch-icon. Sources in src/assets (logo.svg, logo-mini.svg, PNG exports).
+
 ## 2.5.0 — 19 November 2026 (archive)
 
 - Season > Archive: champions of every season, full final standings, race-by-race winners and poles, all-time records.
