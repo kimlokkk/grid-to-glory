@@ -143,6 +143,8 @@ function rgGarage(S) {
   if (!rgIsF1(S) || S.sit || !S.teams) return;
   var rnd0 = S.round, last = rnd0 >= seasonRounds(S), made = 0, push = function (o) { o.k = 'garage'; o.s = S.season; o.r = S.round; pushNews(S, o); made++; };
   S.rgSeen = S.rgSeen && S.rgSeen.s === S.season ? S.rgSeen : { s: S.season, keys: {} };
+  /* saves from before 2.4.0 have no winter snapshot: start measuring from now */
+  if (!S.rgStart || S.rgStart.season !== S.season) S.rgStart = { season: S.season, cars: rgSnap(S).map(function (p) { return p.map(rgR1); }), late: true };
   /* money: a team crosses into a new budget state (at most one story per four rounds) */
   var fin = S.teams.map(function (t) { return t.fin && typeof finStatus === 'function' ? finStatus(t).k : ''; }), prev = S.rgFin || [];
   if (!last && (S.rgMoneyAt == null || rnd0 - S.rgMoneyAt >= 4)) {

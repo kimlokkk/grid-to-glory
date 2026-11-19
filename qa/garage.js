@@ -21,6 +21,7 @@ const path = require('node:path');
         { const s0 = S.regReports ? S.regReports.length : 0; S.regYear = S.season + 1; devWinter(S, []); const rp = S.regReports[S.regReports.length - 1];
           ck('winter records a report', S.regReports.length >= s0 + 1 && rp.teams.length >= 8);
           ck('components sum to total move', rp.teams.every(e => Math.abs(e.c.st + e.c.ru + e.c.lu + e.c.pk - (e.p1 - e.p0)) < 0.2), rp.teams.map(e => [e.c, e.p0, e.p1])); }
+        { delete S.rgStart; delete S.rgFin; delete S.rgSeen; let e = null; try { rgGarage(S); } catch (x) { e = x.message; } ck('old save without winter snapshot: garage news starts cleanly', !e && S.rgStart && S.rgStart.season === S.season, e); }
         UI.musimView = 'regs'; UI.tab = 'musim'; UI.screen = 'hub'; render();
         ck('regs page renders', !!document.querySelector('.rg46'));
         let ok = true; try { rgPackText(S); storyPackText(S); } catch (e) { ok = e.message; } ck('pack text', ok === true, ok);
