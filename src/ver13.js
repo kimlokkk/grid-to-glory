@@ -2,8 +2,8 @@
 var APEX = { ver: '2.5.1', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
   { v: '2.5.1', d: 'New app icon', date: '19 Nov 2026', l: [
-    "Grid to Glory has a logo: a gold italic G on deep navy with a chequered finish strip. It shows in the browser tab, in bookmarks and as the icon when you add the game to your phone's home screen.",
-    "Safari and older browsers get a PNG version, and the tab icon is a simpler, bolder version so it stays readable at 16 pixels."
+    "Grid to Glory has a logo: a double G in gold and white with the GRID TO GLORY wordmark, in the game's navy and gold. It shows in the browser tab, in bookmarks and as the icon when you add the game to your phone's home screen.",
+    "The tab icon uses just the double G so it stays readable at 16 pixels; the home screen icon carries the full logo with the wordmark."
   ] },
   { v: '2.5.0', d: 'Archive', date: '19 Nov 2026', l: [
     "New Archive page in Season, with three views. Champions lists the drivers' and constructors' champion of every season. Seasons opens the final standings for any season: every driver's wins, poles and points, the constructors' table and a race-by-race list of winners and pole sitters. Records shows the all-time leaders for titles, wins, podiums, poles and fastest laps, team titles and wins, and the best single seasons.",

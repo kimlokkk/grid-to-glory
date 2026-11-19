@@ -2,7 +2,7 @@
 
 ## 2.5.1 — 19 November 2026 (app icon)
 
-- New Grid to Glory logo (gold italic G, navy, chequered strip) as favicon (SVG + PNG fallback) and apple-touch-icon. Sources in src/assets (logo.svg, logo-mini.svg, PNG exports).
+- New Grid to Glory logo (double G and wordmark, recoloured to the game's navy and gold) as favicon (16, 32 and 192 px PNG) and apple-touch-icon. Sources in src/assets (logo-gtg.png transparent master, logo-512.png, icon PNGs).
 
 ## 2.5.0 — 19 November 2026 (archive)
 
