@@ -62,9 +62,13 @@ function newsStory(n, game) {
     case 'bank': return { kick: 'STRATEGY', kc: 'k-ana', col: t.color, team: t,
       head: t.name + ' switch focus to next season',
       sub: 'Development on the current car has stopped. Every resource now goes into next year.' };
-    case 'reg': return { kick: 'BREAKING', kc: 'k-brk', col: '#e2342b', team: null,
+    case 'reg': return n.kind === 'minor' ? { kick: 'REGULATIONS', kc: 'k-reg', col: '#2f6fbd', team: null,
+      head: 'Technical update reshuffles the cars',
+      sub: 'About a third of every car is reworked for Season ' + n.s + '. Teams adapt rather than rebuild, but the order still moves.' } : { kick: 'BREAKING', kc: 'k-brk', col: '#e2342b', team: null,
       head: 'New regulations rip up the rulebook',
-      sub: 'Every car must be rebuilt from scratch for Season ' + n.s + '. The pecking order is up for grabs.' };
+      sub: 'About 60% of every car is redesigned for Season ' + n.s + '. The pecking order is up for grabs.' };
+    case 'regnews': return { kick: n.rg === 'warn' ? 'REGULATIONS' : 'REGULATION REPORT', kc: 'k-reg', col: n.col || '#e2342b', team: n.t != null ? T(n.t) : null, head: n.head, sub: n.sub };
+    case 'garage': return { kick: n.kick || 'GARAGE', kc: 'k-gar', col: n.col || (t ? t.color : '#888'), team: t, head: n.head, sub: n.sub };
     case 'poach': return { kick: 'TRANSFER', kc: 'k-trf', col: t.color, team: t,
       head: t.name + ' poach senior engineer from ' + T(n.f).name,
       sub: 'A bigger pay cheque at ' + t.short + ', a dent in morale at ' + T(n.f).short + '.' };

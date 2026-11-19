@@ -1,6 +1,13 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.3.0', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.4.0', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.4.0', d: 'Garage Watch', date: '19 Nov 2026', l: [
+    "New Regs page in Season and a Home banner: Regulation Watch tells you what is coming, one season ahead, for major and minor changes alike, with a rough exposure read for every team (Exposed, Watch, Steady, Upside, Clean sheet) plus title leader, slowest car, well prepared and stretched tags.",
+    "Minor technical updates are now announced a season early and have their own news, separate from the big rebuilds. Major changes get a louder breaking-news warning.",
+    "After a change you get a Reg Report: every team's place before and after, and why. Each move is split into exposure to the old rules, title and catch-up balancing, concept luck and winter development, with a before-and-after slope chart.",
+    "Behind-the-garage stories every few rounds, built from real team state: development watch, focus for the new rules and budget pressure. Filter them with the new Garage category in Paddock Wire.",
+    "Story pack gains a Regulations section with the watch state and latest Reg Report."
+  ] },
   { v: '2.3.0', d: 'Pit wall and story pack', date: '19 Nov 2026', l: [
     "Pit stops play out at the right moment: choose your tyres from an engineer call or the BOX button and the race keeps running. The pit-stop challenge now opens as your car reaches the pit entry, and its result sets your stop time.",
     "A queued pit call can be cancelled at any point until the pit-stop challenge starts. Mini-games off or Fast playback keep the quick automatic stop.",

@@ -600,6 +600,7 @@ function commitRace(wk) {
   if (wk.press === undefined) wk.press = typeof pressMake === 'function' ? pressMake(S, wk.old.cls.filter(function (x) { return x.car.isP; })[0], wk.R.ci) : null;
   wk.rep = finishRace(S, wk.old, bonus); S.xp += wk.jr.xp;
   if (typeof storyRecord === 'function') { try { storyRecord(S, wk); } catch (e) { } }
+  if (typeof rgGarage === 'function') { try { rgGarage(S); } catch (e) { } }
   save();
 }
 A['r-done'] = function () {

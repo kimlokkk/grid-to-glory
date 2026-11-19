@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.0 — 19 November 2026 (Garage Watch)
+
+- Regulation Watch (Season > Regs, Home banner): minor and major changes announced one season ahead, rough per-team exposure bands, title leader / slowest / prepared / stretched tags.
+- Reg Report recorded at regulation time: per-team before/after, split into exposure, title and catch-up rules, concept luck and winter development; slope chart and reasons.
+- Behind-the-garage news (development watch, new-rules focus, budget) with a Garage filter in Paddock Wire; minor updates have their own news.
+- Story pack Regulations section.
+
 ## 2.3.0 — 19 November 2026 (pit wall and story pack)
 
 - Pit-stop challenge now starts as the car reaches the pit entry instead of when the tyres are chosen. A queued call can be cancelled until the challenge starts; mini-games off or Fast keep the automatic stop.

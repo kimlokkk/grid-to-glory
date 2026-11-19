@@ -96,8 +96,8 @@ function hProf() {
 A['pf-m'] = function (d) { UI.pfM = d.v; render(); };
 
 /* ---------- News ---------- */
-var NWCAT = { all: 'All', race: 'Races', trf: 'Transfers', oth: 'Other' };
-function nwCat(st) { return st.kc === 'k-race' ? 'race' : st.kc === 'k-trf' ? 'trf' : 'oth'; }
+var NWCAT = { all: 'All', race: 'Races', trf: 'Transfers', gar: 'Garage', oth: 'Other' };
+function nwCat(st) { return st.kc === 'k-race' ? 'race' : st.kc === 'k-trf' ? 'trf' : (st.kc === 'k-gar' || st.kc === 'k-reg' || st.kc === 'k-tech' || st.kc === 'k-ana') ? 'gar' : 'oth'; }
 function hNews() {
   var f = UI.nwF || 'all', L = newsList(S).map(function (n) { var st = null; try { st = newsStory(n); } catch (e) { } return st ? { n: n, st: st } : null; }).filter(Boolean);
   var h = '<div class="card nw"><div class="nw-bar"><span class="nw-brand">PADDOCK<b>WIRE</b></span><span class="nw-live"><i></i>' + L.length + ' STORIES</span></div>' +

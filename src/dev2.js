@@ -136,6 +136,7 @@ function devStatus(t) {        /* untuk UI: projek semasa pasukan */
 }
 
 function devWinter(S, log) {
+  var rgCtx = null;                                   /* Garage Watch: records what a regulation change did, from the real numbers */
   if (typeof finSeason === 'function') finSeason(S);
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
   /* pengarah teknikal hanyut */
@@ -155,12 +156,15 @@ function devWinter(S, log) {
   /* peraturan baru: sebahagian kereta diundi semula, falsafah diundi semula */
   var pro = S.mode === 'pro' && S.world && S.world.era, kind = S.season + 1 >= S.regYear ? 'major' : (pro && S.regMinor && S.season + 1 >= S.regMinor ? 'minor' : null), reg = !!kind;
   if (reg) {
-    var mix = !pro ? DEV.regMix : kind === 'major' ? 0.6 : 0.3, before = powerRank(S), champId = S.teams.slice().sort(function (a, b) { return b.pts - a.pts; })[0].id;
+    var mix = regMix(!!pro, kind), before = powerRank(S), champId = S.teams.slice().sort(function (a, b) { return b.pts - a.pts; })[0].id;
     var lastId = S.teams.slice().sort(function (a, b) { return teamPower(a) - teamPower(b); })[0].id;
+    if (typeof rgBegin === 'function') rgCtx = rgBegin(S, kind, mix, champId, lastId);
     S.teams.forEach(function (t) {
       PARTS.forEach(function (k) { var nv = clamp(S.target[k] + gauss() * 9, 50, 97); t.car[k] = (1 - mix) * t.car[k] + mix * nv; if (kind !== 'minor') t.dev.phil[k] = rr(0.75, 1.25); });
     });
+    if (typeof rgMid === 'function') rgMid(rgCtx, 1);
     if (pro) regBalance(S, kind, champId, lastId, before);
+    if (typeof rgMid === 'function') rgMid(rgCtx, 2);
     if (kind === 'major' || !pro) S.regYear = pro ? S.world.era.next : S.season + 1 + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
     if (pro) { S.regMinor = regNextMinor(S, kind); S.regLast = { kind: kind, season: S.season + 1 }; }
     if (log) log.push({ reg: true, kind: kind });
@@ -174,10 +178,13 @@ function devWinter(S, log) {
     PARTS.forEach(function (k) { var m = leagueMean(S, k); S.teams.forEach(function (t) { t.car[k] = clamp(m + (t.car[k] - m) * f, 45, 99); }); });
   }
   setTargets(S);
+  if (typeof rgFinish === 'function') rgFinish(S, rgCtx, reg, log);
   return reg;
 }
 
 /* Regulation changes (Pro): a dynasty drops after a major change; minor changes shuffle the leaders a little. Preparation softens the fall. */
+/* share of each car that is rebuilt on a regulation change (one source for the winter re-roll and the Garage Watch expectation) */
+function regMix(pro, kind) { return !pro ? DEV.regMix : kind === 'major' ? 0.6 : 0.3; }
 function regPrep(t) { return clamp(((t.prestige || 5) - 5) * 0.04 + ((t.dev && t.dev.td) || 1) - 1 + ((t.dev && t.dev.staff) || 1) - 1, -0.2, 0.35); }
 function regBalance(S, kind, champId, lastId, before) {
   var champ = S.teams[champId], last = S.teams[lastId];

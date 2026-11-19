@@ -124,7 +124,7 @@ function storyPackText(scope) {
     'HOW TO USE: Everything below is fact from the game. Write the story in English from it: keep names, numbers, results and continuity exact; invent only dialogue, personalities and small scene details, and say which parts are invented.', ''];
   var sec = function (t, body) { return '## ' + t + '\n' + body + '\n'; };
   return head.join('\n') + '\n' + sec('MY DRIVER', spSafe('player', function () { return spPlayer(S); })) + '\n' + sec('STANDINGS', spSafe('standings', function () { return spStandings(S); })) + '\n' +
-    sec('TEAMS, CARS, STAFF', spSafe('teams', function () { return spTeams(S); })) + '\n' + sec('DRIVERS', spSafe('drivers', function () { return spDrivers(S); })) + '\n' +
+    sec('TEAMS, CARS, STAFF', spSafe('teams', function () { return spTeams(S); })) + '\n' + sec('REGULATIONS', spSafe('regulations', function () { return typeof rgPackText === 'function' ? rgPackText(S) : ''; })) + '\n' + sec('DRIVERS', spSafe('drivers', function () { return spDrivers(S); })) + '\n' +
     sec('NEWS', spSafe('news', function () { return spNews(S, scope === 'season' ? 0 : races.first || 0); })) + '\n' + sec('RACES', races.text);
 }
 
