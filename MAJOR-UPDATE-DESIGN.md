@@ -1,6 +1,15 @@
-# Regulation changes: design notes (working spec, not implemented)
+# Major update design (working spec, not implemented)
 
 Collected from the design discussion after Season 5. Nothing here is built yet. Items marked **PROPOSED** are suggested defaults that still need a decision or tuning.
+
+The whole document stays one **major update** for now. After review we pick which parts can ship early as small patches (see Part E). Anything not picked stays in the major update.
+
+Contents: Part A regulation changes, Part B team principal, technical director and board, Part C engine allocation, Part D race weekend penalties, Part E phasing and triage, Part F decisions.
+
+---
+
+# Part A: Regulation changes
+
 
 ## 1. Goal
 
@@ -149,3 +158,140 @@ Acceptance: the S3 to S4 style reshuffle remains, and technical director, team p
 
 - Whether the car re-roll (`dev2.js`) and the era profile (`world21.js`) always apply on the same winter. Confirm with a test before writing news around either.
 - The simulation does not include era-profile weights or winter packages, which probably explains why the real S4 shuffle was larger than the simulation.
+
+---
+
+# Part B: Team principal, technical director and board
+
+## B1. Today (from the code)
+
+- The part to upgrade is picked by weighted chance (`dev2.js` devPackage): R&D philosophy, gap to the best team, and team principal rating as an exponent (a better principal finds the weak part more reliably). There is no decision about *when* to bring it or *when* to fit it.
+- The technical director multiplies gain: `td * staff^2 * tp.skill^1.5`. Roles are blended in one formula, with no split of authority.
+- Teams choose drivers by team plan (`PLAN`: win, build, rebuild, cut), not by the principal.
+- Board: one silent rule. If the team finishes 4 or more places below its target (`sackGap`), the principal is replaced at winter with 60% chance. No warning, no other action.
+
+## B2. Authority split (**PROPOSED**)
+
+| Role | Decides | Effect |
+|---|---|---|
+| **Team principal** | **What** to upgrade, **when** to bring it, **when** to fit it, **which drivers** to hire, how much to sacrifice this season for the next | Strategic direction. Final say |
+| **Technical director** | **How good** the part is when it is built | Build quality. Builds what the principal orders |
+| **Technical staff** | Execution: failure rate and reliability | As today |
+| **Board** | Targets, budget, rewards and sanctions (B4) | Pressure and consequences |
+
+## B3. Communication: the principal decides, the director advises
+
+The principal always has the final decision, but listens to the technical director. This lets a good technical director carry a weak principal without removing the principal's importance.
+
+- The principal's own pick is correct with probability `p` that rises with principal rating (illustration: 55% at rating 0 up to 90% at rating 100).
+- The principal consults the technical director. Weaker principals lean on advice more (illustration: 77% of the time at low rating, 53% at high). The advice itself is correct with a probability that rises with technical director rating (illustration: 60% at rating 0, 95% at rating 100).
+- Rough results: weak principal with a great director about 0.89 correct, weak with a weak director about 0.78, strong with a great director about 0.93. A weak principal is wrong more often, but not always.
+- When the principal overrules the director, the part is built as ordered. The part the director wanted does not progress, so the weakness stays. The director can become unhappy and may leave (technical directors already move between teams). Show it as news ("principal overrules technical director") so the player can read what is going on behind the garage.
+- All numbers are illustrations. Tune by simulation (Part E).
+
+Principal style from Part A section 7 applies here too (aggressive switches focus to next year early, cautious later).
+
+## B4. Board (**PROPOSED**)
+
+- A **confidence score** (0 to 100) per team, from results versus target, trend and finances.
+- **Reviews** at rounds 6, 12 and 18. Possible actions: warning, R&D budget cut, forced driver change or engine supplier change, replacing the principal (new principal, new direction), or rewards (more budget, higher target).
+- The player is a driver, not a principal. Board actions reach the player as changes in the team: new principal, a driver forced in or out, a technical director leaving. These are also the "behind the garage" stories.
+
+---
+
+# Part C: Engine allocation
+
+## C1. Today
+
+There are no engine units. Mechanical failure chance is `(100 - reliability) * 0.00007 * tyre-age factor` per tick (`engine2.js` incidents). No mileage, no units, no penalty.
+
+## C2. Rules (decided)
+
+- **4 power units per driver per season** (22 races).
+- Each unit has **wear** that grows with laps used. **Wear affects race pace** (not only reliability) so that teams strategise when to fit a fresh unit.
+- Fitting a fifth unit gives a **grid penalty** (**PROPOSED**: 10 places).
+- Failure chance rises with wear (**PROPOSED**: multiplier about `1 + 2 * wear^2`).
+
+## C3. Wear and pace (**PROPOSED**, tune)
+
+- Wear `w` from 0 to 1 over the unit's life. Effective engine rating = engine rating minus about `8 * w^2` at the end of life (a few tenths of a second per lap at engine-heavy tracks).
+- Unit life depends on the supplier's reliability and team technical staff.
+- The effect scales with how much the track depends on the engine (`pw`), so a worn unit hurts more at Lumen City than at Senja Marina.
+
+## C4. Strategy
+
+- Fresh units are free until all 4 are used, so the choice is *when*. Use a new one at hard-to-overtake tracks (high `ot`, for example Senja Marina) and run old ones where passing is easy (for example Kaspira).
+- When a fifth unit is needed, take the penalty at an easy-to-overtake track.
+
+## C5. Who decides
+
+- **Team principal and technical director suggest** (message from the engineer with a reason: "fresh unit recommended, engine at 78% wear").
+- **The driver decides whether to use it.** For the player this is a choice before the race. For AI drivers the decision follows the suggestion with a probability from the driver's `risk` and the team's style, so aggressive teams take penalties earlier and cautious ones conserve units.
+- Spare units cost money (R&D fund), which ties into the principal's budget decisions.
+
+## C6. UI
+
+Team and driver card: "PU 2 of 4, life 62%". Pre-race prompt with the suggestion and the penalty cost. Story pack includes unit usage and penalties.
+
+## C7. Regulation link
+
+On a major regulation change, new power units are less reliable in their first season, scaled by technical staff and the works supplier.
+
+---
+
+# Part D: Race weekend penalties
+
+## D1. Today
+
+Only two exist: +15 s for not using two dry compounds (`sim.js` finalizeRace) and 5 s for a jump start (`ui5.js`). Contact has no steward ruling (only the attacker can cause contact in `attemptPass`) and AI drivers are never penalised.
+
+## D2. Scope (decided: tiers 1 to 3, no licence points)
+
+1. **Stewards.** A contact caused by a failed overtake gets a ruling: no further action, 5 s or 10 s, depending on the attacker's `risk` and push mode. A "Stewards' decisions" row on the result screen and a radio message.
+2. **Grid penalties.** From engine allocation (Part C). Applied to the grid after qualifying. Cap the total number of penalties per race so the grid does not become chaotic.
+3. **Pit offences.** Unsafe release and pit lane speeding from pit-stop quality (mini-game result or crew time).
+
+Not included: super licence penalty points and race bans.
+
+Penalties feed the existing assessment (a penalty already reduces the consistency score).
+
+---
+
+# Part E: Phasing and triage
+
+## E1. Phases (**PROPOSED**)
+
+| Phase | Content | Mechanic change |
+|---|---|---|
+| 1 | Reg Report, exposure card, post-change story, Regulation Watch card, louder warning, behind-the-garage news (Part A section 5) | No |
+| 2 | Team principal and technical director authority, board reviews (Part B), minor and major regulation mechanics (Part A section 6) | Yes |
+| 3 | Engine allocation (Part C) | Yes |
+| 4 | Steward penalties and pit offences (Part D) | Yes |
+
+Each phase gets simulation checks (Part A section 9, plus engine and penalty distributions) and its own tests.
+
+## E2. Triage (to do)
+
+Everything stays in the major update until reviewed. Then choose which items ship early as small patches. Items that need no new game state or balance work are the likeliest candidates (Part A section 5, steward ruling display), but this is not decided.
+
+---
+
+# Part F: Decisions
+
+## F1. Decided
+
+- Pattern of regulation reshuffle is kept.
+- One season warning, rough indicators.
+- Team principal decides, technical director advises. A weak principal is wrong more often, not always. Principal styles are balanced (equal average, different risk).
+- Technical director has more influence on build quality, principal on direction.
+- 4 power units per season. Wear affects race pace. Principal and technical director suggest, the driver decides.
+- Penalty tiers 1 to 3. No licence points.
+- Document is the **Major update design**. Triage for patches comes later.
+
+## F2. Open (see Part A section 11 plus)
+
+1. Wear to pace curve and failure multiplier (C3).
+2. Grid penalty size (proposed 10) and a cap per race.
+3. Probabilities in B3.
+4. Board review actions and thresholds (B4).
+5. Steward thresholds (D2 tier 1).
