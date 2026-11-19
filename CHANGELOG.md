@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.0 — 19 November 2026 (pit wall and story pack)
+
+- Pit-stop challenge now starts as the car reaches the pit entry instead of when the tyres are chosen. A queued call can be cancelled until the challenge starts; mini-games off or Fast keep the automatic stop.
+- Contract sheet padding and signature layout fixed for small phones.
+- Story pack: one block of text with cars, teams, staff, drivers, news, full qualifying and race results and race logs, for the latest race, the last five races or the whole season (Copy or Download). Per-race qualifying times, tyres, log and key radio are recorded for the current and previous season.
+
 ## 2.1.0 — 10 November 2026 (playtest build)
 
 - Synchronised F3/F2/F1 worlds, market scarcity, ageing and a dynamic ceiling (Mind-based growth step).
