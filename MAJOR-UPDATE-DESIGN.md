@@ -187,11 +187,11 @@ The principal always has the final decision, but listens to the technical direct
 - The principal consults the technical director. Weaker principals lean on advice more (illustration: 77% of the time at low rating, 53% at high). The advice itself is correct with a probability that rises with technical director rating (illustration: 60% at rating 0, 95% at rating 100).
 - Rough results: weak principal with a great director about 0.89 correct, weak with a weak director about 0.78, strong with a great director about 0.93. A weak principal is wrong more often, but not always.
 - When the principal overrules the director, the part is built as ordered. The part the director wanted does not progress, so the weakness stays. The director can become unhappy and may leave (technical directors already move between teams). Show it as news ("principal overrules technical director") so the player can read what is going on behind the garage.
-- All numbers are illustrations. Tune by simulation (Part E).
+- Probabilities **approved** as the starting point. Verify by simulation when the mechanic is built (Part E).
 
 Principal style from Part A section 7 applies here too (aggressive switches focus to next year early, cautious later).
 
-## B4. Board (**PROPOSED**)
+## B4. Board (**approved as proposed**)
 
 - A **confidence score** (0 to 100) per team, from results versus target, trend and finances.
 - **Reviews** at rounds 6, 12 and 18. Possible actions: warning, R&D budget cut, forced driver change or engine supplier change, replacing the principal (new principal, new direction), or rewards (more budget, higher target).
@@ -209,19 +209,21 @@ There are no engine units. Mechanical failure chance is `(100 - reliability) * 0
 
 - **4 power units per driver per season** (22 races).
 - Each unit has **wear** that grows with laps used. **Wear affects race pace** (not only reliability) so that teams strategise when to fit a fresh unit.
-- Fitting a fifth unit gives a **grid penalty** (**PROPOSED**: 10 places).
-- Failure chance rises with wear (**PROPOSED**: multiplier about `1 + 2 * wear^2`).
+- Fitting a fifth unit gives a **grid penalty of 10 places** (approved), capped at **15 places per driver per race** in total.
+- Failure chance rises with wear and is **mean-neutral** (see C3), so the season-average failure rate stays as today.
 
-## C3. Wear and pace (**PROPOSED**, tune)
+## C3. Wear, pace and failure (tuned by simulation, see C8)
 
-- Wear `w` from 0 to 1 over the unit's life. Effective engine rating = engine rating minus about `8 * w^2` at the end of life (a few tenths of a second per lap at engine-heavy tracks).
-- Unit life depends on the supplier's reliability and team technical staff.
-- The effect scales with how much the track depends on the engine (`pw`), so a worn unit hurts more at Lumen City than at Senja Marina.
+- **Unit life** in races: `5.5 * (1 + (reliability - 75) / 100)`, clamped 4.4 to 6.6. (22 races / 4 units = 5.5 for a reliability of 75.)
+- **Wear** `w` = laps run on the unit / life in laps. It may exceed 1 (up to about 1.4) if a unit is stretched.
+- **Pace:** effective engine rating drops by `5 * w^2` engine points in the **race only** (qualifying is not affected). At the end of life that is about 5 engine points, worth roughly 0.1 s per lap at an engine-heavy track. The cost scales with how much the track depends on the engine (`pw`).
+- **Failure:** the existing hazard is multiplied by `m(w) = (1 + 4 * w^2) / (1 + 4/3)`. A fresh unit fails at about 0.43 times the baseline, mid-life at 0.86, end of life at 2.14. The average over a unit's life is 1, so the season-average failure rate is unchanged.
+- A failed unit counts as used. Replacing it consumes one of the 4 units, which is what makes reliability matter for grid penalties (C8).
 
 ## C4. Strategy
 
-- Fresh units are free until all 4 are used, so the choice is *when*. Use a new one at hard-to-overtake tracks (high `ot`, for example Senja Marina) and run old ones where passing is easy (for example Kaspira).
-- When a fifth unit is needed, take the penalty at an easy-to-overtake track.
+- Fresh units are free until all 4 are used. The simulation (C8) showed that the *timing of swaps* in a simple one-after-another plan hardly matters. The decision becomes real when the team can **choose which unit to run each race** (a pool of 4 units): put the least-worn units at engine-heavy tracks and the most-worn at engine-light tracks. **Recommended: pool model** (needs approval).
+- A fifth unit costs a 10-place grid drop. The simulation found the drop costs about as much at easy-to-overtake tracks as at hard ones (about 17% difference), so the cheapest place to take it is where the team's expected result is *lowest*, not necessarily where passing is easy.
 
 ## C5. Who decides
 
@@ -237,6 +239,41 @@ Team and driver card: "PU 2 of 4, life 62%". Pre-race prompt with the suggestion
 
 On a major regulation change, new power units are less reliable in their first season, scaled by technical staff and the works supplier.
 
+## C8. Simulation study (tuning)
+
+Method: the real race engine, 22 circuits, 48 seeds per circuit (about 10,000 races), a mid-field team (rank 5), dry races, same qualifying grids reused across variants. Season model: expected points per race from the measured table, a failure term from the measured hazard, optimisation over unit assignments.
+
+**Baseline (today).** Mechanical failure is **4.7% per car per race** (10,560 car-races). Per lap: reliability 60s 0.00245, 70s 0.00177, 80s 0.0013, matching the existing formula `(100 - rel) * 0.00007 * (1 + tyre age * 0.003)`.
+
+**Cost of losing engine points (mid-field car, average over circuits):** points per car per race 4.51 at 0 lost, 3.10 at 8, 1.75 at 16. The cost depends strongly on the track's engine weight: circuits with `pw` of 0.6 or more lose about 2.0 points at 8 engine points, circuits with 0.4 or less lose about 0.8.
+
+**Grid penalty (10 places).** Costs about 2.2 points per race, roughly half of the car's expected points. It varied little with overtaking difficulty (2.0 at easy tracks, 2.4 at hard ones).
+
+**Season results for a mid-field car (points per season, about 99 with a perfect unit):**
+
+| Setting (X engine points, life) | Wear cost incl. normal failures | Best vs worst unit allocation | 5th unit gain at 10-place penalty | Running only 3 units |
+|---|---|---|---|---|
+| X 5, life 4.5 races (weak reliability) | 15% | 4.9 | +2.4 | 10% |
+| **X 5, life 5.5 races** | **11%** | **3.5** | **+0.9** | **7.5%** |
+| X 5, life 6.5 races (strong reliability) | 9% | 2.7 | +0.3 | 5.5% |
+
+About 5 points of the 11% is the normal failure rate that already exists today. Title contenders score about three times as many points per race, so the stakes scale roughly three times.
+
+**Chosen:** `X = 5`, quadratic wear (`w^2`), failure multiplier with `a = 4`, life from reliability as in C3. A 5th unit is about neutral for an average car, clearly worthwhile only for weak-reliability teams, and not worthwhile for strong ones.
+
+**How often will AI cars need a fifth unit?** Monte Carlo with a failure consuming a unit:
+
+| Reliability | Failures per season | Chance of at least one 5th-unit penalty | Penalties per car per season |
+|---|---|---|---|
+| 60 | 1.6 | 56% | 0.65 |
+| 70 | 1.2 | 45% | 0.50 |
+| 80 | 0.8 | 32% | 0.34 |
+| 90 | 0.4 | 17% | 0.17 |
+
+For a 20-car grid that is roughly 7 to 10 penalised starts per season, about 0.4 per race. Not chaotic, and reliability clearly matters.
+
+**Limits of the study:** one mid-field team, dry races only, expected-value model (no race-by-race randomness in the season model), and a one-line approximation for failure losses. Re-check by simulation once the real mechanic exists.
+
 ---
 
 # Part D: Race weekend penalties
@@ -247,7 +284,12 @@ Only two exist: +15 s for not using two dry compounds (`sim.js` finalizeRace) an
 
 ## D2. Scope (decided: tiers 1 to 3, no licence points)
 
-1. **Stewards.** A contact caused by a failed overtake gets a ruling: no further action, 5 s or 10 s, depending on the attacker's `risk` and push mode. A "Stewards' decisions" row on the result screen and a radio message.
+1. **Stewards.** A contact caused by a failed overtake gets a ruling: no further action, 5 s or 10 s. A "Stewards' decisions" row on the result screen and a radio message.
+   - **Base: how realistic the attempt was, not push mode.** A calm, calculated driver can run push mode without taking risks, so push mode is not used. The game already computes the chance `p` that the pass succeeds (pace advantage, attack versus defend skill, driver risk, DRS, tyres, overtaking difficulty). Low `p` at contact means an over-optimistic move.
+   - Measured over 308 races: 2.6 contacts per race; `p` at contact has median 0.19, 25th percentile 0.08, 75th percentile 0.41.
+   - **Starting thresholds (to tune):** `p` below 0.05 is the attacker's fault, **10 s** (about 15% of contacts); `p` from 0.05 to 0.12 is **5 s** (about 20%); above that is a **racing incident**, no action (about 65%). That is roughly 0.9 penalised contacts per race.
+   - **Consequence step:** if the other car lost time or the attacker crashed out, move one step up (no action to 5 s, 5 s to 10 s).
+   - The defender is never penalised, as today (only attackers can cause contact in the engine).
 2. **Grid penalties.** From engine allocation (Part C). Applied to the grid after qualifying. Cap the total number of penalties per race so the grid does not become chaotic.
 3. **Pit offences.** Unsafe release and pit lane speeding from pit-stop quality (mini-game result or crew time).
 
@@ -288,10 +330,17 @@ Everything stays in the major update until reviewed. Then choose which items shi
 - Penalty tiers 1 to 3. No licence points.
 - Document is the **Major update design**. Triage for patches comes later.
 
-## F2. Open (see Part A section 11 plus)
+## F2. Decided in the tuning round
 
-1. Wear to pace curve and failure multiplier (C3).
-2. Grid penalty size (proposed 10) and a cap per race.
-3. Probabilities in B3.
-4. Board review actions and thresholds (B4).
-5. Steward thresholds (D2 tier 1).
+- Grid penalty 10 places, cap 15 per driver per race (approved).
+- Team principal probabilities in B3 (approved).
+- Board review actions and thresholds in B4 (approved).
+- Wear curve and failure multiplier tuned by simulation (C3, C8).
+- Steward base is the attempt's success chance `p`, not push mode (D2).
+
+## F3. Open
+
+1. Pool model (choose which unit to run each race) instead of one-after-another units (C4). Recommended, needs approval.
+2. Steward thresholds (D2): 0.05 and 0.12 are starting values. Tune by simulation, with a target of about 1 penalised contact per race.
+3. Real-world check of the engine penalty values once built (C8 limits).
+4. Remaining open items from Part A section 11.
