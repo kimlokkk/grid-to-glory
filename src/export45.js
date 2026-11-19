@@ -46,12 +46,12 @@ function spPlayer(S) {
     L.push('Tier: ' + EVALUATION.tiers[p.evaluation.tier] + (ev && ev.sts != null ? ' · season STS ' + ev.sts.toFixed(1) + '/100 · head-to-head ' + ev.h2hWins + '/' + ev.h2hRaces : ''));
   }
   L.push('Career (incl. this season): titles ' + ((p.cs && p.cs.titles) || 0) + ', wins ' + (((p.cs && p.cs.wins) || 0) + (p.wins || 0)) + ', podiums ' + (((p.cs && p.cs.pods) || 0) + (p.pods || 0)));
-  L.push('This season: ' + p.pts + ' pts, ' + p.wins + ' wins, ' + p.pods + ' podiums, ' + (p.dnf || 0) + ' DNFs');
+  L.push('This season: ' + p.pts + ' pts, ' + p.wins + ' wins, ' + p.pods + ' podiums, ' + (S.results || []).filter(function (r) { return r.dnf; }).length + ' DNFs' + (S.round ? '' : ' (no races yet)'));
   if (mate) L.push('Teammate: ' + mate.name + ' (OVR ' + ovr(mate) + ', ' + mate.pts + ' pts)' + (S.tm ? ' · relationship ' + tmLabel(S.tm.rel) + ' (' + spN(S.tm.rel, 1) + '), team orders obeyed ' + S.tm.yes + ', refused ' + S.tm.no : ''));
   return L.join('\n');
 }
 function spStandings(S) {
-  var L = ['DRIVERS'];
+  var L = ['DRIVERS' + (S.round ? '' : ' (no races yet: order is arbitrary)')];
   driverStandings(S).forEach(function (d, i) { L.push((i + 1) + '. ' + d.code + ' ' + d.name + ' (' + spTeamLine(S, d.team) + ') ' + d.pts + ' pts, ' + d.wins + ' wins, ' + d.pods + ' podiums'); });
   L.push('', 'CONSTRUCTORS');
   teamStandings(S).forEach(function (t, i) { L.push((i + 1) + '. ' + t.name + ' ' + t.pts + ' pts, ' + t.wins + ' wins'); });
@@ -62,7 +62,7 @@ function spTeams(S) {
   var ranks = { aero: spRank(S.teams, 'aero'), engine: spRank(S.teams, 'engine'), chassis: spRank(S.teams, 'chassis'), rel: spRank(S.teams, 'rel') }, pr = powerRank(S), me0 = S.drivers[S.pi].team, L = [];
   teamStandings(S).forEach(function (t, i) {
     var c = t.car, d = t.dev || {}, f = t.fin, tp = d.tp, ch = typeof TEAM_CHARS !== 'undefined' && t.char && TEAM_CHARS[t.char] ? TEAM_CHARS[t.char].name : '';
-    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + ' (' + t.short + ') · constructors P' + (i + 1) + ' · car power rank #' + pr[t.id] + ' (avg ' + teamPower(t).toFixed(1) + ')');
+    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + ' (' + t.short + ')' + (S.round ? ' · constructors P' + (i + 1) : ' · no races yet') + ' · car power rank #' + pr[t.id] + ' (avg ' + teamPower(t).toFixed(1) + ')');
     L.push('  Car: aero ' + Math.round(c.aero) + ' (#' + ranks.aero[t.id] + '), engine ' + Math.round(c.engine) + ' (#' + ranks.engine[t.id] + '), chassis ' + Math.round(c.chassis) + ' (#' + ranks.chassis[t.id] + '), reliability ' + Math.round(c.rel) + ' (#' + ranks.rel[t.id] + ')');
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
