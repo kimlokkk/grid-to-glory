@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.1 — 19 November 2026 (contract outlook)
+
+- Team outlook on F1 contract offer cards (classic offers and the pro market): car-pace rank, trend since winter, money, new-rules exposure, board target and tags.
+
 ## 2.4.0 — 19 November 2026 (Garage Watch)
 
 - Regulation Watch (Season > Regs, Home banner): minor and major changes announced one season ahead, rough per-team exposure bands, title leader / slowest / prepared / stretched tags.

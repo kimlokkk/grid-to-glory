@@ -343,3 +343,35 @@ function rgPackText(S) {
   });
   return L.join('\n');
 }
+
+/* ---------- Contract Outlook (2.4.1): today's picture of a team, shown on offer cards ---------- */
+function rgOutlook(id) {
+  if (!rgIsF1(S) || !S.teams || !S.teams[id] || S.sit) return null;
+  var pows = S.teams.map(function (t) { return teamPower(t); }), rk = rgRanks(pows), n = S.teams.length, t = S.teams[id], o = { id: id, rank: rk[id], n: n, tags: [] };
+  var st = S.rgStart && S.rgStart.season === S.season && S.rgStart.cars && S.rgStart.cars[id] ? S.rgStart : null;
+  if (st) { var p0 = S.rgStart.cars.map(rgPow), r0 = rgRanks(p0); o.d = pows[id] - p0[id]; o.dr = r0[id] - rk[id]; }
+  o.fin = t.fin && typeof finStatus === 'function' ? finStatus(t) : null;
+  o.tg = t.dev && t.dev.target || null;
+  var w = rgWatch(S); o.warn = w.state === 'warn' ? (w.rows.filter(function (r) { return r.id === id; })[0] || null) : null;
+  if (o.rank <= 3) o.tags.push(['Title contender', 'good']); else if (o.rank >= n - 2) o.tags.push(['Back of the grid', 'bad']);
+  if (o.d != null) { if (o.d >= 1.5 || o.dr >= 2) o.tags.push(['Rising', 'good']); else if (o.d <= -1.5 || o.dr <= -2) o.tags.push(['Falling', 'bad']); }
+  if (o.warn) { if (o.warn.band === 'exposed' || o.warn.band === 'watch') o.tags.push(['Exposed to new rules', 'bad']); else if (o.warn.band === 'clean' || o.warn.band === 'upside') o.tags.push(['Gains from new rules', 'good']); if (o.warn.ready) o.tags.push(['Well prepared', 'good']); if (o.warn.stretched) o.tags.push(['Stretched', 'bad']); }
+  return o;
+}
+function rgOutlookHTML(id) {
+  var o = rgOutlook(id); if (!o) return '';
+  var trend = o.d == null ? 'Not measured yet' : (o.d >= 0.5 ? '▲ ' : o.d <= -0.5 ? '▼ ' : '') + rgSgn(rgR1(o.d)) + ' power since winter' + (o.dr ? ' (' + (o.dr > 0 ? 'up ' : 'down ') + Math.abs(o.dr) + ' place' + (Math.abs(o.dr) > 1 ? 's' : '') + ')' : '');
+  return '<div class="rg-out" aria-label="Team outlook"><div class="rg-out-h"><small>Team outlook</small><b>P' + o.rank + '<i> of ' + o.n + ' on car pace</i></b></div>' +
+    '<ul class="rg-out-l"><li><span>Trend</span><b class="' + (o.d == null ? '' : o.d >= 0.5 ? 'up' : o.d <= -0.5 ? 'dn' : '') + '">' + trend + '</b></li>' +
+    (o.fin ? '<li><span>Money</span><b class="' + (o.fin.k === 'bad' ? 'dn' : o.fin.k === 'good' || o.fin.k === 'cap' ? 'up' : '') + '">' + o.fin.txt + '</b></li>' : '') +
+    (o.warn ? '<li><span>New rules</span><b class="' + (o.warn.band === 'exposed' || o.warn.band === 'watch' ? 'dn' : o.warn.band === 'steady' ? '' : 'up') + '">' + RG_BANDS[o.warn.band].l + '</b></li>' : '') +
+    (o.tg ? '<li><span>Board target</span><b>P' + o.tg + '</b></li>' : '') + '</ul>' +
+    (o.tags.length ? '<div class="rg-tags">' + o.tags.map(function (x) { return '<u class="' + x[1] + '">' + x[0] + '</u>'; }).join('') + '</div>' : '') +
+    '<p class="rg-out-n">Cars are rebuilt every winter, so this is today’s picture, not a promise.</p></div>';
+}
+(function () {
+  var oc0 = typeof offerCardHTML === 'function' ? offerCardHTML : null;
+  if (oc0) offerCardHTML = function (o) { var h = oc0.apply(this, arguments), k = '<button class="btn pri wide" data-act="sign-pre"', i = h.lastIndexOf(k); try { var x = o.f1 || o.sit ? '' : rgOutlookHTML(o.team); return x && i >= 0 ? h.slice(0, i) + x + h.slice(i) : h; } catch (e) { return h; } };
+  var mo0 = typeof marketOfferHTML === 'function' ? marketOfferHTML : null;
+  if (mo0) marketOfferHTML = function (o) { var h = mo0.apply(this, arguments), k = '<div class="cv-offer-act">', i = h.lastIndexOf(k); try { var x = o.league === 'f1' && !o.program && !o.loan ? rgOutlookHTML(o.team) : ''; return x && i >= 0 ? h.slice(0, i) + x + h.slice(i) : h; } catch (e) { return h; } };
+})();

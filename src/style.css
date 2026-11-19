@@ -3830,3 +3830,9 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
   .rg-row { grid-template-columns: 5px minmax(0, 1fr); } .rg-read { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; padding-bottom: 0; }
   .rg-art-body { padding: 12px; } .rg-last-sum { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Contract Outlook (2.4.1) */
+.rg-out { margin: 12px 0 4px; padding: 12px 14px; border-radius: 12px; background: #f2f3ed; border: 1px solid #dfe2d8; border-left: 4px solid var(--tc, #182032); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.rg-out-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; } .rg-out-h small { font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #6b7686; } .rg-out-h b { font: italic 700 20px/1 var(--disp); color: #182032; } .rg-out-h i { font: 500 11px var(--mono); font-style: normal; color: #6b7686; }
+.rg-out-l { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; } .rg-out-l li span { flex: none; white-space: nowrap; } .rg-out-l li { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: #536070; } .rg-out-l b { font: 700 12px var(--mono); color: #182032; text-align: right; } .rg-out-l b.up { color: #187a43; } .rg-out-l b.dn { color: #c22f25; }
+.rg-out-n { margin: 0; font-size: 11px; line-height: 1.45; color: #7a8493; }
