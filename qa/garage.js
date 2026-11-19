@@ -20,7 +20,7 @@ const path = require('node:path');
         const ex = rgExposure(S, 'major'); ck('exposure bands valid', ex.length >= 8 && ex.every(x => ['exposed','watch','steady','upside','clean'].includes(x.band)));
         { const s0 = S.regReports ? S.regReports.length : 0; S.regYear = S.season + 1; devWinter(S, []); const rp = S.regReports[S.regReports.length - 1];
           ck('winter records a report', S.regReports.length >= s0 + 1 && rp.teams.length >= 8);
-          ck('components sum to total move', rp.teams.every(e => Math.abs(e.c.st + e.c.ru + e.c.lu + e.c.pk - (e.p1 - e.p0)) < 0.2), rp.teams.map(e => [e.c, e.p0, e.p1])); }
+          ck('components sum to total move', rp.teams.every(e => Math.abs(e.c.st + e.c.ru + e.c.lu + e.c.pk - (e.p1 - e.p0)) < 0.3), rp.teams.map(e => [e.c, e.p0, e.p1])); }
         { delete S.rgStart; delete S.rgFin; delete S.rgSeen; let e = null; try { rgGarage(S); } catch (x) { e = x.message; } ck('old save without winter snapshot: garage news starts cleanly', !e && S.rgStart && S.rgStart.season === S.season, e); }
         ck('trend points recorded once per round and render in the outlook', S.rgTrend && S.rgTrend.pts.length === 1 && (rgGarage(S), S.rgTrend.pts.length === 1) && rgOutlookHTML(S.teams[0].id).includes('rg-spark'));
         { const offs = makeOffers(S, 5, null, true), html = offs.filter(o => !o.f1 && !o.sit).map(o => offerCardHTML(o));

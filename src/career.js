@@ -117,6 +117,7 @@ function endSeason(S) {
   if (pos === 1) { if (S.mode !== 'pro' || leagueOf(S) === 'f1') S.career.titles++; else S.career.juniorTitles = (S.career.juniorTitles || 0) + 1; }
   evaluationClose(S);
   if (typeof drvRecord === 'function') drvRecord(S);
+  if (typeof arRecord === 'function') { try { arRecord(S); } catch (e) { } }
   S.lastSummary = { rec: rec, ds: ds.map(function (d) { return d.id; }), ts: ts.map(function (t) { return t.id; }) };
   S.offers = null; S.fired = null; S.paddock = null;
   if (typeof finBonus === 'function') finBonus(S);

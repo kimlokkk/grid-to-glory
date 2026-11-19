@@ -315,15 +315,19 @@ if (typeof hUtama === 'function') {
   var rgHome0 = hUtama;
   hUtama = function () { var h = rgHome0.apply(this, arguments), s = rgStripHTML(), i = h.indexOf('<div class="hp-cols">'); return s && i >= 0 ? h.slice(0, i) + s + h.slice(i) : h; };
 }
-/* Season: a Regs view next to the others */
+/* Season: Regs and Archive views next to the others */
+function rgNavBtns(view) {
+  return (rgWatch(S).state === 'none' ? '' : '<button class="btn sm ' + (view === 'regs' ? 'on' : '') + (rgWatch(S).state === 'warn' ? ' rg-dot' : '') + '" data-act="hub-section" data-v="regs">Regs</button>') +
+    (typeof arPage === 'function' ? '<button class="btn sm ' + (view === 'archive' ? 'on' : '') + '" data-act="hub-section" data-v="archive">Archive</button>' : '');
+}
+function rgNav(view) {
+  return '<div class="hub-sections" role="group" aria-label="Season">' + [['calendar', 'Calendar'], ['results', 'Results'], ['standings', 'Standings'], ['news', 'News'], ['history', 'History']].concat(S.world ? [['world', 'World']] : []).map(function (x) { return '<button class="btn sm" data-act="hub-section" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + rgNavBtns(view) + '</div>';
+}
 if (typeof hMusim === 'function') {
   var rgMusim0 = hMusim;
   hMusim = function () {
-    if (UI.musimView !== 'regs') {
-      var h = rgMusim0.apply(this, arguments);
-      return rgWatch(S).state === 'none' ? h : h.replace('</div>', '<button class="btn sm ' + (UI.musimView === 'regs' ? 'on' : '') + (rgWatch(S).state === 'warn' ? ' rg-dot' : '') + '" data-act="hub-section" data-v="regs">Regs</button></div>');
-    }
-    return '<div class="hub-sections" role="group" aria-label="Season">' + [['calendar', 'Calendar'], ['results', 'Results'], ['standings', 'Standings'], ['news', 'News'], ['history', 'History']].concat(S.world ? [['world', 'World']] : []).map(function (x) { return '<button class="btn sm" data-act="hub-section" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '<button class="btn sm on' + (rgWatch(S).state === 'warn' ? ' rg-dot' : '') + '" data-act="hub-section" data-v="regs">Regs</button></div>' + rgPage();
+    if (UI.musimView !== 'regs') { var h = rgMusim0.apply(this, arguments); return h.replace('</div>', rgNavBtns(UI.musimView) + '</div>'); }
+    return rgNav('regs') + rgPage();
   };
   var rgSection0 = A['hub-section'];
   A['hub-section'] = function (d) { if (d.v === 'regs') { UI.musimView = 'regs'; UI.tab = 'musim'; render(); window.scrollTo(0, 0); return; } return rgSection0(d); };

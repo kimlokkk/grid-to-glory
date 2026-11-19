@@ -1,6 +1,11 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.4.1', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.5.0', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.5.0', d: 'Archive', date: '19 Nov 2026', l: [
+    "New Archive page in Season, with three views. Champions lists the drivers' and constructors' champion of every season. Seasons opens the final standings for any season: every driver's wins, poles and points, the constructors' table and a race-by-race list of winners and pole sitters. Records shows the all-time leaders for titles, wins, podiums, poles and fastest laps, team titles and wins, and the best single seasons.",
+    "From now on every finished season is archived in full, including each driver's rating at season end. Seasons you already played are rebuilt from the race results, standings and champions the game kept, and are marked Race results, Standings only or Champions only so you can see how complete they are.",
+    "Driver rating graphs now record every season in Pro careers too. Before this they only showed the first season and now. Ratings from earlier seasons were not kept and cannot be recovered, so the graph grows from this season onwards."
+  ] },
   { v: '2.4.1', d: 'Contract outlook', date: '19 Nov 2026', l: [
     "Every F1 contract offer now carries a Team outlook card: car-pace rank with the team's place in the field, a graph of its car power race by race against the grid average, trend since winter, money status, exposure to announced regulation changes and the board target, with quick tags like Rising, Falling or Gains from new rules.",
     "The graph starts filling from your next race, so older saves show it after a few rounds. Cars are rebuilt every winter, so treat the outlook as a guide and not a promise."

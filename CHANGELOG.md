@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.0 — 19 November 2026 (archive)
+
+- Season > Archive: champions of every season, full final standings, race-by-race winners and poles, all-time records.
+- Finished seasons are archived in full (standings, poles, fastest laps, winners, every driver's OVR). Older seasons are rebuilt from race results, driver and team history and champions, with a completeness label.
+- Fixed Pro careers not recording driver rating history; rating graphs now gain a point each season.
+
 ## 2.4.1 — 19 November 2026 (contract outlook)
 
 - Team outlook on F1 contract offer cards (classic offers and the pro market): car-pace rank and field position, per-race car-power graph against the grid average, trend since winter, money, new-rules exposure, board target and tags.

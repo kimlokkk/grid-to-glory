@@ -200,8 +200,8 @@ function profileHTML(kind, i, view) {
     if (typeof conSectionHTML === 'function') h += conSectionHTML(g, d);
     h += '<h4>Season ' + g.season + '</h4>' + pfTiles([['Pos', 'P' + (ds.indexOf(d) + 1)], ['Pts', d.pts], ['Wins', d.wins], ['Podiums', d.pods]]) + (!foreign && typeof pfRaces === 'function' ? pfRaces(d) : '');
     h += '<h4>Career</h4>' + pfTiles([['Starts', c.starts], ['Wins', c.wins], ['Podiums', c.pods], ['Poles', c.poles], ['Titles', c.titles]]);
-    var rh = (d.rh || []).map(function (x) { return x.r; }); if (!rh.length || rh[rh.length - 1] !== o) rh = rh.concat([o]);
-    if (rh.length >= 2) h += '<h4>Rating trend</h4><div class="pf-spark">' + rateSpark(rh, d.rh || []) + '</div>';
+    var rhs = typeof arRH === 'function' ? arRH(d) : (d.rh || []), rh = rhs.map(function (x) { return x.r; }).concat([o]);
+    if (rh.length >= 2) h += '<h4>Rating trend</h4><div class="pf-spark">' + rateSpark(rh, rhs) + '</div>';
     if (d.sh && d.sh.length) h += '<h4>History</h4><table class="t pf-hist"><thead><tr><th>Season</th><th>Team</th><th class="r">Pos</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>' + d.sh.slice().reverse().map(function (r) { return '<tr><td class="mono">S' + r.s + '</td><td><span class="tag" style="--tc:' + r.tc + '">' + r.t + '</span></td><td class="r mono">P' + r.pos + '</td><td class="r mono">' + r.wins + '</td><td class="r mono">' + r.pts + '</td></tr>'; }).join('') + '</tbody></table>';
   }
   if (g.mode === 'pro' && d.worldHistory && d.worldHistory.length) h += worldDriverHistoryHTML(d);
