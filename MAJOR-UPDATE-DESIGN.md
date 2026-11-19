@@ -156,7 +156,8 @@ Acceptance: the S3 to S4 style reshuffle remains, and technical director, team p
 
 ## 12. Unverified
 
-- Whether the car re-roll (`dev2.js`) and the era profile (`world21.js`) always apply on the same winter. Confirm with a test before writing news around either.
+- **Verified (13-season simulation):** the car re-roll (`dev2.js`) and the era profile (`world21.js`) apply on the **same winter**, and the era is announced **one full season earlier** (for example announced after season 7, applied after season 8 for season 9).
+- **Found while verifying:** the **minor** change shows the same breaking story as a major one ("New regulations rip up the rulebook ... every car must be rebuilt from scratch") but only 30% of the car is re-rolled, and a minor change is **never announced** in advance. This is misleading and is the first thing to fix (Part E2).
 - The simulation does not include era-profile weights or winter packages, which probably explains why the real S4 shuffle was larger than the simulation.
 
 ---
@@ -322,9 +323,43 @@ Penalties feed the existing assessment (a penalty already reduces the consistenc
 
 Each phase gets simulation checks (Part A section 9, plus engine and penalty distributions) and its own tests.
 
-## E2. Triage (to do)
+## E2. Triage (PROPOSED, awaiting approval)
 
-Everything stays in the major update until reviewed. Then choose which items ship early as small patches. Items that need no new game state or balance work are the likeliest candidates (Part A section 5, steward ruling display), but this is not decided.
+Criteria: player value, size, balance or save risk, dependencies. Items that change no balance and need little new state go first.
+
+### Patch 1: Garage Watch (no balance change)
+
+| Item | Size | Notes |
+|---|---|---|
+| Distinguish minor and major in the news, and announce minor changes in advance | S | Fixes the misleading "rebuilt from scratch" story on a minor |
+| Early-warning card for the next change (kind, season, profile hint, certainty) from `regulationWatch()` | S | Function exists but no screen uses it |
+| Louder early warning: breaking-style news and a card, not one ordinary line at R0 | S | The announcement already exists one season ahead |
+| Reg Report recorded when a change is applied (per team: rank and power before and after, per-part change, flags, preparation) | S | Small save footprint (about ten teams per change) |
+| Post-change feature story: who gained and why, one line per team | S to M | Reasons come from the report (Part A section 5) |
+| Exposure tags a season ahead: High, Medium, Low, champion and slowest marked, prepared or not | M | Rough tags only. Build it from one `regExpectation()` helper that reads the mix constants, so a later mechanic change updates one place |
+| Behind-the-garage news every 2 to 3 rounds from existing state (loans, facilities, switch focus, principal and director moves, big packages) | M | Cap the frequency and vary the kinds |
+| Story pack: Regulation Watch and Reg Report lines | S | |
+
+Tests: a timing test (re-roll and era on the same winter, announcement one season earlier), report contents, news caps.
+
+### Patch 2: Stewards (small balance change)
+
+Tier 1 steward rulings from Part D (base: pass success chance `p`, consequence step, attacker only), shown on the result screen with a radio message. Needs a simulation to confirm about 1 penalised contact per race and a check on the consistency score. Independent of everything else.
+
+### Stays in the major update
+
+| Item | Why it stays |
+|---|---|
+| Minor and major rebuild mechanics, leadership effect (Part A section 6) | Rebalances the whole grid. Needs multi-season simulation |
+| Principal decides, director advises (B2, B3) | Changes AI development choices. Needs simulation |
+| Board reviews and actions (B4) | New state and AI behaviour. A visible confidence display could follow Patch 1 |
+| Engine allocation and the pool model (Part C) | Race engine, qualifying and AI planner changes, new save data, new UI |
+| Grid penalties from engine units (D tier 2) | Depends on Part C |
+| Pit offences (D tier 3) | Depends on a pit-quality measure. Could become a small patch later |
+
+### Order
+
+Patch 1, then Patch 2, then the major update in the order of E1 (phase 2 mechanics, phase 3 engines).
 
 ---
 
