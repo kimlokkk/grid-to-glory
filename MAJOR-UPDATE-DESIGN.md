@@ -207,39 +207,49 @@ There are no engine units. Mechanical failure chance is `(100 - reliability) * 0
 
 ## C2. Rules (decided)
 
-- **4 power units per driver per season** (22 races).
-- Each unit has **wear** that grows with laps used. **Wear affects race pace** (not only reliability) so that teams strategise when to fit a fresh unit.
-- Fitting a fifth unit gives a **grid penalty of 10 places** (approved), capped at **15 places per driver per race** in total.
+- Each driver has a **pool of 4 power units** for the season (22 races). **Before each race the driver chooses which unit to run.** Any unit that has not failed can be used, in any order. This is the **pool model** (approved).
+- Every unit has its own **mileage** (laps run) and therefore its own **wear**. Mileage only grows on the unit that was run.
+- **Wear affects race pace** (not only reliability), so the choice of unit matters at the circuit.
+- A **fifth unit** (a new unit beyond the 4) gives a **grid penalty of 10 places** (approved), capped at **15 places per driver per race** in total. The new unit joins the pool, so later races can choose among 5.
+- A **failed unit is out of the pool.** If no unit is left, a new one must be fitted (grid penalty).
 - Failure chance rises with wear and is **mean-neutral** (see C3), so the season-average failure rate stays as today.
 
 ## C3. Wear, pace and failure (tuned by simulation, see C8)
 
 - **Unit life** in races: `5.5 * (1 + (reliability - 75) / 100)`, clamped 4.4 to 6.6. (22 races / 4 units = 5.5 for a reliability of 75.)
-- **Wear** `w` = laps run on the unit / life in laps. It may exceed 1 (up to about 1.4) if a unit is stretched.
+- **Wear** `w` = laps run on that unit / its life in laps. It rises during a race, so use the wear at the start of the race plus the part of the race completed. It may exceed 1 (up to about 1.4) if a unit is stretched.
 - **Pace:** effective engine rating drops by `5 * w^2` engine points in the **race only** (qualifying is not affected). At the end of life that is about 5 engine points, worth roughly 0.1 s per lap at an engine-heavy track. The cost scales with how much the track depends on the engine (`pw`).
 - **Failure:** the existing hazard is multiplied by `m(w) = (1 + 4 * w^2) / (1 + 4/3)`. A fresh unit fails at about 0.43 times the baseline, mid-life at 0.86, end of life at 2.14. The average over a unit's life is 1, so the season-average failure rate is unchanged.
 - A failed unit counts as used. Replacing it consumes one of the 4 units, which is what makes reliability matter for grid penalties (C8).
 
 ## C4. Strategy
 
-- Fresh units are free until all 4 are used. The simulation (C8) showed that the *timing of swaps* in a simple one-after-another plan hardly matters. The decision becomes real when the team can **choose which unit to run each race** (a pool of 4 units): put the least-worn units at engine-heavy tracks and the most-worn at engine-light tracks. **Recommended: pool model** (needs approval).
+- The choice is **which unit goes where**. Put the **least-worn** units at engine-heavy circuits and the **most-worn** at engine-light circuits. Engine weight (`pw`) in the Pro profile: high at Lumen City 0.75, Velocera 0.75, Kaspira 0.65, Longwei 0.65, Falkenring 0.65, Sierra Alta 0.65, Île Laurent 0.6. Low at Monte Albrecht 0.3, Hanabi, Dunmere, Valle Dorado, Duinveld, Senja Marina and Qamar Dunes 0.35, Sol de Vega 0.4.
+- Rule of thumb for the planner: rank the remaining circuits by `pw`, rank the units by wear, and match them.
+- Simulation (C8): the best assignment beats a naive even rotation by about 0.9 points per season and the worst assignment is about 3.5 points below the best (mid-field car). The cost of mistakes is larger than the gain from perfection, so the decision matters mostly by avoiding bad matches. Title contenders score about three times as many points per race, so their stakes are about three times larger.
 - A fifth unit costs a 10-place grid drop. The simulation found the drop costs about as much at easy-to-overtake tracks as at hard ones (about 17% difference), so the cheapest place to take it is where the team's expected result is *lowest*, not necessarily where passing is easy.
+- Failures also shape the plan: a failed unit leaves the pool, which is why weak-reliability teams reach a fifth unit far more often (C8).
 
 ## C5. Who decides
 
-- **Team principal and technical director suggest** (message from the engineer with a reason: "fresh unit recommended, engine at 78% wear").
-- **The driver decides whether to use it.** For the player this is a choice before the race. For AI drivers the decision follows the suggestion with a probability from the driver's `risk` and the team's style, so aggressive teams take penalties earlier and cautious ones conserve units.
-- Spare units cost money (R&D fund), which ties into the principal's budget decisions.
+- **Team principal and technical director suggest** the unit for the race, with a reason ("use unit 3, 18% worn: Lumen City is engine-heavy" or "unit 1 is at 92% wear, rest it at Senja Marina").
+- **The driver decides which unit to use.** For the player this is a choice before each race. For AI drivers the decision follows the suggestion with a probability based on the driver's `risk` and the team's style (aggressive teams push worn units longer and take penalties earlier, cautious ones rest units early).
+- AI default planner: match unit wear to circuit engine weight as in C4, with some noise so teams do not all choose the same.
+- New units beyond 4 cost money (R&D fund), which ties into the principal's budget decisions.
 
 ## C6. UI
 
-Team and driver card: "PU 2 of 4, life 62%". Pre-race prompt with the suggestion and the penalty cost. Story pack includes unit usage and penalties.
+- A **power unit panel** on the team and driver cards: four unit cards with a wear bar, mileage and status (available, in use last race, failed), for example "Unit 2 · 46% worn".
+- **Pre-race choice** after qualifying: select a unit, see the engineer's suggestion, the expected pace cost at this circuit (small, medium, large) and the extra failure risk. A fifth unit shows the grid penalty before confirming.
+- Results and the story pack record the unit used each race and any penalty.
 
 ## C7. Regulation link
 
 On a major regulation change, new power units are less reliable in their first season, scaled by technical staff and the works supplier.
 
 ## C8. Simulation study (tuning)
+
+Note: the season table below was built with the engine's measured race costs and an optimiser over unit assignments. The pool-model figures in C4 come from the same data (best assignment, naive rotation, worst assignment).
 
 Method: the real race engine, 22 circuits, 48 seeds per circuit (about 10,000 races), a mid-field team (rank 5), dry races, same qualifying grids reused across variants. Season model: expected points per race from the measured table, a failure term from the measured hazard, optimisation over unit assignments.
 
@@ -337,10 +347,11 @@ Everything stays in the major update until reviewed. Then choose which items shi
 - Board review actions and thresholds in B4 (approved).
 - Wear curve and failure multiplier tuned by simulation (C3, C8).
 - Steward base is the attempt's success chance `p`, not push mode (D2).
+- **Pool model approved:** each driver has 4 units and chooses which one to run before every race (C2 to C6).
 
 ## F3. Open
 
-1. Pool model (choose which unit to run each race) instead of one-after-another units (C4). Recommended, needs approval.
+1. Check the pool model by simulation once built: the Monte Carlo for fifth-unit frequency in C8 assumed a one-after-another plan with replacement on failure, and a pool with free choice may behave slightly differently.
 2. Steward thresholds (D2): 0.05 and 0.12 are starting values. Tune by simulation, with a target of about 1 penalised contact per race.
 3. Real-world check of the engine penalty values once built (C8 limits).
 4. Remaining open items from Part A section 11.
