@@ -6492,8 +6492,61 @@ var A = {};
 var $app = document.getElementById('app');
 var $modal = document.getElementById('modal');
 
-function save() { try { if (S && S.drivers) { foundationInit(S); S.meta.rng = _s; } if (typeof APEX !== 'undefined' && S && S.drivers) { S.saveVer = APEX.save; S.appVer = APEX.ver; } localStorage.setItem(KEY, JSON.stringify(S)); UI.saveWarn = 0; return true; } catch (e) { if (!UI.saveWarn) { UI.saveWarn = 1; try { toast('Could not save: browser storage is full or blocked. Progress may be lost if you close the page.'); } catch (e2) { } } return false; } }
-function loadSave() { try { var j = localStorage.getItem(KEY); return j ? JSON.parse(j) : null; } catch (e) { return null; } }
+/* Save compression (2.5.2): the career is stored as LZW over ASCII-escaped JSON, one 16-bit code per character, in independent 200k blocks.
+   A saved career grows about 150 KB a season; compressed it is roughly five times smaller, so phones with a small storage quota last much longer. */
+var LZ = { BLOCK: 200000, LIMIT: 55000, SEP: '\uE000', TAG: 'z1:' };
+function lzPack(json) {
+  var s = json.replace(/[\u0080-\uffff]/g, function (c) { return '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4); }), blocks = [];
+  for (var o = 0; o < s.length; o += LZ.BLOCK) {
+    var t = s.slice(o, o + LZ.BLOCK), d = new Map(), n = 128, out = [], w = '', i;
+    for (i = 0; i < 128; i++) d.set(String.fromCharCode(i), i);
+    for (i = 0; i < t.length; i++) {
+      var c = t.charAt(i), wc = w + c;
+      if (d.has(wc)) w = wc; else { out.push(d.get(w)); if (n < LZ.LIMIT) d.set(wc, n++); w = c; }
+    }
+    if (w) out.push(d.get(w));
+    var chunk = []; for (i = 0; i < out.length; i += 8000) chunk.push(String.fromCharCode.apply(null, out.slice(i, i + 8000)));
+    blocks.push(chunk.join(''));
+  }
+  return LZ.TAG + blocks.join(LZ.SEP);
+}
+function lzUnpack(z) {
+  return z.slice(LZ.TAG.length).split(LZ.SEP).map(function (b) {
+    if (!b) return '';
+    var d = [], n = 128, i; for (i = 0; i < 128; i++) d[i] = String.fromCharCode(i);
+    var w = d[b.charCodeAt(0)], out = [w];
+    for (i = 1; i < b.length; i++) { var k = b.charCodeAt(i), e = k < n ? d[k] : w + w.charAt(0); out.push(e); if (n < LZ.LIMIT) d[n++] = w + e.charAt(0); w = e; }
+    return out.join('');
+  }).join('');
+}
+/* last resort when the browser still refuses: drop old heavy race detail and old news, then try again */
+function saveSlim() {
+  try {
+    (S.rr || []).forEach(function (r) { delete r.q; delete r.lg; delete r.rd; });
+    if (S.news && S.news.length > 120) S.news = S.news.slice(0, 120);
+    if (S.events && S.events.length > 300) S.events = S.events.slice(-300);
+  } catch (e) { }
+}
+function saveStore(json) {
+  var plain = UI.noZip, z = null;
+  if (!plain) {
+    try {
+      z = lzPack(json);
+      UI.zipN = (UI.zipN || 0) + 1;
+      if ((UI.zipN <= 2 || UI.zipN % 8 === 0) && lzUnpack(z) !== json.replace(/[\u0080-\uffff]/g, function (c) { return '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4); })) { UI.noZip = plain = true; z = null; }
+    } catch (e) { UI.noZip = plain = true; z = null; }
+  }
+  localStorage.setItem(KEY, plain ? json : z);
+}
+function save() {
+  try {
+    if (S && S.drivers) { foundationInit(S); S.meta.rng = _s; }
+    if (typeof APEX !== 'undefined' && S && S.drivers) { S.saveVer = APEX.save; S.appVer = APEX.ver; }
+    try { saveStore(JSON.stringify(S)); } catch (e1) { if (!S || !S.drivers) throw e1; saveSlim(); saveStore(JSON.stringify(S)); }
+    UI.saveWarn = 0; return true;
+  } catch (e) { if (!UI.saveWarn) { UI.saveWarn = 1; try { toast('Could not save: browser storage is full or blocked. Progress may be lost if you close the page. Use Save data to export a backup, and avoid private browsing.'); } catch (e2) { } } return false; }
+}
+function loadSave() { try { var j = localStorage.getItem(KEY); if (!j) return null; return JSON.parse(j.indexOf(LZ.TAG) === 0 ? lzUnpack(j) : j); } catch (e) { return null; } }
 function toast(m) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600); }
 function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requires a newer game build'); o.settings = o.settings || {}; if (o.settings.v !== 3) { o.settings.mini = true; o.settings.ask = true; o.settings.v = 3; }
   /* versi English: buang teks lama Bahasa Melayu yang tersimpan */
@@ -10840,8 +10893,13 @@ function thStrip(ci) {
 }
 if (typeof A !== 'undefined') A['th'] = function (d) { showModal(thHTML(+d.v)); };
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.5.1', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.5.2', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.5.2', d: 'Save space fix', date: '20 Nov 2026', l: [
+    "Fixed \"Could not save: browser storage is full\" on phones. A career grows by about 150 KB every season and iPhone browsers only allow a few megabytes, so long careers ran out of room.",
+    "Saves are now compressed about six times smaller, and every compressed save is checked before it is trusted. Your existing save is converted automatically the next time the game saves, and old saves still load.",
+    "If the browser still refuses, the game now clears old race detail and old news and tries again before it warns you. The warning also tells you to export a backup and to avoid private browsing."
+  ] },
   { v: '2.5.1', d: 'New app icon', date: '19 Nov 2026', l: [
     "Grid to Glory has a logo: a double G in gold and white with the GRID TO GLORY wordmark, in the game's navy and gold. It shows in the browser tab, in bookmarks and as the icon when you add the game to your phone's home screen.",
     "The tab icon uses just the double G so it stays readable at 16 pixels; the home screen icon carries the full logo with the wordmark."

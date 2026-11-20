@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.2 — 20 November 2026 (save space fix)
+
+- Saves are LZW-compressed (about 6x smaller, prefix z1:), verified by decompressing on the first saves of a session and every eighth save; falls back to plain JSON if a check ever fails. Plain saves from older versions still load and are converted on the next save.
+- If storage still refuses, old per-race detail, old news and old events are trimmed and the save is retried before the warning appears; the warning now suggests exporting a backup and avoiding private browsing.
+
 ## 2.5.1 — 19 November 2026 (app icon)
 
 - New Grid to Glory logo (double G and wordmark, recoloured to the game's navy and gold) as favicon (16, 32 and 192 px PNG) and apple-touch-icon. Sources in src/assets (logo-gtg.png transparent master, logo-512.png, icon PNGs).

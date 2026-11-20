@@ -1,6 +1,11 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.5.1', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.5.2', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.5.2', d: 'Save space fix', date: '20 Nov 2026', l: [
+    "Fixed \"Could not save: browser storage is full\" on phones. A career grows by about 150 KB every season and iPhone browsers only allow a few megabytes, so long careers ran out of room.",
+    "Saves are now compressed about six times smaller, and every compressed save is checked before it is trusted. Your existing save is converted automatically the next time the game saves, and old saves still load.",
+    "If the browser still refuses, the game now clears old race detail and old news and tries again before it warns you. The warning also tells you to export a backup and to avoid private browsing."
+  ] },
   { v: '2.5.1', d: 'New app icon', date: '19 Nov 2026', l: [
     "Grid to Glory has a logo: a double G in gold and white with the GRID TO GLORY wordmark, in the game's navy and gold. It shows in the browser tab, in bookmarks and as the icon when you add the game to your phone's home screen.",
     "The tab icon uses just the double G so it stays readable at 16 pixels; the home screen icon carries the full logo with the wordmark."

@@ -17,8 +17,8 @@ const assert = require('node:assert/strict');
     console.log('PASS homepage version, complete major notes and historical release date');
     // Version stamps use the existing Classic fixture; public Pro creation has a contract wizard.
     await pg.evaluate(() => { closeModal(); A.new(); A['career-mode']({ v: 'classic' }); A['new-go'](); save(); });
-    assert.deepEqual(await pg.evaluate(() => { const o = JSON.parse(localStorage.getItem(KEY)); return [o.saveVer, o.appVer]; }), [2, ver]);
-    await pg.evaluate(() => { const o = JSON.parse(localStorage.getItem(KEY)); delete o.saveVer; delete o.appVer; localStorage.setItem(KEY, JSON.stringify(o)); });
+    assert.deepEqual(await pg.evaluate(() => { const o = loadSave(); return [o.saveVer, o.appVer]; }), [2, ver]);
+    await pg.evaluate(() => { const o = loadSave(); delete o.saveVer; delete o.appVer; localStorage.setItem(KEY, JSON.stringify(o)); });
     await pg.reload(); await pg.click('[data-act=continue]');
     assert.deepEqual(await pg.evaluate(() => [S.saveVer, S.appVer, UI.screen]), [2, ver, 'hub']);
     console.log('PASS new and unstamped legacy saves use app 2.0.0 with unchanged save format 2');
