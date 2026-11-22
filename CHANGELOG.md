@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.3 — 22 November 2026 (training XP clarity)
+
+- Pro training sessions that use XP buy a skill automatically at the weekend lock; the spend is now shown on the weekend Focus card and in Driver > Training.
+- New per-player setting `training.spendXp` ("XP use": Buy skills with XP / Keep my XP). Default unchanged. Keep my XP skips the purchase only; preparation and Focus are unaffected.
+
 ## 2.5.2 — 20 November 2026 (save space fix)
 
 - Saves are LZW-compressed (about 6x smaller, prefix z1:), verified by decompressing on the first saves of a session and every eighth save; falls back to plain JSON if a check ever fails. Plain saves from older versions still load and are converted on the next save.
