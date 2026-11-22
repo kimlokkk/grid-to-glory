@@ -29,7 +29,8 @@ function storyRecord(S, wk) {
   var keep = { pass: 1, contact: 1, spin: 1, dnf: 1, pit: 1, sc: 1, vsc: 1, restart: 1, wx: 1 };
   rec.lg = (R.log || []).filter(function (e) { return keep[e.k]; }).map(function (e) {
     var info = e.k === 'pit' ? 'for ' + (COMP[e.comp] ? COMP[e.comp].n : (e.comp || '?')) + ' tyres' + (e.loss != null ? ', ' + e.loss.toFixed(1) + 's lost' : '') + (e.tags && e.tags[1] ? ' (' + e.tags[1] + ')' : '') : e.k === 'pass' ? [e.zone].concat((e.tags || []).filter(function (t) { return t !== 'peluang'; })).join(', ') : (e.tags || []).join(', ');
-    return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info];
+    var pos = e.k === 'pass' || e.k === 'contact' ? [e.pb, e.pa] : e.k === 'spin' || e.k === 'pit' ? [e.p0, e.p1] : e.k === 'dnf' ? [e.p0] : null;
+    return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info, pos && pos[0] != null ? pos : 0];
   });
   rec.rd = (R.radio || []).filter(function (r) { return r.imp; }).slice(-60).map(function (r) { return [r.lap, r.t]; });
   S.rr.forEach(function (r) { if (r.s < S.season - (SP.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
@@ -127,7 +128,13 @@ function spRaces(S, scope) {
     if (rec.lg && rec.lg.length) {
       L.push('Race log:');
       rec.lg.slice().sort(function (x, y) { return x[0] - y[0]; }).forEach(function (e) {
-        var k = e[1], t = k === 'pass' ? e[2] + ' passes ' + e[3] + (e[4] ? ' (' + e[4] + ')' : '') : k === 'contact' ? 'contact: ' + e[2] + ' (attacking) and ' + e[3] : k === 'spin' ? e[2] + ' spins' : k === 'dnf' ? e[2] + ' retires: ' + e[4] : k === 'pit' ? e[2] + ' pits ' + e[4] : k === 'sc' ? 'SAFETY CAR' : k === 'vsc' ? 'VIRTUAL SAFETY CAR' : k === 'restart' ? 'restart ' + e[4] : e[4] || k;
+        var ps = e[5] || null, pp = function (n) { return n ? 'P' + n : '?'; };
+        var k = e[1], t = k === 'pass' ? e[2] + ' passes ' + e[3] + (ps ? ' for ' + pp(ps[1]) + ' (from ' + pp(ps[0]) + ')' : '') + (e[4] ? ' (' + e[4] + ')' : '')
+          : k === 'contact' ? 'contact: ' + e[2] + ' (attacking' + (ps ? ', ' + pp(ps[0]) : '') + ') and ' + e[3] + (ps ? ' (' + pp(ps[1]) + ')' : '')
+          : k === 'spin' ? e[2] + ' spins' + (ps ? ' from ' + pp(ps[0]) + (ps[1] ? ', rejoins ' + pp(ps[1]) + (ps[1] > ps[0] ? ' (lost ' + (ps[1] - ps[0]) + ')' : ' (no places lost)') : '') : '')
+          : k === 'dnf' ? e[2] + ' retires' + (ps ? ' from ' + pp(ps[0]) : '') + ': ' + e[4]
+          : k === 'pit' ? e[2] + ' pits ' + e[4] + (ps ? ', from ' + pp(ps[0]) + (ps[1] ? ', rejoins ' + pp(ps[1]) + (ps[1] > ps[0] ? ' (lost ' + (ps[1] - ps[0]) + ')' : ps[1] < ps[0] ? ' (gained ' + (ps[0] - ps[1]) + ')' : '') : '') : '')
+          : k === 'sc' ? 'SAFETY CAR' : k === 'vsc' ? 'VIRTUAL SAFETY CAR' : k === 'restart' ? 'restart ' + e[4] : e[4] || k;
         L.push('  L' + e[0] + ' ' + spEn(t));
       });
     } else L.push('Race log: not recorded for this race.');

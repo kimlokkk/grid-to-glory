@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.5 — 22 November 2026 (race log positions)
+
+- Race log entries carry running order: pass (`pb`/`pa`), contact, spin and pit (`p0` and the rejoin position `p1`, filled in by `resolvePend` once the car is moving), retire (`p0`). Computed by `raceOrderPos` from car distance; no random numbers are used, so race results are unchanged.
+- Story pack text shows the positions (older races keep the previous wording).
+
 ## 2.5.4 — 22 November 2026 (training XP clarity)
 
 - Pro training sessions that use XP buy a skill automatically at the weekend lock; the spend is now shown on the weekend Focus card and in Driver > Training.

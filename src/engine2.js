@@ -434,10 +434,19 @@ function maybeSC(R, pFull, pVsc) {
   var r = rnd();
   if (r < pFull) startSC(R, 'SC'); else if (r < pFull + pVsc) startSC(R, 'VSC');
 }
+/* running order at this instant (no random numbers): 1 + running cars further round the lap than f */
+function raceOrderPos(R, f) { var p = 1; for (var i = 0; i < R.cars.length; i++) { var c = R.cars[i]; if (c !== f && !c.dnf && c.s > f.s) p++; } return p; }
+/* a car that lost time (spin, pit stop) gets its rejoin position written to its log entry once it is moving again */
+function resolvePend(R) {
+  var keep = [];
+  R.pend.forEach(function (x) { if (x.f.dnf) return; if (x.f.hold <= 0) x.e.p1 = raceOrderPos(R, x.f); else keep.push(x); });
+  R.pend = keep;
+}
 function retire(R, f, reason, pFull, pVsc) {
+  var p0 = raceOrderPos(R, f);
   f.fin = true; f.dnf = reason; f.tFin = 1e9; f.dnfS = f.s; R.nDNF++;
   if (reason === 'Mechanical failure') R.nMech++; else R.nCrash++;
-  R.log.push({ t: R.t, lap: f.lap, k: 'dnf', b: f.di, tags: [reason] });
+  R.log.push({ t: R.t, lap: f.lap, k: 'dnf', b: f.di, p0: p0, tags: [reason] });
   maybeSC(R, pFull, pVsc);
 }
 function incidents(R, trk) {
@@ -454,7 +463,7 @@ function incidents(R, trk) {
       if (rnd() < P2.crashPerSpin * (1 + wet)) retire(R, f, 'Crash', P2.scCrash, P2.scCrash * 0.4);
       else {
         f.hold += rr(5, 11);
-        R.log.push({ t: R.t, lap: f.lap, k: 'spin', b: f.di, tags: ['kesilapan'] });
+        var sp = { t: R.t, lap: f.lap, k: 'spin', b: f.di, p0: raceOrderPos(R, f), tags: ['kesilapan'] }; R.log.push(sp); (R.pend = R.pend || []).push({ f: f, e: sp });
         maybeSC(R, 0, P2.vscSpin);
       }
     }
@@ -475,7 +484,7 @@ function attemptPass(R, b, a, z) {
   if (b.a.attack - a.a.defend > 6) tags.push('skil'); if (b.a.risk > 70 && p < 0.5) tags.push('agresif'); if (b.lap <= 1) tags.push('start');
   var cyc = (b.lap - b.lastPit <= 3) || (a.lap - a.lastPit <= 3); if (cyc) tags.push('kitaran-pit');
   if (!tags.length) tags.push('peluang');
-  R.log.push({ t: R.t, lap: b.lap, k: ok ? 'pass' : 'fail', b: b.di, a: a.di, p: p, zone: z.n, tags: tags });
+  R.log.push({ t: R.t, lap: b.lap, k: ok ? 'pass' : 'fail', b: b.di, a: a.di, p: p, pb: raceOrderPos(R, b), pa: raceOrderPos(R, a), zone: z.n, tags: tags });
   if (ok) { R.nPass++; if (!cyc && b.lap > 1) R.nClean++; if (b.lap <= 1) R.nStart++; b.passes++; a.passed++; tags.forEach(function (g) { R.tagCount[g] = (R.tagCount[g] || 0) + 1; }); }
   else {
     R.nFail++;
@@ -483,7 +492,7 @@ function attemptPass(R, b, a, z) {
     if (rnd() < pc) {
       R.nContact++; b.hold += rr(2, 6); if (rnd() < 0.35) a.hold += rr(1, 3);
       if (rnd() < P2.contactDNF) retire(R, b, 'Crash', P2.scCrash, P2.scCrash * 0.4);
-      R.log.push({ t: R.t, lap: b.lap, k: 'contact', b: b.di, a: a.di, zone: z.n, tags: ['sentuhan'] });
+      R.log.push({ t: R.t, lap: b.lap, k: 'contact', b: b.di, a: a.di, pb: raceOrderPos(R, b), pa: raceOrderPos(R, a), zone: z.n, tags: ['sentuhan'] });
     }
   }
   return ok;
@@ -564,7 +573,7 @@ function tick2(R) {
       f.s = pitS; var entryT = R.t + dt - tm;
       var k = f.pitReq; f.pitReq = null;
       f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); f.crewT = null; if (f.c0 == null) f.c0 = f.comp; f.comp = k; f.eff = 0; f.tyreTemp = 0.3; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
-      R.log.push({ t: entryT, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, tags: ['pit'].concat(f.why ? [f.why] : []) }); f.why = null;
+      var pitE = { t: entryT, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, p0: raceOrderPos(R, f), tags: ['pit'].concat(f.why ? [f.why] : []) }; R.log.push(pitE); (R.pend = R.pend || []).push({ f: f, e: pitE }); f.why = null;
       var pitWait = Math.min(f.hold, tm); f.hold -= pitWait; tm -= pitWait; f.waitT += pitWait;
       if (tm > 0) drive(tm / f.pA);
     } else drive(dl);
@@ -608,6 +617,7 @@ function tick2(R) {
       engineerLap(R, f);
     }
   });
+  if (R.pend && R.pend.length) resolvePend(R);
   R.ticks++;
   var ld = R.cars.filter(function (x) { return !x.fin; }); R.done = ld.length === 0;
   if (!R.done) R.lap = ld.reduce(function (m, x) { return Math.max(m, x.lap); }, 1);
