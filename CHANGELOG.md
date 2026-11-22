@@ -1,14 +1,14 @@
 # Changelog
 
-## 2.5.6 — 22 November 2026 (story pack tyre fix)
-
-- Story pack: the starting tyre was read from `oldShape` data, which does not carry `c0`, so it fell back to the finishing tyre. It is now read from the real race car and flagged with `rec.tv`. Races recorded without the flag print "starting tyre not recorded" but keep their (correct) stop list.
-- `qa/storypack.js` now checks the recorded starting tyre against the race and that every dry finisher shows two compounds.
-
-## 2.5.5 — 22 November 2026 (training XP clarity)
+## 2.5.6 — 22 November 2026 (training XP clarity)
 
 - Pro training sessions that use XP buy a skill automatically at the weekend lock; the spend is now shown on the weekend Focus card and in Driver > Training.
 - New per-player setting `training.spendXp` ("XP use": Buy skills with XP / Keep my XP). Default unchanged. Keep my XP skips the purchase only; preparation and Focus are unaffected.
+
+## 2.5.5 — 22 November 2026 (story pack tyre fix)
+
+- Story pack: the starting tyre was read from `oldShape` data, which does not carry `c0`, so it fell back to the finishing tyre. It is now read from the real race car and flagged with `rec.tv`. Races recorded without the flag print "starting tyre not recorded" but keep their (correct) stop list.
+- `qa/storypack.js` now checks the recorded starting tyre against the race and that every dry finisher shows two compounds.
 
 ## 2.5.4 — 22 November 2026 (race log positions)
 
