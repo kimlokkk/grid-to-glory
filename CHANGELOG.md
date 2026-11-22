@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.3 — 22 November 2026 (story pack detail)
+
+- Story pack: Q1/Q2/Q3 per-session times (`rec.qs`, from `P2._qres`), eliminations marked, final grid line.
+- Story pack: per-driver tyre story (`rec.x[i][4..5]`: starting tyre and stops with lap/compound/time lost); engine remembers the starting tyre (`f.c0`) at the first stop. Pit lines in the race log name the fitted tyre.
+- Old races keep the previous format.
+
 ## 2.5.2 — 20 November 2026 (save space fix)
 
 - Saves are LZW-compressed (about 6x smaller, prefix z1:), verified by decompressing on the first saves of a session and every eighth save; falls back to plain JSON if a check ever fails. Plain saves from older versions still load and are converted on the next save.

@@ -78,7 +78,7 @@ A['q-auto'] = function () { qSess(null); };
 A['q-fin'] = function () {
   var wk = UI.wk, Q = wk.Q;
   while (Q.s < 3) qkSession(Q, null);
-  qkGrid(Q); wk.q = P2._qrows.slice(); wk.qq = P2._q; P2._q = null; judgeQuali(wk);
+  qkGrid(Q); wk.q = P2._qrows.slice(); wk.qr = P2._qres; wk.qq = P2._q; P2._q = null; judgeQuali(wk);
   var qs = wk.mg.qs || []; wk.mg.q = qs.length ? qs.reduce(function (a, b) { return a + b; }, 0) / qs.length : 0.5;
   render();
 };
