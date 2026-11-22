@@ -54,6 +54,7 @@ function qkGrid(Q) {
   var order = Q.res[2].slice().concat(Q.elim[1] || [], Q.elim[0] || []);
   order.forEach(function (r, i) { r.gpos = i + 1; });
   P2._q = { setup: Q.setup, temp: Q.temp };
+  P2._qres = Q.res.map(function (rows) { return (rows || []).map(function (r) { return [r.di, r.lap]; }); });
   P2._qrows = order.map(function (r, i) { return { di: r.di, t: r.t, pos: i + 1, lap: r.lap, sess: i < 10 ? 2 : i < 15 ? 1 : 0 }; });
   return order.map(function (r) { return r.di; });
 }

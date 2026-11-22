@@ -563,7 +563,7 @@ function tick2(R) {
       dl = pitS - f.sPrev; drive(dl); tm = Math.max(0, tm - dl * f.pA);
       f.s = pitS; var entryT = R.t + dt - tm;
       var k = f.pitReq; f.pitReq = null;
-      f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); f.crewT = null; f.comp = k; f.eff = 0; f.tyreTemp = 0.3; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
+      f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); f.crewT = null; if (f.c0 == null) f.c0 = f.comp; f.comp = k; f.eff = 0; f.tyreTemp = 0.3; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
       R.log.push({ t: entryT, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, tags: ['pit'].concat(f.why ? [f.why] : []) }); f.why = null;
       var pitWait = Math.min(f.hold, tm); f.hold -= pitWait; tm -= pitWait; f.waitT += pitWait;
       if (tm > 0) drive(tm / f.pA);

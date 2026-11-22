@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.4 — 22 November 2026 (story pack detail)
+
+- Story pack: Q1/Q2/Q3 per-session times (`rec.qs`, from `P2._qres`), eliminations marked, final grid line.
+- Story pack: per-driver tyre story (`rec.x[i][4..5]`: starting tyre and stops with lap/compound/time lost); engine remembers the starting tyre (`f.c0`) at the first stop. Pit lines in the race log name the fitted tyre.
+- Old races keep the previous format.
+
 ## 2.5.3 — 22 November 2026 (training XP clarity)
 
 - Pro training sessions that use XP buy a skill automatically at the weekend lock; the spend is now shown on the weekend Focus card and in Driver > Training.
