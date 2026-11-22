@@ -1,14 +1,14 @@
 /* App version and release notes; save format version is independent. */
 var APEX = { ver: '2.5.4', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
-  { v: '2.5.4', d: 'Story pack detail', date: '22 Nov 2026', l: [
+  { v: '2.5.4', d: 'Training XP clarity', date: '22 Nov 2026', l: [
+    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card (\"Training bought Consistency +1 for 7 XP\") and in Driver, Training.",
+    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
+  ] },
+  { v: '2.5.3', d: 'Story pack detail', date: '22 Nov 2026', l: [
     "Story pack now records the full qualifying: every car's time in Q1, Q2 and Q3 with gaps, who was knocked out in Q1 and Q2, and the final grid.",
     "Every driver's tyre story in the race result: the tyre they started on, each stop with its lap, the tyre fitted and the time lost, and the tyre they finished on. The race log now says which tyre each stop fitted (\"HAL pits for Hard tyres, 7.8s lost (undercut)\").",
     "Races you already played keep the older, shorter format (final order and finish tyre only); the new detail is recorded from your next race."
-  ] },
-  { v: '2.5.3', d: 'Training XP clarity', date: '22 Nov 2026', l: [
-    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card (\"Training bought Consistency +1 for 7 XP\") and in Driver, Training.",
-    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
   ] },
   { v: '2.5.2', d: 'Save space fix', date: '20 Nov 2026', l: [
     "Fixed \"Could not save: browser storage is full\" on phones. A career grows by about 150 KB every season and iPhone browsers only allow a few megabytes, so long careers ran out of room.",
