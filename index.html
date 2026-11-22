@@ -5917,10 +5917,19 @@ function maybeSC(R, pFull, pVsc) {
   var r = rnd();
   if (r < pFull) startSC(R, 'SC'); else if (r < pFull + pVsc) startSC(R, 'VSC');
 }
+/* running order at this instant (no random numbers): 1 + running cars further round the lap than f */
+function raceOrderPos(R, f) { var p = 1; for (var i = 0; i < R.cars.length; i++) { var c = R.cars[i]; if (c !== f && !c.dnf && c.s > f.s) p++; } return p; }
+/* a car that lost time (spin, pit stop) gets its rejoin position written to its log entry once it is moving again */
+function resolvePend(R) {
+  var keep = [];
+  R.pend.forEach(function (x) { if (x.f.dnf) return; if (x.f.hold <= 0) x.e.p1 = raceOrderPos(R, x.f); else keep.push(x); });
+  R.pend = keep;
+}
 function retire(R, f, reason, pFull, pVsc) {
+  var p0 = raceOrderPos(R, f);
   f.fin = true; f.dnf = reason; f.tFin = 1e9; f.dnfS = f.s; R.nDNF++;
   if (reason === 'Mechanical failure') R.nMech++; else R.nCrash++;
-  R.log.push({ t: R.t, lap: f.lap, k: 'dnf', b: f.di, tags: [reason] });
+  R.log.push({ t: R.t, lap: f.lap, k: 'dnf', b: f.di, p0: p0, tags: [reason] });
   maybeSC(R, pFull, pVsc);
 }
 function incidents(R, trk) {
@@ -5937,7 +5946,7 @@ function incidents(R, trk) {
       if (rnd() < P2.crashPerSpin * (1 + wet)) retire(R, f, 'Crash', P2.scCrash, P2.scCrash * 0.4);
       else {
         f.hold += rr(5, 11);
-        R.log.push({ t: R.t, lap: f.lap, k: 'spin', b: f.di, tags: ['kesilapan'] });
+        var sp = { t: R.t, lap: f.lap, k: 'spin', b: f.di, p0: raceOrderPos(R, f), tags: ['kesilapan'] }; R.log.push(sp); (R.pend = R.pend || []).push({ f: f, e: sp });
         maybeSC(R, 0, P2.vscSpin);
       }
     }
@@ -5958,7 +5967,7 @@ function attemptPass(R, b, a, z) {
   if (b.a.attack - a.a.defend > 6) tags.push('skil'); if (b.a.risk > 70 && p < 0.5) tags.push('agresif'); if (b.lap <= 1) tags.push('start');
   var cyc = (b.lap - b.lastPit <= 3) || (a.lap - a.lastPit <= 3); if (cyc) tags.push('kitaran-pit');
   if (!tags.length) tags.push('peluang');
-  R.log.push({ t: R.t, lap: b.lap, k: ok ? 'pass' : 'fail', b: b.di, a: a.di, p: p, zone: z.n, tags: tags });
+  R.log.push({ t: R.t, lap: b.lap, k: ok ? 'pass' : 'fail', b: b.di, a: a.di, p: p, pb: raceOrderPos(R, b), pa: raceOrderPos(R, a), zone: z.n, tags: tags });
   if (ok) { R.nPass++; if (!cyc && b.lap > 1) R.nClean++; if (b.lap <= 1) R.nStart++; b.passes++; a.passed++; tags.forEach(function (g) { R.tagCount[g] = (R.tagCount[g] || 0) + 1; }); }
   else {
     R.nFail++;
@@ -5966,7 +5975,7 @@ function attemptPass(R, b, a, z) {
     if (rnd() < pc) {
       R.nContact++; b.hold += rr(2, 6); if (rnd() < 0.35) a.hold += rr(1, 3);
       if (rnd() < P2.contactDNF) retire(R, b, 'Crash', P2.scCrash, P2.scCrash * 0.4);
-      R.log.push({ t: R.t, lap: b.lap, k: 'contact', b: b.di, a: a.di, zone: z.n, tags: ['sentuhan'] });
+      R.log.push({ t: R.t, lap: b.lap, k: 'contact', b: b.di, a: a.di, pb: raceOrderPos(R, b), pa: raceOrderPos(R, a), zone: z.n, tags: ['sentuhan'] });
     }
   }
   return ok;
@@ -6047,7 +6056,7 @@ function tick2(R) {
       f.s = pitS; var entryT = R.t + dt - tm;
       var k = f.pitReq; f.pitReq = null;
       f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); f.crewT = null; if (f.c0 == null) f.c0 = f.comp; f.comp = k; f.eff = 0; f.tyreTemp = 0.3; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
-      R.log.push({ t: entryT, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, tags: ['pit'].concat(f.why ? [f.why] : []) }); f.why = null;
+      var pitE = { t: entryT, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, p0: raceOrderPos(R, f), tags: ['pit'].concat(f.why ? [f.why] : []) }; R.log.push(pitE); (R.pend = R.pend || []).push({ f: f, e: pitE }); f.why = null;
       var pitWait = Math.min(f.hold, tm); f.hold -= pitWait; tm -= pitWait; f.waitT += pitWait;
       if (tm > 0) drive(tm / f.pA);
     } else drive(dl);
@@ -6091,6 +6100,7 @@ function tick2(R) {
       engineerLap(R, f);
     }
   });
+  if (R.pend && R.pend.length) resolvePend(R);
   R.ticks++;
   var ld = R.cars.filter(function (x) { return !x.fin; }); R.done = ld.length === 0;
   if (!R.done) R.lap = ld.reduce(function (m, x) { return Math.max(m, x.lap); }, 1);
@@ -10894,8 +10904,12 @@ function thStrip(ci) {
 }
 if (typeof A !== 'undefined') A['th'] = function (d) { showModal(thHTML(+d.v)); };
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.5.3', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.5.4', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.5.4', d: 'Race log positions', date: '22 Nov 2026', l: [
+    "Story pack race log now says where everyone was: \"CAS passes MAT for P16 (from P17)\", \"CAS spins from P5, rejoins P17 (lost 12)\", \"RUG pits for Soft tyres, 6.3s lost, from P2, rejoins P4 (lost 2)\", \"HAR retires from P20: Mechanical failure\", and the positions of the two cars in a contact.",
+    "Rejoin positions are taken as soon as the car is moving again after a spin or a stop, so the places lost are real and not an estimate. Races you already played keep the older log without positions."
+  ] },
   { v: '2.5.3', d: 'Story pack detail', date: '22 Nov 2026', l: [
     "Story pack now records the full qualifying: every car's time in Q1, Q2 and Q3 with gaps, who was knocked out in Q1 and Q2, and the final grid.",
     "Every driver's tyre story in the race result: the tyre they started on, each stop with its lap, the tyre fitted and the time lost, and the tyre they finished on. The race log now says which tyre each stop fitted (\"HAL pits for Hard tyres, 7.8s lost (undercut)\").",
@@ -14907,7 +14921,8 @@ function storyRecord(S, wk) {
   var keep = { pass: 1, contact: 1, spin: 1, dnf: 1, pit: 1, sc: 1, vsc: 1, restart: 1, wx: 1 };
   rec.lg = (R.log || []).filter(function (e) { return keep[e.k]; }).map(function (e) {
     var info = e.k === 'pit' ? 'for ' + (COMP[e.comp] ? COMP[e.comp].n : (e.comp || '?')) + ' tyres' + (e.loss != null ? ', ' + e.loss.toFixed(1) + 's lost' : '') + (e.tags && e.tags[1] ? ' (' + e.tags[1] + ')' : '') : e.k === 'pass' ? [e.zone].concat((e.tags || []).filter(function (t) { return t !== 'peluang'; })).join(', ') : (e.tags || []).join(', ');
-    return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info];
+    var pos = e.k === 'pass' || e.k === 'contact' ? [e.pb, e.pa] : e.k === 'spin' || e.k === 'pit' ? [e.p0, e.p1] : e.k === 'dnf' ? [e.p0] : null;
+    return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info, pos && pos[0] != null ? pos : 0];
   });
   rec.rd = (R.radio || []).filter(function (r) { return r.imp; }).slice(-60).map(function (r) { return [r.lap, r.t]; });
   S.rr.forEach(function (r) { if (r.s < S.season - (SP.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
@@ -15005,7 +15020,13 @@ function spRaces(S, scope) {
     if (rec.lg && rec.lg.length) {
       L.push('Race log:');
       rec.lg.slice().sort(function (x, y) { return x[0] - y[0]; }).forEach(function (e) {
-        var k = e[1], t = k === 'pass' ? e[2] + ' passes ' + e[3] + (e[4] ? ' (' + e[4] + ')' : '') : k === 'contact' ? 'contact: ' + e[2] + ' (attacking) and ' + e[3] : k === 'spin' ? e[2] + ' spins' : k === 'dnf' ? e[2] + ' retires: ' + e[4] : k === 'pit' ? e[2] + ' pits ' + e[4] : k === 'sc' ? 'SAFETY CAR' : k === 'vsc' ? 'VIRTUAL SAFETY CAR' : k === 'restart' ? 'restart ' + e[4] : e[4] || k;
+        var ps = e[5] || null, pp = function (n) { return n ? 'P' + n : '?'; };
+        var k = e[1], t = k === 'pass' ? e[2] + ' passes ' + e[3] + (ps ? ' for ' + pp(ps[1]) + ' (from ' + pp(ps[0]) + ')' : '') + (e[4] ? ' (' + e[4] + ')' : '')
+          : k === 'contact' ? 'contact: ' + e[2] + ' (attacking' + (ps ? ', ' + pp(ps[0]) : '') + ') and ' + e[3] + (ps ? ' (' + pp(ps[1]) + ')' : '')
+          : k === 'spin' ? e[2] + ' spins' + (ps ? ' from ' + pp(ps[0]) + (ps[1] ? ', rejoins ' + pp(ps[1]) + (ps[1] > ps[0] ? ' (lost ' + (ps[1] - ps[0]) + ')' : ' (no places lost)') : '') : '')
+          : k === 'dnf' ? e[2] + ' retires' + (ps ? ' from ' + pp(ps[0]) : '') + ': ' + e[4]
+          : k === 'pit' ? e[2] + ' pits ' + e[4] + (ps ? ', from ' + pp(ps[0]) + (ps[1] ? ', rejoins ' + pp(ps[1]) + (ps[1] > ps[0] ? ' (lost ' + (ps[1] - ps[0]) + ')' : ps[1] < ps[0] ? ' (gained ' + (ps[0] - ps[1]) + ')' : '') : '') : '')
+          : k === 'sc' ? 'SAFETY CAR' : k === 'vsc' ? 'VIRTUAL SAFETY CAR' : k === 'restart' ? 'restart ' + e[4] : e[4] || k;
         L.push('  L' + e[0] + ' ' + spEn(t));
       });
     } else L.push('Race log: not recorded for this race.');
