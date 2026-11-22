@@ -22,7 +22,10 @@ function storyRecord(S, wk) {
   var rec = S.rr && S.rr[S.rr.length - 1], R = wk && wk.R; if (!rec || !R || rec.s !== S.season || !wk.old) return;
   var code = function (di) { var d = S.drivers[di]; return d ? d.code : '?'; };
   var pits = {}; (R.log || []).forEach(function (e) { if (e.k === 'pit' && e.b != null) (pits[e.b] = pits[e.b] || []).push([e.lap || 0, e.comp || '', e.loss != null ? +e.loss.toFixed(1) : 0]); });
-  rec.x = wk.old.cls.map(function (x) { var di = x.car.di, fin = x.car.comp || ''; return [fin, x.car.stops || 0, +(x.gap || 0).toFixed(1), x.dnf ? (typeof x.car.dnf === 'string' ? x.car.dnf : 'DNF') : '', x.car.c0 || fin, pits[di] || []]; });
+  var live = {}; (R.cars || []).forEach(function (f) { live[f.di] = f; });
+  /* the starting tyre lives on the real race car (oldShape does not copy it), so read it from there */
+  rec.x = wk.old.cls.map(function (x) { var di = x.car.di, fin = x.car.comp || '', rc = live[di]; return [fin, x.car.stops || 0, +(x.gap || 0).toFixed(1), x.dnf ? (typeof x.car.dnf === 'string' ? x.car.dnf : 'DNF') : '', (rc && rc.c0) || fin, pits[di] || []]; });
+  rec.tv = 1; /* starting tyre read from the real car */
   if (wk.qr && wk.qr.length) rec.qs = wk.qr.map(function (rows) { return rows.map(function (r) { return [code(r[0]), +r[1].toFixed(3)]; }); });
   rec.q = (wk.q || []).map(function (r) { return [code(r.di), S.drivers[r.di] ? S.drivers[r.di].team : -1, +(r.lap || 0).toFixed(3), r.sess]; });
   rec.m = { w: R.w ? R.w.type : '', sc: R.nSC || 0, vsc: R.nVSC || 0, ot: R.nClean || 0, flt: R.fl && R.fl.t ? +R.fl.t.toFixed(3) : 0, L: R.L };
@@ -37,10 +40,10 @@ function storyRecord(S, wk) {
 }
 
 /* ---------- text sections ---------- */
-function spTyres(ex) {
+function spTyres(ex, ok) {
   var nm = function (k) { return COMP[k] ? COMP[k].n : (k || '?'); }, pits = ex[5];
   if (!pits) return nm(ex[0]) + ' finish tyre, ' + ex[1] + ' stop' + (ex[1] === 1 ? '' : 's');
-  var s = 'tyres: started ' + nm(ex[4]);
+  var s = ok ? 'tyres: started ' + nm(ex[4]) : 'tyres: starting tyre not recorded';
   pits.forEach(function (p) { s += ' > L' + p[0] + ' ' + nm(p[1]) + (p[2] ? ' (' + p[2].toFixed(1) + 's)' : ''); });
   return s + (pits.length ? (ex[3] ? ', retired on ' : ', finished ') + nm(ex[0]) : ' (no stop)') + ' · ' + ex[1] + ' stop' + (ex[1] === 1 ? '' : 's');
 }
@@ -123,7 +126,7 @@ function spRaces(S, scope) {
     L.push('Race result (full):');
     rec.c.forEach(function (x, i) {
       var ex = rec.x && rec.x[i];
-      L.push('  ' + (x[2] ? 'P' + x[2] : 'DNF') + ' ' + spCode(S, x[0]) + ' ' + x[0] + ' (' + spTeamLine(S, x[1]) + ') · grid ' + x[4] + (ex ? ' · ' + (ex[3] ? ex[3] : (x[2] > 1 ? '+' + ex[2] + 's' : 'winner')) + ' · ' + spTyres(ex) : '') + (x[3] ? ' · ' + x[3] + ' pts' : '') + (x[5] ? ' · PLAYER' : ''));
+      L.push('  ' + (x[2] ? 'P' + x[2] : 'DNF') + ' ' + spCode(S, x[0]) + ' ' + x[0] + ' (' + spTeamLine(S, x[1]) + ') · grid ' + x[4] + (ex ? ' · ' + (ex[3] ? ex[3] : (x[2] > 1 ? '+' + ex[2] + 's' : 'winner')) + ' · ' + spTyres(ex, rec.tv) : '') + (x[3] ? ' · ' + x[3] + ' pts' : '') + (x[5] ? ' · PLAYER' : ''));
     });
     if (rec.lg && rec.lg.length) {
       L.push('Race log:');
