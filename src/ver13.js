@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.5.4', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.5.5', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.5.5', d: 'Story pack tyre fix', date: '22 Nov 2026', l: [
+    "Fixed the Story pack showing the starting tyre wrongly. It repeated the finishing tyre, so a driver who started on Medium and stopped for Hard looked like Hard to Hard. The pack now reads the real starting tyre from the race.",
+    "Races recorded with the wrong starting tyre cannot be repaired. They now say \"starting tyre not recorded\" and still list every stop and the tyre fitted, which were always correct. Races you play from now on are exact."
+  ] },
   { v: '2.5.4', d: 'Race log positions', date: '22 Nov 2026', l: [
     "Story pack race log now says where everyone was: \"CAS passes MAT for P16 (from P17)\", \"CAS spins from P5, rejoins P17 (lost 12)\", \"RUG pits for Soft tyres, 6.3s lost, from P2, rejoins P4 (lost 2)\", \"HAR retires from P20: Mechanical failure\", and the positions of the two cars in a contact.",
     "Rejoin positions are taken as soon as the car is moving again after a spin or a stop, so the places lost are real and not an estimate. Races you already played keep the older log without positions."
