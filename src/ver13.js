@@ -1,6 +1,13 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.5.7', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.0', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.0', d: 'Leadership', date: '23 Nov 2026', l: [
+    "Technical directors now keep their quality. Until now a team's director quality was redrawn at random every winter whoever the person was, so the name on the door meant nothing. A director is now a real person with a rating (0 to 100) that moves only a little each year, so a strong one stays strong and a weak one stays weak, on any team.",
+    "The principal decides, the director advises. Every upgrade decision is right with a chance that depends on both ratings and on how well the drivers explain the car; a weak principal leans on the director more, and when he overrules a director who was right, the weakness stays. Look for \"Right calls\" on a team's profile (Performance tab) and for stories like \"X overrules Y\". A director who is overruled too often can walk out.",
+    "A real staff market. Directors and principals have asking salaries, and they choose the best offer on pay, team prestige, how competitive the car is and loyalty. Pay comes out of the team's budget, so the best director is a real trade-off. Rich teams still land more of them, but for a reason. A team can buy a director out of his contract for a fee; look for the stories.",
+    "Driver feedback now helps every team, not only yours. The two drivers' feedback sets how well the team's upgrades work (better advice, fewer failed packages). Your own team keeps a similar gain overall.",
+    "Existing careers switch over without anyone changing strength. A save with nothing played yet this season switches straight away; a save part-way through a season finishes it as before and switches at the start of the next season."
+  ] },
   { v: '2.5.7', d: 'Technical director rating', date: '23 Nov 2026', l: [
     "Technical director ratings now use the same 0 to 100 scale as technical staff. Before, a director at the weak end of the market showed Rating 0 and a strong one 100, which made small differences look huge and the weakest look useless. A typical weak director now reads about 25 and a strong one about 75. Their real effect on car development has not changed.",
     "Shown on the team profile, the Paddock panel and the Story pack."

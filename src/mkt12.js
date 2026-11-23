@@ -208,6 +208,7 @@ function mktRun(S, dlog) {
 
 /* ===== pasaran staf: Technical Director & Team Principal ===== */
 function mktStaff(S, N, ord) {
+  if (typeof leadOn === 'function' && leadOn(S, N)) return leadMarket(S, N, ord);
   var used = {}; S.teams.forEach(function (t) { used[t.dev.tdp && t.dev.tdp.name] = 1; used[t.dev.tp && t.dev.tp.name] = 1; });
   /* technical director */
   var tdPool = [], tdOpen = {};

@@ -6250,6 +6250,7 @@ function initDev(S) {
   setTargets(S);
   S.target = S.target || {}; PARTS.forEach(function (k) { S.target[k] = leagueMean(S, k); });
   S.regYear = S.mode === 'pro' && S.world ? S.world.era.next : S.season + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
+  if (typeof leadMigrate === 'function') leadMigrate(S);
 }
 
 /* kedudukan semasa ikut mata (jika belum ada mata, ikut kekuatan kereta) */
@@ -6269,21 +6270,27 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var bud = DEV.budA + DEV.budB * t.prestige;
   var eff = 1 + DEV.catchUp * back;
   /* pilih bahagian: lemah berbanding terbaik liga + falsafah */
-  var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
-  var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
-  while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
-  var k = PARTS[ki];
+  var lead = typeof leadOn === 'function' && leadOn(S), k;
+  if (lead) k = leadPickPart(S, t, tops);                                        /* principal decides, director advises (Leadership, B3) */
+  else {
+    var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
+    var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
+    while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
+    k = PARTS[ki];
+  }
   var mine = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id;
   if (mine && S.rd && rnd() < 0.75) k = S.rd;                                    /* pasukan pemain ikut fokus R&D pilihan */
   if (opt && opt.k) k = opt.k;
   var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * DEV.staffK);
+  if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / 600;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }
   if (opt && opt.fm) fail *= opt.fm;
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
   else gain = size * bud * t.dev.td * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
-  if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
+  if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
+  else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
   if (k === 'engine' && typeof engShare === 'function') engShare(S, t, gain);
   if (log) log.push({ t: t.id, k: k, g: gain, mode: mode, rush: !!(opt && opt.rush), big: !!(opt && opt.big) });
@@ -6299,6 +6306,7 @@ DEV.rate = 0.45;     /* kemajuan purata / pusingan (1.5 = satu pakej biasa) */
 DEV.std = 1.5;
 function suitPart(c, k) { if (!c) return false; return k === 'engine' ? c.pw >= 0.55 : (k === 'aero' || k === 'chassis') ? c.pw <= 0.42 : false; }
 function pickPart(S, t, tops) {
+  if (typeof leadOn === 'function' && leadOn(S)) { var kk = leadPickPart(S, t, tops), mn = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id; if (mn && S.rd && rnd() < 0.75) kk = S.rd; return kk; }
   var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
   var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
   while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
@@ -6346,7 +6354,8 @@ function devWinter(S, log) {
   if (typeof finSeason === 'function') finSeason(S);
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
   /* pengarah teknikal hanyut */
-  S.teams.forEach(function (t) { t.dev.td = clamp(t.dev.td + (1 - t.dev.td) * DEV.tdRev + gauss() * DEV.tdSd, 0.8, 1.2); });
+  /* old system: the team's director quality random-walks every winter whoever the person is. With Leadership it is the person's rating (it drifts slowly in the staff market). */
+  if (!(typeof leadOn === 'function' && leadOn(S, S.season + 1))) S.teams.forEach(function (t) { t.dev.td = clamp(t.dev.td + (1 - t.dev.td) * DEV.tdRev + gauss() * DEV.tdSd, 0.8, 1.2); });
   /* staf: ikut bajet, perlahan */
   S.teams.forEach(function (t) { var tg = 0.86 + 0.028 * t.prestige; t.dev.staff = clamp(t.dev.staff + (tg - t.dev.staff) * 0.3 + gauss() * 0.04, 0.8, 1.2); });
   /* juara curi jurutera dari pasukan lain */
@@ -6566,6 +6575,7 @@ function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requ
   if (o.news) o.news = o.news.filter(function (n) { return n && typeof n === 'object'; });
   if (o.rdLog) o.rdLog = o.rdLog.filter(function (l) { return !/^Musim |gagal|Pakej/.test(l); });
   if (typeof verMigrate === 'function') o = verMigrate(o);
+  if (typeof leadMigrate === 'function') { try { leadMigrate(o); } catch (e) { } }
   return o; }
 function me() { return S.drivers[S.pi]; }
 function myTeam() { return S.teams[me().team]; }
@@ -9698,7 +9708,7 @@ function conInit(S) {
       if (dv.tp.age == null) dv.tp.age = Math.round(rr(41, 63));
       if (!dv.tp.con || dv.tp.con.end < S.season) dv.tp.con = staffCon(S, dv.tp.skill, true);
     }
-    if (!dv.tdp) dv.tdp = { name: pool.pop() || pick(TDNAMES), age: Math.round(rr(38, 60)) };
+    if (!dv.tdp) dv.tdp = { name: pool.pop() || pick(TDNAMES), age: Math.round(rr(38, 60)), skill: dv.td, loy: hash01(t.id + 7, 17) };
     if (!dv.tdp.con || dv.tdp.con.end < S.season) dv.tdp.con = staffCon(S, dv.td, true);
   });
 }
@@ -9944,6 +9954,7 @@ function mktRun(S, dlog) {
 
 /* ===== pasaran staf: Technical Director & Team Principal ===== */
 function mktStaff(S, N, ord) {
+  if (typeof leadOn === 'function' && leadOn(S, N)) return leadMarket(S, N, ord);
   var used = {}; S.teams.forEach(function (t) { used[t.dev.tdp && t.dev.tdp.name] = 1; used[t.dev.tp && t.dev.tp.name] = 1; });
   /* technical director */
   var tdPool = [], tdOpen = {};
@@ -10905,8 +10916,15 @@ function thStrip(ci) {
 }
 if (typeof A !== 'undefined') A['th'] = function (d) { showModal(thHTML(+d.v)); };
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.5.7', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.0', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.0', d: 'Leadership', date: '23 Nov 2026', l: [
+    "Technical directors now keep their quality. Until now a team's director quality was redrawn at random every winter whoever the person was, so the name on the door meant nothing. A director is now a real person with a rating (0 to 100) that moves only a little each year, so a strong one stays strong and a weak one stays weak, on any team.",
+    "The principal decides, the director advises. Every upgrade decision is right with a chance that depends on both ratings and on how well the drivers explain the car; a weak principal leans on the director more, and when he overrules a director who was right, the weakness stays. Look for \"Right calls\" on a team's profile (Performance tab) and for stories like \"X overrules Y\". A director who is overruled too often can walk out.",
+    "A real staff market. Directors and principals have asking salaries, and they choose the best offer on pay, team prestige, how competitive the car is and loyalty. Pay comes out of the team's budget, so the best director is a real trade-off. Rich teams still land more of them, but for a reason. A team can buy a director out of his contract for a fee; look for the stories.",
+    "Driver feedback now helps every team, not only yours. The two drivers' feedback sets how well the team's upgrades work (better advice, fewer failed packages). Your own team keeps a similar gain overall.",
+    "Existing careers switch over without anyone changing strength. A save with nothing played yet this season switches straight away; a save part-way through a season finishes it as before and switches at the start of the next season."
+  ] },
   { v: '2.5.7', d: 'Technical director rating', date: '23 Nov 2026', l: [
     "Technical director ratings now use the same 0 to 100 scale as technical staff. Before, a director at the weak end of the market showed Rating 0 and a strong one 100, which made small differences look huge and the weakest look useless. A typical weak director now reads about 25 and a strong one about 75. Their real effect on car development has not changed.",
     "Shown on the team profile, the Paddock panel and the Story pack."
@@ -11045,7 +11063,7 @@ function teamProfileHTML(id) {
   if (dv.tp) {
     var st = typeof devStatus === 'function' ? devStatus(t) : null;
     h += '<h4>Leadership & factory</h4><div class="tpf-lead"><div><small>Team principal</small><b>' + esc(dv.tp.name) + '</b><span>Rating ' + pct100(dv.tp.skill, 0.75, 1.25) + ' · ' + tpStyle(dv.tp.amb) + '</span>' + (dv.tp.con ? '<span class="cn">Until S' + dv.tp.con.end + ' · ' + payTxt(dv.tp.con.pay) + '</span>' : '') + '</div>' + (dv.tdp ? '<div><small>Technical director</small><b>' + esc(dv.tdp.name) + '</b><span>Rating ' + pct100(dv.td, 0.8, 1.2) + ' · age ' + dv.tdp.age + '</span>' + (dv.tdp.con ? '<span class="cn">Until S' + dv.tdp.con.end + ' · ' + payTxt(dv.tdp.con.pay) + '</span>' : '') + '</div>' : '') + '<div><small>Technical staff</small><b>' + pct100(dv.staff, 0.8, 1.2) + '<span style="display:inline"> /100</span></b><span>' + (dv.staff >= 1.05 ? 'Top-class factory' : dv.staff >= 0.95 ? 'Solid' : 'Short on experience') + '</span></div>' +
-      '<div><small>Board target</small><b>P' + dv.target + '</b><span>in the constructors’</span></div>' + (st ? '<div><small>Next upgrade</small><b>' + (st.banked ? 'Shelved' : (RDNAME[st.k] || 'New') + ' · ' + Math.min(100, Math.round(st.prog / st.th * 100)) + '%') + '</b><span>' + (st.banked ? 'Focus on next year' : 'In development') + '</span></div>' : '') + '</div>';
+      '<div><small>Board target</small><b>P' + dv.target + '</b><span>in the constructors’</span></div>' + (typeof leadOn === 'function' && leadOn(S) && dv.tdp ? '<div><small>Right calls</small><b>' + Math.round(leadOdds(S, t).right * 100) + '%</b><span>Feedback ' + Math.round(leadFeedback(S, t)) + '</span></div>' : '') + (st ? '<div><small>Next upgrade</small><b>' + (st.banked ? 'Shelved' : (RDNAME[st.k] || 'New') + ' · ' + Math.min(100, Math.round(st.prog / st.th * 100)) + '%') + '</b><span>' + (st.banked ? 'Focus on next year' : 'In development') + '</span></div>' : '') + '</div>';
   }
   if (typeof teamPolicy === 'function') {
     var ac = (S.juniors || []).map(function (j, i) { return { j: j, i: i }; }).filter(function (x) { return x.j.acad === t.id; });
@@ -14721,7 +14739,7 @@ function pdTeamHTML(r) {
   overview+=pdPanel('Race drivers','The starting line-up',pdLineup(v,t,r.league),'pd-span');
   var parts=t.spec?[['setup','Setup'],['crew','Pit crew'],['coaching','Coaching']]:[['aero','Aero'],['engine','Engine'],['chassis','Chassis'],['rel','Reliability']];
   var performance=pdPanel(t.spec?'Team support':'Car development',t.spec?'The people behind the pace':'The package on track','<div class="pd-bars">'+parts.map(function(p){var value=Math.round(t.spec?(t.ops||{})[p[0]]*100:t.car[p[0]]),rank=v.teams.filter(function(x){return t.spec?((x.ops||{})[p[0]]||0)>((t.ops||{})[p[0]]||0):x.car[p[0]]>t.car[p[0]];}).length+1;return '<div><span>'+p[1]+'<b>'+value+' <small>/100</small></b></span>'+driverMeter(value,100,p[1])+'<small>#'+rank+' in '+r.league.toUpperCase()+'</small></div>';}).join('')+'</div><p class="pd-note">'+(t.spec?'The engine, aero and chassis are shared across this championship. Support ratings describe this team’s operation.':'Component ranks compare the current '+r.league.toUpperCase()+' grid.')+'</p>','pd-span');
-  if(dv.tp)performance+=pdPanel('Leadership','On the pit wall','<div class="pd-people"><div><small>Team principal</small><b>'+esc(dv.tp.name)+'</b><span>'+tpStyle(dv.tp.amb)+' · Rating '+pct100(dv.tp.skill,.75,1.25)+'</span></div>'+(dv.tdp?'<div><small>Technical director</small><b>'+esc(dv.tdp.name)+'</b><span>Rating '+pct100(dv.td,.8,1.2)+'</span></div>':'')+'<div><small>Technical staff</small><b>'+pct100(dv.staff,.8,1.2)+' /100</b></div><div><small>Board target</small><b>'+(dv.target?'P'+dv.target:'Not recorded')+'</b></div></div>','pd-span');
+  if(dv.tp)performance+=pdPanel('Leadership','On the pit wall','<div class="pd-people"><div><small>Team principal</small><b>'+esc(dv.tp.name)+'</b><span>'+tpStyle(dv.tp.amb)+' · Rating '+pct100(dv.tp.skill,.75,1.25)+'</span></div>'+(dv.tdp?'<div><small>Technical director</small><b>'+esc(dv.tdp.name)+'</b><span>Rating '+pct100(dv.td,.8,1.2)+'</span></div>':'')+'<div><small>Technical staff</small><b>'+pct100(dv.staff,.8,1.2)+' /100</b></div><div><small>Board target</small><b>'+(dv.target?'P'+dv.target:'Not recorded')+'</b></div>'+(typeof leadOn==='function'&&leadOn(S)&&!t.spec&&dv.tdp?'<div><small>Right calls</small><b>'+Math.round(leadOdds(S,t).right*100)+'%</b><span>Feedback '+Math.round(leadFeedback(S,t))+'</span></div>':'')+'</div>','pd-span');
   var operations='';if(!t.spec){var payroll={dr:0,st:0,exp:0,n:0};ds.forEach(function(d){var c=d.con?Object.assign({},d.con):null;if(pdMine(d)){c=c||{pay:payFor(ovr(d))};c.end=S.season+S.contract-1;}if(c){payroll.dr+=c.pay;payroll.n++;if(c.end<=S.season)payroll.exp++;}});[dv.tp,dv.tdp].forEach(function(p){if(p&&p.con){payroll.st+=p.con.pay;payroll.n++;if(p.con.end<=S.season)payroll.exp++;}});operations+=pdPanel('Contracts','The team commitments',pfTiles([['Driver pay',payTxt(payroll.dr)],['Staff pay',payTxt(payroll.st)],['Expiring',payroll.exp+' of '+payroll.n]]),'pd-span');}
   if(t.fin)operations+=pdPanel('Team economy','The balance sheet',finHTML(t),'pd-span');
   if(t.fac)operations+=pdPanel('Infrastructure','Inside the factory',pfTiles([['Facilities',facName(t)],['R&D effect',(facMul(t)>=1?'+':'')+Math.round((facMul(t)-1)*100)+'%'],['Engine',esc(t.eng?t.eng.sup:'—')],['Deal',t.eng&&t.eng.works?'Works':'Customer']])+(t.fin&&t.fin.loan?'<p class="pd-note">Outstanding loan: '+payTxt(t.fin.loan)+'.</p>':''),'pd-span');
@@ -14985,7 +15003,8 @@ function spTeams(S) {
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
     if (tp) L.push('  Team principal: ' + tp.name + (tp.age ? ' (' + tp.age + ')' : '') + ' · ' + (tp.amb >= 2 ? 'Aggressive' : tp.amb <= 0 ? 'Cautious' : 'Balanced') + ' · rating ' + spPct(tp.skill, 0.75, 1.25));
-    if (d.tdp) L.push('  Technical director: ' + d.tdp.name + ' · rating ' + spPct(d.td, 0.8, 1.2));
+    if (d.tdp) L.push('  Technical director: ' + d.tdp.name + (d.tdp.age ? ' (' + d.tdp.age + ')' : '') + ' · rating ' + spPct(d.td, 0.8, 1.2) + (d.tdp.con ? ' · until S' + d.tdp.con.end + ', $' + d.tdp.con.pay + 'M' : ''));
+    if (typeof leadOn === 'function' && leadOn(S) && d.tp && d.td) { var lo = leadOdds(S, t); L.push('  Leadership: team feedback ' + Math.round(lo.fb) + ' (upgrade gain x' + leadFbGain(S, t).toFixed(2) + '); about ' + Math.round(lo.right * 100) + '% of upgrade decisions are right (principal alone ' + Math.round(lo.pick * 100) + '%, director advice ' + Math.round(lo.adv * 100) + '%, principal follows advice ' + Math.round(lo.cons * 100) + '% of the time)'); }
     if (d.staff != null) L.push('  Technical staff ' + spPct(d.staff, 0.8, 1.2) + '/100 · board target P' + (d.target || '?') + (ch ? ' · team trait: ' + ch : ''));
     L.push('  Drivers: ' + S.drivers.filter(function (x) { return x.team === t.id; }).map(function (x) { return x.name + ' (OVR ' + ovr(x) + ')'; }).join(', '));
   });
@@ -15661,5 +15680,175 @@ if (typeof hMusim === 'function') {
   hMusim = function () { if (UI.musimView === 'archive') return rgNav('archive') + arPage(); return arMusim0.apply(this, arguments); };
   var arSection0 = A['hub-section'];
   A['hub-section'] = function (d) { if (d.v === 'archive') { UI.musimView = 'archive'; UI.tab = 'musim'; render(); window.scrollTo(0, 0); return; } return arSection0(d); };
+}
+'use strict';
+/* ===== Leadership (2.6.0): rating scale, principal and director decisions, feedback for every team, staff market =====
+   Design: MAJOR-UPDATE-DESIGN.md Part B5 to B8.
+   Gate: S.lead = { v: 1, from: <season> }. Until the gate is on, none of this runs and the old code path (and its random numbers) is untouched. */
+var LEAD = {
+  v: 1,
+  rng: { td: [0.8, 1.2], tp: [0.75, 1.25], staff: [0.8, 1.2] },   /* multiplier range that rating 0 to 100 maps onto (same scales the screens already used) */
+  poolSd: 15, poolMin: 6, poolMax: 94,                               /* new directors: rating spread, no clamp pile-up at 0 and 100 */
+  pickBase: 0.55, pickSlope: 0.35,                                   /* principal's own pick correct: 55% at rating 0 to 90% at 100 */
+  consBase: 0.77, consSlope: 0.24,                                   /* principal leans on advice: 77% at rating 0 to 53% at 100 */
+  advBase: 0.60, advSlope: 0.35, fbAdv: 0.0015,                      /* director's advice correct: 60% at rating 0 to 95% at 100; driver feedback adds a little */
+  fbGain: 150,                                                       /* team feedback gain: 1 + (feedback - 70) / fbGain (was the player's driver only) */
+  drift: 1.5, retireAge: 62,
+  ask: [2, 10],                                                      /* asking salary ($M) at rating 0 and 100 */
+  poach: 0.25, quitOver: 3,
+  keepTP: 0.78                                                       /* principals re-signed without a market */
+};
+
+function leadRating(kind, m) { var r = LEAD.rng[kind]; return Math.round(clamp((m - r[0]) / (r[1] - r[0]) * 100, 0, 100)); }
+function leadMul(kind, rating) { var r = LEAD.rng[kind]; return r[0] + (r[1] - r[0]) * clamp(rating, 0, 100) / 100; }
+function leadAsk(rating) { return Math.round((LEAD.ask[0] + (LEAD.ask[1] - LEAD.ask[0]) * clamp(rating, 0, 100) / 100) * 10) / 10; }
+/* year: the season the question is about (defaults to the current one) */
+function leadOn(S, year) { return !!(S && S.lead && S.lead.v >= 1 && (year == null ? S.season : year) >= S.lead.from && S.teams && S.teams[0] && !S.teams[0].spec); }   /* F1 and Classic teams only, not the junior series */
+
+/* Existing saves: nothing played yet this season -> use it from now; otherwise from the next new season. */
+function leadMigrate(S) {
+  if (!S || S.lead || !S.teams || !S.drivers) return;
+  S.lead = { v: LEAD.v, from: (S.round || 0) === 0 ? S.season : S.season + 1, ev: {} };
+  /* the director's rating becomes the person's, equal to what the team has right now: nobody changes strength on the day */
+  S.teams.forEach(function (t) { var dv = t.dev; if (!dv) return; if (dv.tdp) { dv.tdp.skill = dv.td; if (dv.tdp.loy == null) dv.tdp.loy = hash01(t.id + 3, 11); } if (dv.tp && dv.tp.loy == null) dv.tp.loy = hash01(t.id + 5, 13); });
+}
+
+/* team feedback: the better of the two drivers counts a little more */
+function leadFeedback(S, t) {
+  var fb = S.drivers.filter(function (d) { return d.team === t.id; }).map(function (d) { return Number.isFinite(d.fb) ? d.fb : 70; }).sort(function (a, b) { return b - a; });
+  if (!fb.length) return 70;
+  return fb.length > 1 ? 0.6 * fb[0] + 0.4 * fb[1] : fb[0];
+}
+function leadFbGain(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbGain; }
+
+/* what the principal and the director each get right, as probabilities (also shown in the story pack) */
+function leadOdds(S, t) {
+  var tpR = leadRating('tp', t.dev.tp.skill), tdR = leadRating('td', t.dev.td), fb = leadFeedback(S, t);
+  var pick = LEAD.pickBase + LEAD.pickSlope * tpR / 100, cons = LEAD.consBase - LEAD.consSlope * tpR / 100;
+  var adv = clamp(LEAD.advBase + LEAD.advSlope * tdR / 100 + (fb - 75) * LEAD.fbAdv, 0.4, 0.98);
+  return { pick: pick, cons: cons, adv: adv, right: (1 - cons) * pick + cons * adv, tpR: tpR, tdR: tdR, fb: fb };
+}
+
+/* sample an index from weights */
+function leadSample(w) { var tot = 0, i; for (i = 0; i < w.length; i++) tot += w[i]; var x = rnd() * tot; for (i = 0; i < w.length - 1; i++) { if (x < w[i]) return i; x -= w[i]; } return w.length - 1; }
+
+/* Which part to work on. Both the winter package and the in-season project call this.
+   The sensible choice is drawn the way an average principal would draw it; the director advises it with probability `adv`,
+   the principal picks it with probability `pick`, and leans on the advice with probability `cons`. A wrong choice is a different part. */
+function leadPickPart(S, t, tops) {
+  var d = t.dev, o = leadOdds(S, t), w = PARTS.map(function (k) { return d.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1); });
+  var good = leadSample(w.map(function (x) { return Math.pow(x, 1.4); }));
+  var wrong = function () { var ww = w.map(function (x, i) { return i === good ? 0 : x; }); return leadSample(ww); };
+  var own = rnd() < o.pick ? good : wrong(), advice = rnd() < o.adv ? good : wrong(), follows = rnd() < o.cons, ki = follows ? advice : own;
+  if (!follows && own !== advice) leadOverrule(S, t, PARTS[advice], PARTS[own], advice === good);
+  return PARTS[ki];
+}
+
+/* The principal went against the director. When the director was right, that costs: it is remembered and may be reported. */
+function leadOverrule(S, t, adv, own, advRight) {
+  var tdp = t.dev.tdp; if (!tdp || !advRight) return;
+  tdp.over = (tdp.over || 0) + 1;
+  var key = t.id + ':' + S.season; S.lead.ev = S.lead.ev || {};
+  if (S.lead.ev[key]) return;
+  var big = leadRating('td', t.dev.td) >= 55 || (S.drivers[S.pi] && S.drivers[S.pi].team === t.id);
+  if (!big || hash01(S.season * 13 + t.id, 7) > 0.65) return;
+  S.lead.ev[key] = 1;
+  pushNews(S, { k: 'garage', kick: 'GARAGE', t: t.id, s: S.season, r: S.round + 1, head: t.dev.tp.name + ' overrules ' + tdp.name + ' at ' + t.name,
+    sub: 'The technical director wanted the next package on the ' + adv + '. The principal chose the ' + own + '. The weakness stays for now.' });
+}
+
+/* ---------- staff market ---------- */
+function leadRoom(S, t, kind) {
+  var p = typeof teamPayroll === 'function' ? teamPayroll(S, t) : { dr: 0, st: 0 }, cap = typeof finPayCap === 'function' ? finPayCap(t) : 45;
+  var other = (kind === 'td' ? (t.dev.tp && t.dev.tp.con ? t.dev.tp.con.pay : 0) : (t.dev.tdp && t.dev.tdp.con ? t.dev.tdp.con.pay : 0));
+  return cap - p.dr - other;
+}
+/* how much a person likes a team's offer */
+function leadScore(S, t, c, offer, ask, rankP, n, N) {
+  return offer / ask + 0.03 * t.prestige + 0.35 * (1 - (rankP - 1) / Math.max(1, n - 1)) + (c.from === t.id ? 0.25 * (c.p.loy == null ? 0.5 : c.p.loy) : 0) + hgauss(t.id + c.p.name + N) * 0.08;
+}
+function leadFill(S, N, kind, pool, open, rankP) {
+  var n = S.teams.length, out = [];
+  var rate = function (c) { return leadRating(kind, c.p.skill); };
+  pool.sort(function (a, b) { return rate(b) - rate(a); });
+  var openIds = Object.keys(open).filter(function (k) { return open[k]; }).map(Number);
+  [false, true].forEach(function (relaxed) {
+    pool.slice().forEach(function (c) {
+      if (!openIds.length || c.done) return;
+      var r = rate(c), ask = leadAsk(r), best = null, bs = -1e9;
+      openIds.forEach(function (id) {
+        var t = S.teams[id], room = leadRoom(S, t, kind), offer = Math.min(ask * 1.1, Math.max(room, 0));
+        if (!relaxed && offer < ask * 0.8) return;
+        if (relaxed) offer = Math.max(offer, ask * 0.7);
+        var s = leadScore(S, t, c, offer, ask, rankP[id], n, N);
+        if (s > bs) { bs = s; best = { t: t, offer: offer }; }
+      });
+      if (!best) return;
+      c.done = true; openIds.splice(openIds.indexOf(best.t.id), 1); open[best.t.id] = 0;
+      out.push({ c: c, t: best.t, pay: Math.round(best.offer * 10) / 10 });
+    });
+  });
+  return out;
+}
+function leadMarket(S, N, ord) {
+  var n = S.teams.length, st = S.mkt && S.mkt.staff ? S.mkt.staff : (S.mkt.staff = []);
+  var rankP = {}; S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }).forEach(function (t, i) { rankP[t.id] = i + 1; });
+  var used = {}; S.teams.forEach(function (t) { used[t.dev.tdp && t.dev.tdp.name] = 1; used[t.dev.tp && t.dev.tp.name] = 1; });
+  /* directors: rating drifts a little, the oldest retire, a director who was overruled too often may walk out */
+  var tdPool = [], tdOpen = {};
+  S.teams.forEach(function (t) {
+    var p = t.dev.tdp; if (!p) return;
+    var r = leadRating('td', t.dev.td); r = clamp(r + gauss() * LEAD.drift + (p.age < 42 ? 0.8 : p.age > 54 ? -1 : 0), 4, 96); t.dev.td = leadMul('td', r); p.skill = t.dev.td;
+    if (p.loy == null) p.loy = rnd();
+    var quits = (p.over || 0) >= LEAD.quitOver && r >= 55 && rnd() < 0.5, retires = p.age >= LEAD.retireAge && rnd() < 0.5;
+    if (retires) { p.con = Object.assign({}, p.con || {}, { end: N - 1 }); tdOpen[t.id] = 1; st.push({ k: 'tdout', n: p.name, t: t.id, why: 'retires' }); return; }
+    if (quits) { p.con = Object.assign({}, p.con || {}, { end: N - 1 }); tdPool.push({ p: p, from: t.id }); tdOpen[t.id] = 1; st.push({ k: 'tdout', n: p.name, t: t.id, why: 'overruled' }); pushNews(S, { k: 'garage', kick: 'GARAGE', t: t.id, s: N, r: 0, head: p.name + ' leaves ' + t.name, sub: 'The technical director has had enough of being overruled and walks out. The seat is open on the market.' }); p.over = 0; return; }
+    p.over = 0;
+    if (p.con && p.con.end < N) { tdPool.push({ p: p, from: t.id }); tdOpen[t.id] = 1; }
+  });
+  /* one poaching attempt per winter at most: a stronger director is bought out of his contract by a team that scores better with him */
+  if (rnd() < LEAD.poach) {
+    var buyers = S.teams.filter(function (t) { return t.dev.tdp && !tdOpen[t.id] && leadRating('td', t.dev.td) < 50 && leadRoom(S, t, 'td') > 5; }).sort(function (a, b) { return b.prestige - a.prestige; });
+    var b = buyers[0], target = null;
+    if (b) S.teams.forEach(function (t) { var p = t.dev.tdp; if (!p || t.id === b.id || tdOpen[t.id] || !p.con || p.con.end < N + 1) return; if (leadRating('td', t.dev.td) >= leadRating('td', b.dev.td) + 20 && (!target || t.dev.td > target.dev.td)) target = t; });
+    if (b && target) {
+      var tp0 = target.dev.tdp, c0 = { p: tp0, from: target.id }, ask = leadAsk(leadRating('td', target.dev.td)), offer = Math.min(ask * 1.1, leadRoom(S, b, 'td'));
+      var sB = leadScore(S, b, { p: tp0, from: -1 }, offer, ask, rankP[b.id], n, N), sT = leadScore(S, target, c0, tp0.con.pay, ask, rankP[target.id], n, N);
+      if (sB > sT + 0.25 && offer >= ask * 0.8) {
+        var fee = Math.round(0.8 * tp0.con.pay * (tp0.con.end - N + 1) * 10) / 10, old = b.dev.tdp;
+        if (b.fin) b.fin.cash -= fee; if (target.fin) target.fin.cash += fee;
+        target.dev.tdp = null; tdOpen[target.id] = 1;
+        b.dev.tdp = tp0; b.dev.td = clamp(tp0.skill, LEAD.rng.td[0], LEAD.rng.td[1]); tp0.con = Object.assign({}, tp0.con, { pay: Math.round(offer * 10) / 10 });
+        if (old) { old.con = Object.assign({}, old.con || {}, { end: N - 1 }); tdPool.push({ p: old, from: b.id }); tdOpen[b.id] = 1; }
+        st.push({ k: 'tdpoach', n: tp0.name, f: target.id, t: b.id, fee: fee });
+        pushNews(S, { k: 'garage', kick: 'GARAGE', t: b.id, s: N, r: 0, head: b.name + ' buy out ' + tp0.name + ' from ' + target.name, sub: 'A buy-out fee of about $' + fee + 'M changes hands. ' + target.short + ' now have a vacancy for the technical director.' });
+      }
+    }
+  }
+  var vac = Object.keys(tdOpen).length;
+  for (var i = tdPool.length; i < vac + 1; i++) {
+    var nm = shuffle(TDNAMES.filter(function (x) { return !used[x]; }))[0] || pick(TDNAMES); used[nm] = 1;
+    var r0 = clamp(Math.round(50 + gauss() * LEAD.poolSd), LEAD.poolMin, LEAD.poolMax);
+    tdPool.push({ p: { name: nm, age: Math.round(rr(37, 58)), skill: leadMul('td', r0), loy: rnd() }, from: -1 });
+  }
+  leadFill(S, N, 'td', tdPool, tdOpen, rankP).forEach(function (a) {
+    var p = a.c.p, old = a.t.dev.tdp, len = 2 + Math.floor(rnd() * (leadRating('td', p.skill) >= 70 ? 2 : 3));
+    p.con = { len: len, end: N + len - 1, pay: a.pay }; a.t.dev.tdp = p; a.t.dev.td = clamp(p.skill, LEAD.rng.td[0], LEAD.rng.td[1]);
+    st.push(a.c.from === a.t.id ? { k: 'tdre', n: p.name, t: a.t.id } : { k: 'td', n: p.name, f: a.c.from, t: a.t.id, old: old ? old.name : '' });
+  });
+  /* principals: most are re-signed, some are released, newcomers join the pool; everyone chooses the best offer */
+  var tpPool = [], tpOpen = {};
+  S.teams.forEach(function (t) {
+    var p = t.dev.tp; if (!p || !p.con || p.con.end >= N) return;
+    if (rnd() < LEAD.keepTP) { p.con = staffCon(S, p.skill, false); p.con.end = N + p.con.len - 1; st.push({ k: 'tpre', n: p.name, t: t.id }); }
+    else { tpPool.push({ p: p, from: t.id }); tpOpen[t.id] = 1; }
+  });
+  var vacT = Object.keys(tpOpen).length;
+  for (var q = tpPool.length; q < vacT + 1 && vacT > 0; q++) { var np = newTP(S.teams[0]), tries = 0; while (used[np.name] && tries++ < 20) np = newTP(S.teams[0]); used[np.name] = 1; np.age = Math.round(rr(40, 60)); tpPool.push({ p: np, from: -1 }); }
+  leadFill(S, N, 'tp', tpPool, tpOpen, rankP).forEach(function (a) {
+    var p = a.c.p, old = a.t.dev.tp; p.con = staffCon(S, p.skill, false); p.con.end = N + p.con.len - 1; a.t.dev.tp = p;
+    st.push(a.c.from === a.t.id ? { k: 'tpre', n: p.name, t: a.t.id } : { k: 'tp', n: p.name, f: a.c.from, t: a.t.id, old: old ? old.name : '' });
+  });
+  if (typeof setTargets === 'function') setTargets(S);
 }
 </script>

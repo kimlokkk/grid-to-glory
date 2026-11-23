@@ -59,7 +59,7 @@ function conInit(S) {
       if (dv.tp.age == null) dv.tp.age = Math.round(rr(41, 63));
       if (!dv.tp.con || dv.tp.con.end < S.season) dv.tp.con = staffCon(S, dv.tp.skill, true);
     }
-    if (!dv.tdp) dv.tdp = { name: pool.pop() || pick(TDNAMES), age: Math.round(rr(38, 60)) };
+    if (!dv.tdp) dv.tdp = { name: pool.pop() || pick(TDNAMES), age: Math.round(rr(38, 60)), skill: dv.td, loy: hash01(t.id + 7, 17) };
     if (!dv.tdp.con || dv.tdp.con.end < S.season) dv.tdp.con = staffCon(S, dv.td, true);
   });
 }

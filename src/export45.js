@@ -80,7 +80,8 @@ function spTeams(S) {
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
     if (tp) L.push('  Team principal: ' + tp.name + (tp.age ? ' (' + tp.age + ')' : '') + ' · ' + (tp.amb >= 2 ? 'Aggressive' : tp.amb <= 0 ? 'Cautious' : 'Balanced') + ' · rating ' + spPct(tp.skill, 0.75, 1.25));
-    if (d.tdp) L.push('  Technical director: ' + d.tdp.name + ' · rating ' + spPct(d.td, 0.8, 1.2));
+    if (d.tdp) L.push('  Technical director: ' + d.tdp.name + (d.tdp.age ? ' (' + d.tdp.age + ')' : '') + ' · rating ' + spPct(d.td, 0.8, 1.2) + (d.tdp.con ? ' · until S' + d.tdp.con.end + ', $' + d.tdp.con.pay + 'M' : ''));
+    if (typeof leadOn === 'function' && leadOn(S) && d.tp && d.td) { var lo = leadOdds(S, t); L.push('  Leadership: team feedback ' + Math.round(lo.fb) + ' (upgrade gain x' + leadFbGain(S, t).toFixed(2) + '); about ' + Math.round(lo.right * 100) + '% of upgrade decisions are right (principal alone ' + Math.round(lo.pick * 100) + '%, director advice ' + Math.round(lo.adv * 100) + '%, principal follows advice ' + Math.round(lo.cons * 100) + '% of the time)'); }
     if (d.staff != null) L.push('  Technical staff ' + spPct(d.staff, 0.8, 1.2) + '/100 · board target P' + (d.target || '?') + (ch ? ' · team trait: ' + ch : ''));
     L.push('  Drivers: ' + S.drivers.filter(function (x) { return x.team === t.id; }).map(function (x) { return x.name + ' (OVR ' + ovr(x) + ')'; }).join(', '));
   });

@@ -44,6 +44,7 @@ function initDev(S) {
   setTargets(S);
   S.target = S.target || {}; PARTS.forEach(function (k) { S.target[k] = leagueMean(S, k); });
   S.regYear = S.mode === 'pro' && S.world ? S.world.era.next : S.season + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
+  if (typeof leadMigrate === 'function') leadMigrate(S);
 }
 
 /* kedudukan semasa ikut mata (jika belum ada mata, ikut kekuatan kereta) */
@@ -63,21 +64,27 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var bud = DEV.budA + DEV.budB * t.prestige;
   var eff = 1 + DEV.catchUp * back;
   /* pilih bahagian: lemah berbanding terbaik liga + falsafah */
-  var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
-  var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
-  while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
-  var k = PARTS[ki];
+  var lead = typeof leadOn === 'function' && leadOn(S), k;
+  if (lead) k = leadPickPart(S, t, tops);                                        /* principal decides, director advises (Leadership, B3) */
+  else {
+    var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
+    var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
+    while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
+    k = PARTS[ki];
+  }
   var mine = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id;
   if (mine && S.rd && rnd() < 0.75) k = S.rd;                                    /* pasukan pemain ikut fokus R&D pilihan */
   if (opt && opt.k) k = opt.k;
   var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * DEV.staffK);
+  if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / 600;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }
   if (opt && opt.fm) fail *= opt.fm;
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
   else gain = size * bud * t.dev.td * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
-  if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
+  if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
+  else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
   if (k === 'engine' && typeof engShare === 'function') engShare(S, t, gain);
   if (log) log.push({ t: t.id, k: k, g: gain, mode: mode, rush: !!(opt && opt.rush), big: !!(opt && opt.big) });
@@ -93,6 +100,7 @@ DEV.rate = 0.45;     /* kemajuan purata / pusingan (1.5 = satu pakej biasa) */
 DEV.std = 1.5;
 function suitPart(c, k) { if (!c) return false; return k === 'engine' ? c.pw >= 0.55 : (k === 'aero' || k === 'chassis') ? c.pw <= 0.42 : false; }
 function pickPart(S, t, tops) {
+  if (typeof leadOn === 'function' && leadOn(S)) { var kk = leadPickPart(S, t, tops), mn = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id; if (mn && S.rd && rnd() < 0.75) kk = S.rd; return kk; }
   var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
   var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
   while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
@@ -140,7 +148,8 @@ function devWinter(S, log) {
   if (typeof finSeason === 'function') finSeason(S);
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
   /* pengarah teknikal hanyut */
-  S.teams.forEach(function (t) { t.dev.td = clamp(t.dev.td + (1 - t.dev.td) * DEV.tdRev + gauss() * DEV.tdSd, 0.8, 1.2); });
+  /* old system: the team's director quality random-walks every winter whoever the person is. With Leadership it is the person's rating (it drifts slowly in the staff market). */
+  if (!(typeof leadOn === 'function' && leadOn(S, S.season + 1))) S.teams.forEach(function (t) { t.dev.td = clamp(t.dev.td + (1 - t.dev.td) * DEV.tdRev + gauss() * DEV.tdSd, 0.8, 1.2); });
   /* staf: ikut bajet, perlahan */
   S.teams.forEach(function (t) { var tg = 0.86 + 0.028 * t.prestige; t.dev.staff = clamp(t.dev.staff + (tg - t.dev.staff) * 0.3 + gauss() * 0.04, 0.8, 1.2); });
   /* juara curi jurutera dari pasukan lain */

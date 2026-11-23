@@ -244,6 +244,38 @@ The new leadership system is gated by a save field, `S.lead = { v: 1, from: <sea
 - The code keeps the old path until the gate is on, so old behaviour is not changed by shipping.
 - The save version is bumped, with tests: a save from before loads, migrates exactly once, and is not migrated twice.
 
+## B9. Leadership core: what was built and measured (2.6.0)
+
+**Finding that changed the plan.** `devWinter` redrew every team's technical director value each winter (`td + (1 - td) * 0.35 + N(0, 0.12)`), whoever the person was. Measured over 6 seeds of 10 seasons: the director rating changed by **25 points a year on average**, and 16% of team-seasons sat at exactly 0 or 100. The director's name never mattered. That is the real reason for the inconsistency, more than the market.
+
+**Built.**
+- Scales: rating 0 to 100 maps to x0.8 to x1.2 for director and staff, x0.75 to x1.25 for principal (the same scales the screens used). Stored on the person. The multiplier the formulas use is derived at hire and on drift, so nothing in the old formulas changed.
+- Director quality is the person's rating. The winter random walk is skipped when the gate is on. In the market a rating drifts about 1.5 points a year (up to 42, down after 54).
+- Decisions (B3): principal's pick correct 55% to 90%, leans on advice 77% to 53%, advice correct 60% to 95% plus 0.15 points per feedback point above 75. A wrong pick is a different part. An overrule where the director was right is a "costly" overrule: counted, and reported (at most one story per team and season).
+- Market: new directors N(50, 15) rating, ask 2 to 10 $M by rating, offers capped by what the team can pay (`finPayCap`), score = offer / ask + 0.03 x prestige + 0.35 x competitiveness + 0.25 x loyalty (own director) + noise. Best director chooses first. One buy-out attempt a winter at most (25%), fee 80% of the remaining salary. Walk-out when overruled 3+ times (rating 55+, 50%). Retirement from 62. Principals: 78% re-signed, the rest go to the same offer market.
+- Team feedback: 0.6 x better driver + 0.4 x other. Gain x(1 + (feedback - 70) / 150) for every team (player also keeps the Feedback ability), failure x(1 - (feedback - 70) / 600).
+
+**Simulation (6 seeds x 10 seasons, old rules vs Leadership):**
+
+| | Old | Leadership |
+|---|---|---|
+| Spread of team power (sd) | 6.06 | 6.05 |
+| Rank change per year | 0.94 | 1.00 |
+| Top team changes in a year | 44% | 44% |
+| Different constructors' champions in 10 years | 4.2 | 4.5 |
+| Director rating change a year | 24.9 | 3.7 |
+| Director rating at 0 or 100 | 16% | 0% |
+| Correlation of director rating with team power | +0.17 | +0.29 |
+| Director changes team a year | 24% | 21% |
+
+The grid does not freeze and the spread is unchanged. Directors who are good are good for years and tend to sit at stronger teams without being forced there.
+
+**Open / to tune.**
+- Director spread in the market is N(0.80 + 0.4 x 0.5, sd 15 rating) = about plus or minus 6% effect, narrower than the old random walk (about plus or minus 11%). The team power spread is held by `sdTarget`, so it did not change, but the director now matters a little less in absolute terms. Widen `poolSd` if you want more weight on the director.
+- Poaching is rare by design (about one every four winters); watch the news in a long career.
+- Board reviews (B4) and the regulation mechanics (Part A) are not built yet.
+- Staff market screen only lists director and principal moves; poaching and walk-outs appear as Paddock Wire stories.
+
 ---
 
 # Part C: Engine allocation
