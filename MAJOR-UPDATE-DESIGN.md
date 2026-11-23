@@ -276,6 +276,26 @@ The grid does not freeze and the spread is unchanged. Directors who are good are
 - Board reviews (B4) and the regulation mechanics (Part A) are not built yet.
 - Staff market screen only lists director and principal moves; poaching and walk-outs appear as Paddock Wire stories.
 
+## B10. Roles as decided (from the review of 2.6.0) and what is built
+
+**Technical director: build quality, by probability.** A good director produces a package that is more likely to be a hit (bigger gain) and less likely to fail; a weak one the reverse. Never certain. Built: hit chance 6% to 54%, miss chance 54% to 6% by rating (hit x1.55, miss x0.45), failure multiplier 1.35 to 0.65. The old straight multiplier is not used while Leadership is on.
+
+**Team principal: direction and management.** Wanted: knows which driver suits, balances money between drivers and the car, chooses a good director, picks the crucial component, knows when to stop developing, when to bring the package, and is ready for regulation changes.
+
+| Role of the principal | Status |
+|---|---|
+| Chooses a good director | **Built.** Two-sided matching: each team ranks candidates with an error that shrinks with the principal's rating, then candidates choose among offers |
+| Chooses the crucial component | **Built.** Noisy judgement; mistakes are near misses (B9) |
+| Knows when to stop developing | **Built.** `leadShelve`: a good principal shelves a lost season 95% of the time, a weak one 25%, and a weak one sometimes shelves for no reason |
+| When to bring the package | **Built (partly).** Timing error and noticing a circuit that suits the part. Package size is still driven by how long he waits (rush or big) as before |
+| Ready for regulation changes | **Built.** In the season before new rules he decides to switch to next year's car (alert 20% to 95% by rating); that adds to `regPrep`, which softens the fall at the change |
+| Which drivers suit | **Next phase.** Needs the driver draft (`mkt12.js`) to score fit by a noisy judgement of the principal |
+| Money between drivers and the car | **Next phase.** Needs a payroll versus R&D split decision on top of `finPayCap`; a weak principal overspends on drivers or starves development |
+
+**Interim.** The principal's direct effect on gain (`tpG` 2.2) is a stand-in. His decisions alone cost little (a wrong call is a near miss), so without it he would barely matter until he also chooses drivers and money. Lower it as those phases come in.
+
+**Measured (12 seeds x 10 seasons), change in team power a season per +10 rating, controlling for the team's starting strength:** director +0.25, principal +0.11, staff +0.16 (about plus or minus 0.04). Spread of team power 6.28, rank change 0.95 a year, no frozen order. A driver no longer steers R&D (the focus buttons are replaced by a read-only view of the pit wall's decision).
+
 ---
 
 # Part C: Engine allocation

@@ -43,6 +43,20 @@ const path = require('node:path');
         const tops = { aero: 99, engine: 92, chassis: 90, rel: 90 }, cnt = { aero: 0, engine: 0, chassis: 0, rel: 0 }; for (let i = 0; i < 3000; i++) { S.lead.ev = {}; cnt[leadPickPart(S, W, tops)]++; }
         pushNews = pn; W.car = JSON.parse(keep);
         ck('even the weakest principal and director almost never pick a part that is already maxed', cnt.aero / 3000 < 0.01 && (cnt.engine + cnt.chassis) / 3000 > 0.85, cnt); }
+      /* 4c. director: probability, not certainty */
+      { const W = S.teams[4], draw = (r) => { W.dev.td = leadMul('td', r); let q = 0, f = 0, hit = 0, N = 6000; for (let i = 0; i < N; i++) { const p = leadPackage(S, W); q += p.q; f += p.fail; if (p.q > 1) hit++; } return { q: q / N, fail: f / N, hit: hit / N }; };
+        const lo = draw(0), hi = draw(100), mid = draw(50);
+        ck('a good director: more hits, less failure, better average package; a weak one the reverse; nobody certain', hi.q > lo.q + 0.25 && hi.fail < lo.fail * 0.6 && hi.hit > lo.hit * 3 && hi.hit < 0.7 && lo.hit > 0.03 && Math.abs(mid.q - 1) < 0.08, { lo, mid, hi }); }
+      /* 4d. principal: when to stop and readiness for new rules */
+      { const W = S.teams[5], ranks = {}; S.teams.forEach(t => ranks[t.id] = 5); ranks[W.id] = W.dev.target + 4;
+        const rate = (r) => { W.dev.tp.skill = leadMul('tp', r); let ok = 0; for (let i = 0; i < 2000; i++) { W.dev.banked = false; if (leadShelve(S, W, ranks, seasonMilestone(S, 7), false)) ok++; } return ok / 2000; };
+        const weak = rate(5), strong = rate(95); ck('a good principal shelves a lost season far more often than a weak one', strong > 0.85 && weak < 0.4, { weak, strong });
+        S.regYear = S.season + 1; const ready = (r) => { W.dev.tp.skill = leadMul('tp', r); let ok = 0; for (let i = 0; i < 2000; i++) { W.dev.banked = false; W.dev.regDecided = false; W.dev.regReady = false; leadShelve(S, W, { [W.id]: 1 }, seasonMilestone(S, 7), false); if (W.dev.regReady) ok++; } return ok / 2000; };
+        const rw = ready(5), rs = ready(95); W.dev.regReady = true; const pr1 = regPrep(W); W.dev.regReady = false; const pr0 = regPrep(W); S.regYear = 99;
+        ck('a good principal prepares for new rules far more often, and preparation softens the fall', rs > 0.85 && rw < 0.45 && pr1 > pr0, { rw, rs, pr0, pr1 }); }
+      /* 4e. the driver no longer steers R&D */
+      { UI.screen = 'hub'; UI.tab = 'team'; render(); const on = document.querySelectorAll('[data-act=rd]').length; const keep = S.lead; S.lead = { v: 1, from: 99 }; render(); const off = document.querySelectorAll('[data-act=rd]').length; S.lead = keep; render();
+        ck('with Leadership the R&D focus buttons are gone; without it they stay', on === 0 && off === 4, { on, off }); }
       /* 5. feedback reaches every team */
       const aiT = S.teams.find(t => S.drivers[S.pi].team !== t.id), ds = S.drivers.filter(x => x.team === aiT.id);
       ds.forEach(x => x.fb = 95); const hi = leadFbGain(S, aiT); ds.forEach(x => x.fb = 55); const lo = leadFbGain(S, aiT);

@@ -15,7 +15,16 @@ var LEAD = {
   drift: 1.5, retireAge: 62,
   ask: [2, 10],                                                      /* asking salary ($M) at rating 0 and 100 */
   poach: 0.25, quitOver: 3,
-  keepTP: 0.78                                                       /* principals re-signed without a market */
+  keepTP: 0.78,                                                      /* principals re-signed without a market */
+  /* Director: build quality by probability, never by certainty. A package can be a hit (bigger gain) or a miss (smaller), and fails more or less often. */
+  hit: [0.06, 0.54], miss: [0.54, 0.06], hitMul: 1.55, missMul: 0.45, // chance of a hit / a miss at rating 0 and 100
+  failTD: [1.35, 0.65],                                              /* failure chance multiplier at rating 0 and 100 */
+  tpG: 2.2,                                                          /* the principal's direct grip on the programme (was 1.5). Interim: his decisions (part, timing, stopping) cost little on their own, so this keeps him meaningful until he also chooses drivers and money (next phase); then lower it */
+  /* Principal: when to stop and when to bring the package. Chance of the right call at rating 0 and 100. */
+  stopRight: [0.25, 0.95], stopFalse: [0.12, 0.01],                  /* shelves the project when he should / when he should not */
+  timeSd: [0.55, 0.10], suitSee: [0.4, 0.9],                         /* sd of his sense of timing; chance he notices a circuit that suits the part */
+  regAlert: [0.2, 0.95], regBonus: 0.10,                             /* chance he prepares for next year's rules; effect on the team's readiness */
+  judgeRating: 25                                                    /* rating points of error when he judges a candidate, at the weakest principal */
 };
 
 function leadRating(kind, m) { var r = LEAD.rng[kind]; return Math.round(clamp((m - r[0]) / (r[1] - r[0]) * 100, 0, 100)); }
@@ -39,6 +48,15 @@ function leadFeedback(S, t) {
   return fb.length > 1 ? 0.6 * fb[0] + 0.4 * fb[1] : fb[0];
 }
 function leadFbGain(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbGain; }
+function leadLerp(pair, rating) { return pair[0] + (pair[1] - pair[0]) * clamp(rating, 0, 100) / 100; }
+/* the director's effect on one package: a gain factor (hit / normal / miss) and a failure multiplier */
+function leadPackage(S, t) {
+  var r = leadRating('td', t.dev.td), hit = leadLerp(LEAD.hit, r), miss = leadLerp(LEAD.miss, r), u = rnd();
+  return { q: u < hit ? LEAD.hitMul : u < hit + miss ? LEAD.missMul : 1, fail: leadLerp(LEAD.failTD, r) };
+}
+function leadTPRating(t) { return leadRating('tp', t.dev.tp.skill); }
+/* does a good principal make the call? chance by rating */
+function leadCall(pair, t) { return rnd() < leadLerp(pair, leadTPRating(t)); }
 
 /* what the principal and the director each get right, as probabilities (also shown in the story pack) */
 /* chance of picking the best part for a given judgement error (measured: 400 draws over 160 real team states) */
@@ -90,26 +108,42 @@ function leadRoom(S, t, kind) {
 function leadScore(S, t, c, offer, ask, rankP, n, N) {
   return offer / ask + 0.03 * t.prestige + 0.35 * (1 - (rankP - 1) / Math.max(1, n - 1)) + (c.from === t.id ? 0.25 * (c.p.loy == null ? 0.5 : c.p.loy) : 0) + hgauss(t.id + c.p.name + N) * 0.08;
 }
+/* Two-sided matching (like a draft where both sides choose).
+   Each open team ranks the candidates by what it thinks their rating is: its own principal's eye is not perfect (a weak principal can rank a mediocre
+   director above a great one). The team proposes to its favourite it can afford; a candidate keeps the offer he likes best (pay, prestige, competitiveness,
+   loyalty) and turns the rest down; those teams try their next choice. A second pass fills any vacancy that is left, at a lower pay if it must. */
 function leadFill(S, N, kind, pool, open, rankP) {
   var n = S.teams.length, out = [];
   var rate = function (c) { return leadRating(kind, c.p.skill); };
-  pool.sort(function (a, b) { return rate(b) - rate(a); });
+  pool.forEach(function (c, i) { c.id = i; });
   var openIds = Object.keys(open).filter(function (k) { return open[k]; }).map(Number);
+  var judge = function (t) { return kind === 'td' && t.dev.tp ? LEAD.judgeRating * leadOdds(S, t).sTP : 8; };
+  var offerFor = function (t, c, relaxed) {
+    var ask = leadAsk(rate(c)), room = leadRoom(S, t, kind), offer = Math.min(ask * 1.1, Math.max(room, 0));
+    if (!relaxed && offer < ask * 0.8) return null;
+    if (relaxed) offer = Math.max(offer, ask * 0.7);
+    return { ask: ask, offer: offer };
+  };
   [false, true].forEach(function (relaxed) {
-    pool.slice().forEach(function (c) {
-      if (!openIds.length || c.done) return;
-      var r = rate(c), ask = leadAsk(r), best = null, bs = -1e9;
-      openIds.forEach(function (id) {
-        var t = S.teams[id], room = leadRoom(S, t, kind), offer = Math.min(ask * 1.1, Math.max(room, 0));
-        if (!relaxed && offer < ask * 0.8) return;
-        if (relaxed) offer = Math.max(offer, ask * 0.7);
-        var s = leadScore(S, t, c, offer, ask, rankP[id], n, N);
-        if (s > bs) { bs = s; best = { t: t, offer: offer }; }
-      });
-      if (!best) return;
-      c.done = true; openIds.splice(openIds.indexOf(best.t.id), 1); open[best.t.id] = 0;
-      out.push({ c: c, t: best.t, pay: Math.round(best.offer * 10) / 10 });
+    var free = openIds.filter(function (id) { return open[id]; });
+    if (!free.length) return;
+    var avail = pool.filter(function (c) { return !c.done; }), prefs = {}, idx = {}, held = {};
+    free.forEach(function (id) {
+      var sd = judge(S.teams[id]);
+      prefs[id] = avail.map(function (c) { return { c: c, v: rate(c) + gauss() * sd }; }).sort(function (a, b) { return b.v - a.v; }).map(function (x) { return x.c; });
+      idx[id] = 0;
     });
+    var queue = free.slice();
+    while (queue.length) {
+      var id = queue.shift(), t = S.teams[id];
+      while (idx[id] < prefs[id].length) {
+        var c = prefs[id][idx[id]++], o = offerFor(t, c, relaxed); if (!o) continue;
+        var sc = leadScore(S, t, c, o.offer, o.ask, rankP[id], n, N), h = held[c.id];
+        if (!h) { held[c.id] = { id: id, s: sc, o: o.offer }; break; }
+        if (sc > h.s) { queue.push(h.id); held[c.id] = { id: id, s: sc, o: o.offer }; break; }
+      }
+    }
+    Object.keys(held).forEach(function (cid) { var h = held[cid], c = pool[cid]; c.done = true; open[h.id] = 0; out.push({ c: c, t: S.teams[h.id], pay: Math.round(h.o * 10) / 10 }); });
   });
   return out;
 }
@@ -174,3 +208,17 @@ function leadMarket(S, N, ord) {
   });
   if (typeof setTargets === 'function') setTargets(S);
 }
+
+/* Should the principal shelve this season's project (stop developing the old car)? Two reasons: the season is lost, or new rules arrive next year.
+   A good principal makes the right call; a weak one often does not, and sometimes shelves for no reason. */
+function leadShelve(S, t, ranks, round, last) {
+  if (last || t.dev.banked) return false;
+  var behind = round >= seasonMilestone(S, 7) && ranks[t.id] - t.dev.target >= 3;
+  var rulesNext = typeof leadRulesNext === 'function' && leadRulesNext(S) && round >= seasonMilestone(S, 5);
+  if (rulesNext && !t.dev.regDecided) { t.dev.regDecided = true; t.dev.regReady = rnd() < leadLerp(LEAD.regAlert, leadTPRating(t)); if (t.dev.regReady) return true; }
+  if (behind) return leadCall(LEAD.stopRight, t);
+  /* a weak principal sometimes pulls the plug when he should not */
+  return round >= seasonMilestone(S, 7) && rnd() < leadLerp(LEAD.stopFalse, leadTPRating(t)) * 0.05;
+}
+/* new rules next season, either a major or a minor change */
+function leadRulesNext(S) { return S.regYear === S.season + 1 || (S.mode === 'pro' && S.regMinor === S.season + 1); }

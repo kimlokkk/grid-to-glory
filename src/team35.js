@@ -53,7 +53,7 @@ function tgBlueprint(t) {
   var P = {}, tiles = {};
   TG_PARTS.forEach(function (k) { P[k[0]] = tgPart(t, k[0]); });
   TG_PARTS.forEach(function (k) {
-    var p = P[k[0]], dev = S.rd === k[0];
+    var p = P[k[0]], dev = (typeof leadOn === 'function' && leadOn(S) && t.dev && t.dev.next ? t.dev.next : S.rd) === k[0];
     tiles[k[0]] = '<div class="tg-bp-tile ' + p.tone + (dev ? ' dev' : '') + '"><div class="tg-bp-tile-h">' + tgIco(k[0]) + '<span><b>' + k[1] + '</b><small>' + k[2] + '</small></span>' + (dev ? '<em>In dev</em>' : '') + '</div>' +
       '<div class="tg-bp-tile-v"><b>' + p.v + '</b><span>#' + p.rank + '<small> of ' + p.n + '</small></span></div><i><u style="width:' + clamp(p.v, 0, 100) + '%"></u></i>' +
       '<p>' + (p.rank === 1 ? 'Best on the grid' : '−' + p.gap + ' to ' + esc(p.best.short)) + '</p></div>';
@@ -75,11 +75,14 @@ function tgBlueprint(t) {
 /* ---------- R&D workshop ---------- */
 function tgWorkshop(t) {
   var ds = t.dev && typeof devStatus === 'function' ? devStatus(t) : null, tp = t.dev && t.dev.tp, pc = ds ? Math.min(100, Math.round(ds.prog / ds.th * 100)) : 0;
-  var h = '<section class="card team-panel tg-work">' + tgHead('R&amp;D workshop', 'Pick the focus', 'Your call');
+  var lead = typeof leadOn === 'function' && leadOn(S) && tp && t.dev.tdp;
+  var h = '<section class="card team-panel tg-work">' + (lead ? tgHead('R&amp;D workshop', 'Decided on the pit wall', 'Their call') : tgHead('R&amp;D workshop', 'Pick the focus', 'Your call'));
   h += '<div class="tg-rd">' + TG_PARTS.map(function (k) {
-    var p = tgPart(t, k[0]), on = S.rd === k[0];
+    var p = tgPart(t, k[0]), on = (lead ? (ds && ds.k) : S.rd) === k[0];
+    if (lead) return '<div class="tg-rd-btn ' + (on ? 'on' : '') + '" style="cursor:default">' + tgIco(k[0]) + '<b>' + k[1] + '</b><span>' + p.v + ' · #' + p.rank + '</span><em>' + (on ? 'Next package' : '') + '</em></div>';
     return '<button class="tg-rd-btn ' + (on ? 'on' : '') + (TG.pop === k[0] ? ' pop' : '') + '" data-act="rd" data-v="' + k[0] + '" aria-pressed="' + on + '">' + tgIco(k[0]) + '<b>' + k[1] + '</b><span>' + p.v + ' · #' + p.rank + '</span><em>' + (on ? 'In development' : 'Select') + '</em></button>';
   }).join('') + '</div>';
+  if (lead) h += '<p class="tg-note" style="margin:6px 0 10px">' + esc(tp.name) + ' (principal) decides what to build and when, advised by ' + esc(t.dev.tdp.name) + ' (technical director). You are a driver: your part is the feedback you give.</p>';
   if (ds) {
     h += '<div class="tg-next">' + tgRing(ds.banked ? 1 : pc / 100, ds.banked ? '—' : pc + '%', '', pc >= 100 ? 'good' : '') +
       '<div><small>Next upgrade</small><b>' + (ds.banked ? 'Switched to next year\'s car' : (RDNAME[ds.k] || 'New') + ' package') + '</b><p>' +

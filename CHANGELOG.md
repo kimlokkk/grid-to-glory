@@ -6,6 +6,7 @@
 - Director quality is the person's rating (0 to 100 = x0.8 to x1.2). The old winter random walk of the team's director value (`dev2.js` devWinter, sd 0.12 a year, 25 rating points a year on average) is skipped when on; ratings drift about 1.5 points a year in the market.
 - Principal decides, director advises (`leadPickPart`): the best part is judged by the principal and the director with an error that falls with rating (log-normal noise, calibrated to the B3 probabilities), so mistakes are near misses, not maxed parts; overrule stories and walk-outs; "Right calls" on the team profile and in the Story pack.
 - Staff market (`leadMarket`): asking salary by rating, offers scored on pay, prestige, competitiveness and loyalty, salary limited by what the team can pay, buy-out poaching, retirement, walk-out when overruled, principals re-signed 78% of the time.
+- Director builds by probability (`leadPackage`): hit / normal / miss chances and failure multiplier by rating, instead of a straight multiplier. The principal's direct effect on gain is `tpG` 2.2 (interim); he decides when to shelve a lost season (`leadShelve`), prepares for next year's rules (`regReady`, softens `regPrep`), has a timing error in `devThresholdLead`, and judges candidates in the two-sided market (`leadFill`). The driver R&D focus override is gone while Leadership is on.
 - Team feedback (both drivers) replaces the player-only driver feedback multiplier; applies to every team; also lowers upgrade failure slightly.
 - `qa/leadership.js`.
 

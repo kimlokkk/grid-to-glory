@@ -6279,16 +6279,17 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
     k = PARTS[ki];
   }
   var mine = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id;
-  if (mine && S.rd && rnd() < 0.75) k = S.rd;                                    /* pasukan pemain ikut fokus R&D pilihan */
+  if (!lead && mine && S.rd && rnd() < 0.75) k = S.rd;                          /* pasukan pemain ikut fokus R&D pilihan (Leadership: the principal and director decide, not the driver) */
   if (opt && opt.k) k = opt.k;
   var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * DEV.staffK);
   if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / 600;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }
   if (opt && opt.fm) fail *= opt.fm;
+  var lp = lead ? leadPackage(S, t) : null; if (lp) fail *= lp.fail;
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
-  else gain = size * bud * t.dev.td * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
+  else gain = size * bud * (lp ? lp.q : t.dev.td) * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, lp ? LEAD.tpG : DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
   if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
   else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
@@ -6306,7 +6307,7 @@ DEV.rate = 0.45;     /* kemajuan purata / pusingan (1.5 = satu pakej biasa) */
 DEV.std = 1.5;
 function suitPart(c, k) { if (!c) return false; return k === 'engine' ? c.pw >= 0.55 : (k === 'aero' || k === 'chassis') ? c.pw <= 0.42 : false; }
 function pickPart(S, t, tops) {
-  if (typeof leadOn === 'function' && leadOn(S)) { var kk = leadPickPart(S, t, tops), mn = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id; if (mn && S.rd && rnd() < 0.75) kk = S.rd; return kk; }
+  if (typeof leadOn === 'function' && leadOn(S)) return leadPickPart(S, t, tops);
   var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
   var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
   while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
@@ -6321,18 +6322,27 @@ function devThreshold(S, t, rk, nextC) {
   if (suitPart(nextC, t.dev.next)) th -= 0.4;                                  /* litar depan sesuai */
   return clamp(th + (t.dev.thN || 0), 0.8, 2.6);
 }
+/* Leadership: the principal's sense of timing. A good one notices a suiting circuit and rarely mistimes the package. */
+function devThresholdLead(S, t, rk, nextC) {
+  var tp = t.dev.tp, th = DEV.std, tr = leadTPRating(t);
+  if (tp.amb >= 2) th -= 0.3; else if (tp.amb <= 0) th += 0.35;
+  if (rk - t.dev.target >= 2) th -= 0.4; else if (t.dev.target - rk >= 2) th += 0.3;
+  if (suitPart(nextC, t.dev.next) && rnd() < leadLerp(LEAD.suitSee, tr)) th -= 0.4;
+  return clamp(th + (t.dev.thN || 0), 0.8, 2.6);
+}
 function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-'round' (1..) siap */
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
-  var nextC = S.cal && round < S.cal.length ? circuitFor(S, S.cal[round]) : null, last = round >= seasonRounds(S);
+  var nextC = S.cal && round < S.cal.length ? circuitFor(S, S.cal[round]) : null, last = round >= seasonRounds(S), lead = typeof leadOn === 'function' && leadOn(S);
   S.teams.forEach(function (t) {
     var d = t.dev;
-    if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * 0.2; }
+    if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * (lead ? leadLerp(LEAD.timeSd, leadTPRating(t)) : 0.2); }
     if (d.banked) return;
     d.prog = (d.prog || 0) + DEV.rate * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
     /* TP bijak tutup projek musim ni bila jauh dari sasaran, simpan untuk kereta tahun depan */
-    if (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
+    var shelve = lead ? leadShelve(S, t, ranks, round, last) : (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0);
+    if (shelve) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
     if (last) return;                                                          /* pusingan akhir: baki dibawa ke musim sejuk */
-    var th = devThreshold(S, t, ranks[t.id], nextC);
+    var th = lead ? devThresholdLead(S, t, ranks[t.id], nextC) : devThreshold(S, t, ranks[t.id], nextC);
     if (d.prog >= th) {
       var p = d.prog, rush = p < 1.2, big = p >= 2.0, sz = DEV.pkg * p / DEV.std;
       if (typeof finAvail === 'function' && t.fin) {
@@ -6341,7 +6351,7 @@ function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-
         var af = Math.min(1, av / cost0); sz *= af; t.fin.cash -= cost0 * af; t.fin.spent += cost0 * af;
       }
       devPackage(S, t, sz, ranks, tops, log, { k: d.next, fm: rush ? 1.45 : big ? 0.75 : 1, rush: rush, big: big });
-      d.prog = 0; d.rum = false; d.next = pickPart(S, t, tops); d.thN = gauss() * 0.2;
+      d.prog = 0; d.rum = false; d.next = pickPart(S, t, tops); d.thN = gauss() * (lead ? leadLerp(LEAD.timeSd, leadTPRating(t)) : 0.2);
     } else if (!d.rum && d.prog >= th - DEV.rate * 1.1 && log) { d.rum = true; log.push({ t: t.id, rumour: true, k: d.next, big: th >= 1.9 }); }
   });
 }
@@ -6384,7 +6394,7 @@ function devWinter(S, log) {
     if (pro) { S.regMinor = regNextMinor(S, kind); S.regLast = { kind: kind, season: S.season + 1 }; }
     if (log) log.push({ reg: true, kind: kind });
   }
-  S.teams.forEach(function (t) { var wsz = DEV.winter + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.rum = false; t.dev.next = null; });
+  S.teams.forEach(function (t) { var wsz = DEV.winter + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.regReady = false; t.dev.regDecided = false; t.dev.rum = false; t.dev.next = null; });
   if (typeof e4Winter === 'function') e4Winter(S, log);
   if (DEV.meanKeep) PARTS.forEach(function (k) { var d = S.target[k] - leagueMean(S, k); S.teams.forEach(function (t) { t.car[k] = clamp(t.car[k] + d, 45, 99); }); });
   if (DEV.sdTarget) {
@@ -6400,7 +6410,7 @@ function devWinter(S, log) {
 /* Regulation changes (Pro): a dynasty drops after a major change; minor changes shuffle the leaders a little. Preparation softens the fall. */
 /* share of each car that is rebuilt on a regulation change (one source for the winter re-roll and the Garage Watch expectation) */
 function regMix(pro, kind) { return !pro ? DEV.regMix : kind === 'major' ? 0.6 : 0.3; }
-function regPrep(t) { return clamp(((t.prestige || 5) - 5) * 0.04 + ((t.dev && t.dev.td) || 1) - 1 + ((t.dev && t.dev.staff) || 1) - 1, -0.2, 0.35); }
+function regPrep(t) { return clamp(((t.prestige || 5) - 5) * 0.04 + ((t.dev && t.dev.td) || 1) - 1 + ((t.dev && t.dev.staff) || 1) - 1 + (t.dev && t.dev.regReady ? LEAD.regBonus : 0), -0.2, 0.35); }
 function regBalance(S, kind, champId, lastId, before) {
   var champ = S.teams[champId], last = S.teams[lastId];
   function crew(t) { var ds = S.drivers.filter(function (d) { return d.team === t.id; }); return ds.length ? ds.reduce(function (a, d) { return a + baseOverall(d); }, 0) / ds.length : 70; }
@@ -10921,6 +10931,8 @@ var CHANGELOG = [
   { v: '2.6.0', d: 'Leadership', date: '23 Nov 2026', l: [
     "Technical directors now keep their quality. Until now a team's director quality was redrawn at random every winter whoever the person was, so the name on the door meant nothing. A director is now a real person with a rating (0 to 100) that moves only a little each year, so a strong one stays strong and a weak one stays weak, on any team.",
     "The principal decides, the director advises. Every upgrade decision is right with a chance that depends on both ratings and on how well the drivers explain the car. A weak principal is wrong more often, but in a believable way: he mixes up two parts that are close, he never pours a package into a part that is already maxed. He also leans on the director more, and when he overrules a director who was right, the better part loses out. Look for \"Right calls\" on a team's profile (Performance tab) and for stories like \"X overrules Y\". A director who is overruled too often can walk out.",
+    "A good director builds better and fails less, by chance. A strong one has a much better chance of a hit package and a lower chance of a failed one; a weak one the reverse. Nothing is guaranteed, so a weak director can still land a good package.",
+    "The principal runs the programme: he decides what to build, when to bring it, when to give up on a lost season and when to prepare for new rules next year, and a good one gets these right far more often than a weak one. He also judges which director to hire, and a weak principal can pick the wrong one. You, as a driver, no longer pick the R&D focus: the Team tab now shows what the pit wall has decided.",
     "A real staff market. Directors and principals have asking salaries, and they choose the best offer on pay, team prestige, how competitive the car is and loyalty. Pay comes out of the team's budget, so the best director is a real trade-off. Rich teams still land more of them, but for a reason. A team can buy a director out of his contract for a fee; look for the stories.",
     "Driver feedback now helps every team, not only yours. The two drivers' feedback sets how well the team's upgrades work (better advice, fewer failed packages). Your own team keeps a similar gain overall.",
     "Existing careers switch over without anyone changing strength. A save with nothing played yet this season switches straight away; a save part-way through a season finishes it as before and switches at the start of the next season."
@@ -13342,7 +13354,7 @@ function tgBlueprint(t) {
   var P = {}, tiles = {};
   TG_PARTS.forEach(function (k) { P[k[0]] = tgPart(t, k[0]); });
   TG_PARTS.forEach(function (k) {
-    var p = P[k[0]], dev = S.rd === k[0];
+    var p = P[k[0]], dev = (typeof leadOn === 'function' && leadOn(S) && t.dev && t.dev.next ? t.dev.next : S.rd) === k[0];
     tiles[k[0]] = '<div class="tg-bp-tile ' + p.tone + (dev ? ' dev' : '') + '"><div class="tg-bp-tile-h">' + tgIco(k[0]) + '<span><b>' + k[1] + '</b><small>' + k[2] + '</small></span>' + (dev ? '<em>In dev</em>' : '') + '</div>' +
       '<div class="tg-bp-tile-v"><b>' + p.v + '</b><span>#' + p.rank + '<small> of ' + p.n + '</small></span></div><i><u style="width:' + clamp(p.v, 0, 100) + '%"></u></i>' +
       '<p>' + (p.rank === 1 ? 'Best on the grid' : '−' + p.gap + ' to ' + esc(p.best.short)) + '</p></div>';
@@ -13364,11 +13376,14 @@ function tgBlueprint(t) {
 /* ---------- R&D workshop ---------- */
 function tgWorkshop(t) {
   var ds = t.dev && typeof devStatus === 'function' ? devStatus(t) : null, tp = t.dev && t.dev.tp, pc = ds ? Math.min(100, Math.round(ds.prog / ds.th * 100)) : 0;
-  var h = '<section class="card team-panel tg-work">' + tgHead('R&amp;D workshop', 'Pick the focus', 'Your call');
+  var lead = typeof leadOn === 'function' && leadOn(S) && tp && t.dev.tdp;
+  var h = '<section class="card team-panel tg-work">' + (lead ? tgHead('R&amp;D workshop', 'Decided on the pit wall', 'Their call') : tgHead('R&amp;D workshop', 'Pick the focus', 'Your call'));
   h += '<div class="tg-rd">' + TG_PARTS.map(function (k) {
-    var p = tgPart(t, k[0]), on = S.rd === k[0];
+    var p = tgPart(t, k[0]), on = (lead ? (ds && ds.k) : S.rd) === k[0];
+    if (lead) return '<div class="tg-rd-btn ' + (on ? 'on' : '') + '" style="cursor:default">' + tgIco(k[0]) + '<b>' + k[1] + '</b><span>' + p.v + ' · #' + p.rank + '</span><em>' + (on ? 'Next package' : '') + '</em></div>';
     return '<button class="tg-rd-btn ' + (on ? 'on' : '') + (TG.pop === k[0] ? ' pop' : '') + '" data-act="rd" data-v="' + k[0] + '" aria-pressed="' + on + '">' + tgIco(k[0]) + '<b>' + k[1] + '</b><span>' + p.v + ' · #' + p.rank + '</span><em>' + (on ? 'In development' : 'Select') + '</em></button>';
   }).join('') + '</div>';
+  if (lead) h += '<p class="tg-note" style="margin:6px 0 10px">' + esc(tp.name) + ' (principal) decides what to build and when, advised by ' + esc(t.dev.tdp.name) + ' (technical director). You are a driver: your part is the feedback you give.</p>';
   if (ds) {
     h += '<div class="tg-next">' + tgRing(ds.banked ? 1 : pc / 100, ds.banked ? '—' : pc + '%', '', pc >= 100 ? 'good' : '') +
       '<div><small>Next upgrade</small><b>' + (ds.banked ? 'Switched to next year\'s car' : (RDNAME[ds.k] || 'New') + ' package') + '</b><p>' +
@@ -15698,7 +15713,16 @@ var LEAD = {
   drift: 1.5, retireAge: 62,
   ask: [2, 10],                                                      /* asking salary ($M) at rating 0 and 100 */
   poach: 0.25, quitOver: 3,
-  keepTP: 0.78                                                       /* principals re-signed without a market */
+  keepTP: 0.78,                                                      /* principals re-signed without a market */
+  /* Director: build quality by probability, never by certainty. A package can be a hit (bigger gain) or a miss (smaller), and fails more or less often. */
+  hit: [0.06, 0.54], miss: [0.54, 0.06], hitMul: 1.55, missMul: 0.45, // chance of a hit / a miss at rating 0 and 100
+  failTD: [1.35, 0.65],                                              /* failure chance multiplier at rating 0 and 100 */
+  tpG: 2.2,                                                          /* the principal's direct grip on the programme (was 1.5). Interim: his decisions (part, timing, stopping) cost little on their own, so this keeps him meaningful until he also chooses drivers and money (next phase); then lower it */
+  /* Principal: when to stop and when to bring the package. Chance of the right call at rating 0 and 100. */
+  stopRight: [0.25, 0.95], stopFalse: [0.12, 0.01],                  /* shelves the project when he should / when he should not */
+  timeSd: [0.55, 0.10], suitSee: [0.4, 0.9],                         /* sd of his sense of timing; chance he notices a circuit that suits the part */
+  regAlert: [0.2, 0.95], regBonus: 0.10,                             /* chance he prepares for next year's rules; effect on the team's readiness */
+  judgeRating: 25                                                    /* rating points of error when he judges a candidate, at the weakest principal */
 };
 
 function leadRating(kind, m) { var r = LEAD.rng[kind]; return Math.round(clamp((m - r[0]) / (r[1] - r[0]) * 100, 0, 100)); }
@@ -15722,6 +15746,15 @@ function leadFeedback(S, t) {
   return fb.length > 1 ? 0.6 * fb[0] + 0.4 * fb[1] : fb[0];
 }
 function leadFbGain(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbGain; }
+function leadLerp(pair, rating) { return pair[0] + (pair[1] - pair[0]) * clamp(rating, 0, 100) / 100; }
+/* the director's effect on one package: a gain factor (hit / normal / miss) and a failure multiplier */
+function leadPackage(S, t) {
+  var r = leadRating('td', t.dev.td), hit = leadLerp(LEAD.hit, r), miss = leadLerp(LEAD.miss, r), u = rnd();
+  return { q: u < hit ? LEAD.hitMul : u < hit + miss ? LEAD.missMul : 1, fail: leadLerp(LEAD.failTD, r) };
+}
+function leadTPRating(t) { return leadRating('tp', t.dev.tp.skill); }
+/* does a good principal make the call? chance by rating */
+function leadCall(pair, t) { return rnd() < leadLerp(pair, leadTPRating(t)); }
 
 /* what the principal and the director each get right, as probabilities (also shown in the story pack) */
 /* chance of picking the best part for a given judgement error (measured: 400 draws over 160 real team states) */
@@ -15773,26 +15806,42 @@ function leadRoom(S, t, kind) {
 function leadScore(S, t, c, offer, ask, rankP, n, N) {
   return offer / ask + 0.03 * t.prestige + 0.35 * (1 - (rankP - 1) / Math.max(1, n - 1)) + (c.from === t.id ? 0.25 * (c.p.loy == null ? 0.5 : c.p.loy) : 0) + hgauss(t.id + c.p.name + N) * 0.08;
 }
+/* Two-sided matching (like a draft where both sides choose).
+   Each open team ranks the candidates by what it thinks their rating is: its own principal's eye is not perfect (a weak principal can rank a mediocre
+   director above a great one). The team proposes to its favourite it can afford; a candidate keeps the offer he likes best (pay, prestige, competitiveness,
+   loyalty) and turns the rest down; those teams try their next choice. A second pass fills any vacancy that is left, at a lower pay if it must. */
 function leadFill(S, N, kind, pool, open, rankP) {
   var n = S.teams.length, out = [];
   var rate = function (c) { return leadRating(kind, c.p.skill); };
-  pool.sort(function (a, b) { return rate(b) - rate(a); });
+  pool.forEach(function (c, i) { c.id = i; });
   var openIds = Object.keys(open).filter(function (k) { return open[k]; }).map(Number);
+  var judge = function (t) { return kind === 'td' && t.dev.tp ? LEAD.judgeRating * leadOdds(S, t).sTP : 8; };
+  var offerFor = function (t, c, relaxed) {
+    var ask = leadAsk(rate(c)), room = leadRoom(S, t, kind), offer = Math.min(ask * 1.1, Math.max(room, 0));
+    if (!relaxed && offer < ask * 0.8) return null;
+    if (relaxed) offer = Math.max(offer, ask * 0.7);
+    return { ask: ask, offer: offer };
+  };
   [false, true].forEach(function (relaxed) {
-    pool.slice().forEach(function (c) {
-      if (!openIds.length || c.done) return;
-      var r = rate(c), ask = leadAsk(r), best = null, bs = -1e9;
-      openIds.forEach(function (id) {
-        var t = S.teams[id], room = leadRoom(S, t, kind), offer = Math.min(ask * 1.1, Math.max(room, 0));
-        if (!relaxed && offer < ask * 0.8) return;
-        if (relaxed) offer = Math.max(offer, ask * 0.7);
-        var s = leadScore(S, t, c, offer, ask, rankP[id], n, N);
-        if (s > bs) { bs = s; best = { t: t, offer: offer }; }
-      });
-      if (!best) return;
-      c.done = true; openIds.splice(openIds.indexOf(best.t.id), 1); open[best.t.id] = 0;
-      out.push({ c: c, t: best.t, pay: Math.round(best.offer * 10) / 10 });
+    var free = openIds.filter(function (id) { return open[id]; });
+    if (!free.length) return;
+    var avail = pool.filter(function (c) { return !c.done; }), prefs = {}, idx = {}, held = {};
+    free.forEach(function (id) {
+      var sd = judge(S.teams[id]);
+      prefs[id] = avail.map(function (c) { return { c: c, v: rate(c) + gauss() * sd }; }).sort(function (a, b) { return b.v - a.v; }).map(function (x) { return x.c; });
+      idx[id] = 0;
     });
+    var queue = free.slice();
+    while (queue.length) {
+      var id = queue.shift(), t = S.teams[id];
+      while (idx[id] < prefs[id].length) {
+        var c = prefs[id][idx[id]++], o = offerFor(t, c, relaxed); if (!o) continue;
+        var sc = leadScore(S, t, c, o.offer, o.ask, rankP[id], n, N), h = held[c.id];
+        if (!h) { held[c.id] = { id: id, s: sc, o: o.offer }; break; }
+        if (sc > h.s) { queue.push(h.id); held[c.id] = { id: id, s: sc, o: o.offer }; break; }
+      }
+    }
+    Object.keys(held).forEach(function (cid) { var h = held[cid], c = pool[cid]; c.done = true; open[h.id] = 0; out.push({ c: c, t: S.teams[h.id], pay: Math.round(h.o * 10) / 10 }); });
   });
   return out;
 }
@@ -15857,4 +15906,18 @@ function leadMarket(S, N, ord) {
   });
   if (typeof setTargets === 'function') setTargets(S);
 }
+
+/* Should the principal shelve this season's project (stop developing the old car)? Two reasons: the season is lost, or new rules arrive next year.
+   A good principal makes the right call; a weak one often does not, and sometimes shelves for no reason. */
+function leadShelve(S, t, ranks, round, last) {
+  if (last || t.dev.banked) return false;
+  var behind = round >= seasonMilestone(S, 7) && ranks[t.id] - t.dev.target >= 3;
+  var rulesNext = typeof leadRulesNext === 'function' && leadRulesNext(S) && round >= seasonMilestone(S, 5);
+  if (rulesNext && !t.dev.regDecided) { t.dev.regDecided = true; t.dev.regReady = rnd() < leadLerp(LEAD.regAlert, leadTPRating(t)); if (t.dev.regReady) return true; }
+  if (behind) return leadCall(LEAD.stopRight, t);
+  /* a weak principal sometimes pulls the plug when he should not */
+  return round >= seasonMilestone(S, 7) && rnd() < leadLerp(LEAD.stopFalse, leadTPRating(t)) * 0.05;
+}
+/* new rules next season, either a major or a minor change */
+function leadRulesNext(S) { return S.regYear === S.season + 1 || (S.mode === 'pro' && S.regMinor === S.season + 1); }
 </script>
