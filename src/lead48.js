@@ -24,7 +24,12 @@ var LEAD = {
   stopRight: [0.25, 0.95], stopFalse: [0.12, 0.01],                  /* shelves the project when he should / when he should not */
   timeSd: [0.55, 0.10], suitSee: [0.4, 0.9],                         /* sd of his sense of timing; chance he notices a circuit that suits the part */
   regAlert: [0.2, 0.95], regBonus: 0.10,                             /* chance he prepares for next year's rules; effect on the team's readiness */
-  judgeRating: 25                                                    /* rating points of error when he judges a candidate, at the weakest principal */
+  judgeRating: 25,                                                   /* rating points of error when he judges a candidate, at the weakest principal */
+  /* Principal choosing drivers and managing the money (draft in mkt12.js). */
+  eyeOvr: [3.0, 0.5], eyePot: [1.7, 0.7],                            /* error in judging a driver's ability / potential, at rating 0 and 100 (OVR points, multiplier on the potential error) */
+  planMiss: 0.30,                                                    /* chance a rating-0 principal misreads the team's situation (win now / build / rebuild) */
+  capBias: [0.08, 0.0], capSd: [0.14, 0.03], strict: [0.45, 1.5],    /* payroll limit: a weak principal overspends and is lax about it; a good one sticks to it */
+  payMul: [1.10, 0.92]                                               /* what he pays a driver relative to the going rate: a good negotiator saves money, a weak one overpays */
 };
 
 function leadRating(kind, m) { var r = LEAD.rng[kind]; return Math.round(clamp((m - r[0]) / (r[1] - r[0]) * 100, 0, 100)); }
@@ -222,3 +227,10 @@ function leadShelve(S, t, ranks, round, last) {
 }
 /* new rules next season, either a major or a minor change */
 function leadRulesNext(S) { return S.regYear === S.season + 1 || (S.mode === 'pro' && S.regMinor === S.season + 1); }
+
+/* the payroll this principal is prepared to carry, relative to the usual limit: weak ones drift above it */
+function leadCapMul(t, N, tr) { return 1 + leadLerp(LEAD.capBias, tr) + leadLerp(LEAD.capSd, tr) * hgauss(t.id + '|cap|' + N); }
+
+/* Pro market: how the principal sees a driver (error in OVR points, same for a given team and driver every time) and what he pays him */
+function leadEye(g, t, d) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? leadLerp(LEAD.eyeOvr, leadTPRating(t)) * hgauss(t.id + '|' + (d.uid || d.name) + '|' + g.season) : 0; }
+function leadPayMul(g, t) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? leadLerp(LEAD.payMul, leadTPRating(t)) : 1; }

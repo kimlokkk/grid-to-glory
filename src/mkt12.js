@@ -4,7 +4,7 @@ function hgauss(s) { return (hashS(s + 'a') + hashS(s + 'b') + hashS(s + 'c') + 
 /* kualiti scout team = kualiti staf teknikal (0..1) */
 function scoutQ(t) { var dv = t.dev || {}; return clamp(((dv.staff == null ? 1 : dv.staff) - 0.8) / 0.4, 0, 1); }
 /* anggaran POTENSI oleh sesebuah team: konsisten setiap musim, makin salah kalau scout lemah */
-function estPot(t, d, N) { return clamp(d.pot + hgauss(t.id + '|' + d.name + '|' + N) * (7 - 5 * scoutQ(t)), 60, 99); }
+function estPot(t, d, N, m) { return clamp(d.pot + hgauss(t.id + '|' + d.name + '|' + N) * (7 - 5 * scoutQ(t)) * (m == null ? 1 : m), 60, 99); }
 /* potensi yang orang ramai nampak (media): potensi sebenar + hype; hype susut bila bakat tu dah banyak berlumba */
 function scoutPot(d) { return clamp(d.pot + (d.hy || 0), 60, 99); }
 function teamPolicy(t) { var a = t.dev && t.dev.acad != null ? t.dev.acad : 0.5; return a >= 0.62 ? 'Develops its own talent' : a <= 0.38 ? 'Buys proven talent' : 'Balanced approach'; }
@@ -47,17 +47,19 @@ function mktPlans(S) {
     else if (rk[t.id] <= 4 || (rk[t.id] <= 7 && amb >= 2)) pl = 'win';
     else if (rk[t.id] >= 8) pl = 'rebuild';
     else pl = 'build';
+    if (typeof leadOn === 'function' && leadOn(S, S.season + 1) && t.dev && t.dev.tp && hashS(t.id + '|plan|' + S.season) < (1 - leadTPRating(t) / 100) * LEAD.planMiss) pl = ({ win: 'build', build: rk[t.id] <= 5 ? 'win' : 'rebuild', rebuild: 'build', cut: 'build' })[pl] || pl;   /* Leadership: a weak principal misreads where the team stands */
     t.plan = pl;
   });
 }
 /* nilai calon di mata sesebuah team */
 function mktScore(S, t, c, N, wPot) {
-  var d = c.d, o = ovr(d) + hgauss(t.id + '|o|' + d.name + '|' + N) * 0.8, sc = o + evaluationMarketBonus(S, d), PL = PLAN[t.plan] || PLAN.build;
-  if (d.age < (d.pk || 28)) { var pe = estPot(t, d, N); sc += wPot * PL.pot * Math.max(0, pe - ovr(d)) * clamp((28 - d.age) / 6, 0.3, 1.2); }
+  var ld = typeof leadOn === 'function' && leadOn(S, N) && t.dev && t.dev.tp, tr = ld ? leadTPRating(t) : 0;
+  var d = c.d, o = ovr(d) + hgauss(t.id + '|o|' + d.name + '|' + N) * (ld ? leadLerp(LEAD.eyeOvr, tr) : 0.8), sc = o + evaluationMarketBonus(S, d), PL = PLAN[t.plan] || PLAN.build;
+  if (d.age < (d.pk || 28)) { var pe = estPot(t, d, N, ld ? leadLerp(LEAD.eyePot, tr) : 1); sc += wPot * PL.pot * Math.max(0, pe - ovr(d)) * clamp((28 - d.age) / 6, 0.3, 1.2); }
   if (c.from === t.id) sc += d.sk ? -9 : (d.miss || 0) >= 2 ? -4 : d.obj && d.obj.res === 'met' ? 4.5 : 3;
   if (c.k === 'jr' || c.k === 'new') { if (d.acad === t.id) sc += (1.5 + 4 * (t.dev.acad || 0.5)) * (0.6 + 0.4 * PL.ac); else if (d.acad != null) sc -= 5; }
   if (d.age >= 36) sc -= 4 * PL.old; else if (d.age >= 34) sc -= 2 * PL.old; else if (d.age >= 31 && PL.old > 1) sc -= 1.5;
-  if (MKTCTX && t.fin) { var proj = (MKTCTX.pay[t.id] || 0) + mktPay(c), cap = finPayCap(t); if (proj > cap) sc -= (proj - cap) * 0.35 * PL.cap; if (PL.cap > 1) sc -= mktPay(c) * 0.12; }   /* tak mampu gaji */
+  if (MKTCTX && t.fin) { var proj = (MKTCTX.pay[t.id] || 0) + mktPay(c), cap = finPayCap(t); if (ld) { cap *= leadCapMul(t, N, tr); } if (proj > cap) sc -= (proj - cap) * 0.35 * PL.cap * (ld ? leadLerp(LEAD.strict, tr) : 1); if (PL.cap > 1) sc -= mktPay(c) * 0.12; }   /* tak mampu gaji */
   return sc;
 }
 var MKTCTX = null;

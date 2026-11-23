@@ -57,6 +57,11 @@ const path = require('node:path');
       /* 4e. the driver no longer steers R&D */
       { UI.screen = 'hub'; UI.tab = 'team'; render(); const on = document.querySelectorAll('[data-act=rd]').length; const keep = S.lead; S.lead = { v: 1, from: 99 }; render(); const off = document.querySelectorAll('[data-act=rd]').length; S.lead = keep; render();
         ck('with Leadership the R&D focus buttons are gone; without it they stay', on === 0 && off === 4, { on, off }); }
+      /* 4f. principal and drivers/money */
+      { const W = S.teams[6], d0 = S.drivers.find(x => x.team !== W.id); const eye = (r) => { W.dev.tp.skill = leadMul('tp', r); let ss = 0, N = 60; for (let i = 0; i < N; i++) ss += Math.pow(leadEye(S, W, { uid: 'u' + i }), 2); return Math.sqrt(ss / N); };
+        const pay = (r) => { W.dev.tp.skill = leadMul('tp', r); return leadPayMul(S, W); };
+        ck('a weak principal misjudges drivers more and pays more for them; a good one the reverse', eye(0) > eye(100) * 2.5 && pay(0) > 1.05 && pay(100) < 0.97, [eye(0), eye(100), pay(0), pay(100)]);
+        const k = S.lead; S.lead = { v: 1, from: 99 }; ck('with the gate off these never apply', leadEye(S, W, d0) === 0 && leadPayMul(S, W) === 1); S.lead = k; }
       /* 5. feedback reaches every team */
       const aiT = S.teams.find(t => S.drivers[S.pi].team !== t.id), ds = S.drivers.filter(x => x.team === aiT.id);
       ds.forEach(x => x.fb = 95); const hi = leadFbGain(S, aiT); ds.forEach(x => x.fb = 55); const lo = leadFbGain(S, aiT);

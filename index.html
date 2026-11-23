@@ -4819,14 +4819,14 @@ function worldQualifiesF1(d){return d.age>=18&&(d.originLeague==='initial-f2'||(
 /* Pay drivers: poorer F1 teams weigh sponsor backing against raw rating. */
 function worldPayBonus(t,d){return t.prestige<=5?(d.pay||0)*(6-t.prestige)*3.2:0;}
 function worldRankCandidate(d){var last=(d.worldHistory||[]).slice(-1)[0];return rating(d)+Math.max(0,(d.pot||rating(d))-rating(d))*.15+(last&&last.pos?Math.max(0,5-last.pos)*.8:0);}
-function worldAssign(game,league,drivers,teams,startYear){var N=startYear==null?game.season+1:startYear,previous={},used={},nums={},player=progressionPlayer(game);drivers.forEach(function(d,i){previous[d.uid]=d.teamKey;d.id=i;d.vac=false;d.teamKey=league==='f1'?'f1:'+d.team:teams[d.team].key;if(d.uid===game.playerUid||league===leagueOf(game)&&game.sit&&d.stand){game.pi=i;nums[d.num]=true;}});drivers.forEach(function(d){if(d.uid!==game.playerUid&&!(league===leagueOf(game)&&game.sit&&d.stand)){if(!d.num||nums[d.num]){var n=2;while(nums[n])n++;d.num=n;}nums[d.num]=true;}d.code=mkCode(d.name,used);d.pts=0;d.wins=0;d.pods=0;d.fp=[];d.perf={n:0,s:0};if(d.uid!==game.playerUid&&(!d.con||d.con.end<N||previous[d.uid]!==d.teamKey)){var length=league==='f1'?(d.age>=35||teams[d.team].prestige<=3?1:2+Math.floor(rnd()*2)):1;d.con={len:length,end:N+length-1,pay:league==='f1'?payFor(ovr(d),.75):league==='f2'?.6:.1};}});}
+function worldAssign(game,league,drivers,teams,startYear){var N=startYear==null?game.season+1:startYear,previous={},used={},nums={},player=progressionPlayer(game);drivers.forEach(function(d,i){previous[d.uid]=d.teamKey;d.id=i;d.vac=false;d.teamKey=league==='f1'?'f1:'+d.team:teams[d.team].key;if(d.uid===game.playerUid||league===leagueOf(game)&&game.sit&&d.stand){game.pi=i;nums[d.num]=true;}});drivers.forEach(function(d){if(d.uid!==game.playerUid&&!(league===leagueOf(game)&&game.sit&&d.stand)){if(!d.num||nums[d.num]){var n=2;while(nums[n])n++;d.num=n;}nums[d.num]=true;}d.code=mkCode(d.name,used);d.pts=0;d.wins=0;d.pods=0;d.fp=[];d.perf={n:0,s:0};if(d.uid!==game.playerUid&&(!d.con||d.con.end<N||previous[d.uid]!==d.teamKey)){var length=league==='f1'?(d.age>=35||teams[d.team].prestige<=3?1:2+Math.floor(rnd()*2)):1;d.con={len:length,end:N+length-1,pay:league==='f1'?payFor(ovr(d),.75)*(typeof leadPayMul==='function'&&teams[d.team]?leadPayMul(game,teams[d.team]):1):league==='f2'?.6:.1};}});}
 function worldNewSeason(game,log){
  var w=game.world;if(w.advanced===game.season)return;worldPrepareAnnual(game);marketApplyAI(game);game.mkt={s:game.season+1,moves:[],staff:[],gold:null,seen:false};var active=leagueOf(game),views={};['f1','f2','f3'].forEach(function(l){views[l]=worldView(game,l);});
  var player=progressionPlayer(game),retiring={};['f1','f2','f3'].forEach(function(l){var v=views[l];v.drivers.concat(v.reserves).forEach(function(d){if(d.uid===game.playerUid)return;if(l!==active||v.reserves.indexOf(d)>=0)d.age++;if(d.age>=AGEING.retireAt||l==='f1'&&d.age>=34&&rnd()<.04*(d.age-33)){retiring[d.uid]=true;worldArchive(game,d,'Retired',l);return;}var last=(d.worldHistory||[]).slice(-1)[0];var team=d.team>=0?v.teams[d.team]:null,coaching=team&&team.ops?clamp(.9+team.ops.coaching*.2,.9,1.1):1;drvGrow(d,(last&&last.pos<=3?1.1:1)*coaching*(d.mentor&&d.mentor.season===game.season?1.03:1));d.fb=clamp(Math.round(d.fb+(d.age<30?.6:0)),40,99);});});
  var taken={},f1=views.f1,kept=[],pool=[];
  f1.drivers.concat(f1.reserves).forEach(function(d){if(retiring[d.uid])return;if(d.uid===game.playerUid||f1.drivers.indexOf(d)>=0&&d.con&&d.con.end>=game.season+1)kept.push(d);else pool.push(d);});
  var candidates=views.f2.drivers.concat(views.f2.reserves).filter(function(d){return d.uid!==game.playerUid&&!retiring[d.uid]&&worldQualifiesF1(d);});pool=pool.concat(candidates);
- var final=[];f1.teams.slice().sort(function(a,b){return teamPower(b)+b.prestige*.2-teamPower(a)-a.prestige*.2;}).forEach(function(t){var here=kept.filter(function(d){return d.team===t.id;}).sort(function(a,b){return (b.uid===game.playerUid?999:worldRankCandidate(b))-(a.uid===game.playerUid?999:worldRankCandidate(a));});while(here.length>2)pool.push(here.pop());while(here.length<2){pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)+worldPayBonus(t,b)-worldRankCandidate(a)-(a.acad===t.id?1:0)-worldPayBonus(t,a);});var d=pool.shift();if(!d)throw new Error('No qualified F2/F1 candidate for an F1 vacancy');d.team=t.id;here.push(d);}here.forEach(function(d){taken[d.uid]=true;final.push(d);});});f1.drivers=final;
+ var final=[];f1.teams.slice().sort(function(a,b){return teamPower(b)+b.prestige*.2-teamPower(a)-a.prestige*.2;}).forEach(function(t){var here=kept.filter(function(d){return d.team===t.id;}).sort(function(a,b){return (b.uid===game.playerUid?999:worldRankCandidate(b))-(a.uid===game.playerUid?999:worldRankCandidate(a));});while(here.length>2)pool.push(here.pop());while(here.length<2){pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)+worldPayBonus(t,b)+leadEye(game,t,b)-worldRankCandidate(a)-(a.acad===t.id?1:0)-worldPayBonus(t,a)-leadEye(game,t,a);});var d=pool.shift();if(!d)throw new Error('No qualified F2/F1 candidate for an F1 vacancy');d.team=t.id;here.push(d);}here.forEach(function(d){taken[d.uid]=true;final.push(d);});});f1.drivers=final;
  var spare=pool.filter(function(d){return !taken[d.uid];}).sort(function(a,b){return worldRankCandidate(b)-worldRankCandidate(a);});f1.reserves=spare.slice(0,6);f1.reserves.forEach(function(d){taken[d.uid]=true;d.team=-1;d.id=-1;});
  function fillJunior(l,from){var v=views[l],old=v.drivers.concat(v.reserves),next=[],release=[];old.forEach(function(d){if(taken[d.uid]||retiring[d.uid])return;if(d.uid===game.playerUid||d.age<=(l==='f2'?24:21)&&d.uid!==v.championUid)next.push(d);else release.push(d);});
   var promote=from?views[from].drivers.concat(views[from].reserves).filter(function(d){return d.uid!==game.playerUid&&!taken[d.uid]&&!retiring[d.uid]&&d.age>=17;}):[];promote.sort(function(a,b){return (b.uid===views[from].championUid?1000:worldRankCandidate(b))-(a.uid===views[from].championUid?1000:worldRankCandidate(a));});
@@ -9678,6 +9678,7 @@ function conMake(S, d, opt) {
   opt = opt || {};
   var L = opt.len || conLen(d), rk = d.cs && d.cs.starts < 20 ? 0.35 : 1, pay = payFor(ovr(d), (opt.k || (1 + gauss() * 0.07)) * rk);
   var rem = opt.stagger ? 1 + Math.floor(rnd() * L) : L;
+  if (typeof leadPayMul === 'function' && d.id !== S.pi && S.teams && S.teams[d.team]) { var pm = leadPayMul(S, S.teams[d.team]); if (pm !== 1) pay = Math.round(pay * pm * 10) / 10; }   /* Leadership: a good principal negotiates, a weak one overpays (untouched when it is off) */
   var c = { len: L, end: (opt.from || S.season) + rem - 1, pay: pay }, o = ovr(d);
   /* klausa: bonus kemenangan untuk pemandu bagus; opsyen tahun tambahan (team untuk bakat muda, pemandu untuk bintang) */
   if (o >= 78 && rnd() < 0.55) c.wb = Math.max(0.1, Math.round(pay * 0.05 * 10) / 10);
@@ -9760,7 +9761,7 @@ function hgauss(s) { return (hashS(s + 'a') + hashS(s + 'b') + hashS(s + 'c') + 
 /* kualiti scout team = kualiti staf teknikal (0..1) */
 function scoutQ(t) { var dv = t.dev || {}; return clamp(((dv.staff == null ? 1 : dv.staff) - 0.8) / 0.4, 0, 1); }
 /* anggaran POTENSI oleh sesebuah team: konsisten setiap musim, makin salah kalau scout lemah */
-function estPot(t, d, N) { return clamp(d.pot + hgauss(t.id + '|' + d.name + '|' + N) * (7 - 5 * scoutQ(t)), 60, 99); }
+function estPot(t, d, N, m) { return clamp(d.pot + hgauss(t.id + '|' + d.name + '|' + N) * (7 - 5 * scoutQ(t)) * (m == null ? 1 : m), 60, 99); }
 /* potensi yang orang ramai nampak (media): potensi sebenar + hype; hype susut bila bakat tu dah banyak berlumba */
 function scoutPot(d) { return clamp(d.pot + (d.hy || 0), 60, 99); }
 function teamPolicy(t) { var a = t.dev && t.dev.acad != null ? t.dev.acad : 0.5; return a >= 0.62 ? 'Develops its own talent' : a <= 0.38 ? 'Buys proven talent' : 'Balanced approach'; }
@@ -9803,17 +9804,19 @@ function mktPlans(S) {
     else if (rk[t.id] <= 4 || (rk[t.id] <= 7 && amb >= 2)) pl = 'win';
     else if (rk[t.id] >= 8) pl = 'rebuild';
     else pl = 'build';
+    if (typeof leadOn === 'function' && leadOn(S, S.season + 1) && t.dev && t.dev.tp && hashS(t.id + '|plan|' + S.season) < (1 - leadTPRating(t) / 100) * LEAD.planMiss) pl = ({ win: 'build', build: rk[t.id] <= 5 ? 'win' : 'rebuild', rebuild: 'build', cut: 'build' })[pl] || pl;   /* Leadership: a weak principal misreads where the team stands */
     t.plan = pl;
   });
 }
 /* nilai calon di mata sesebuah team */
 function mktScore(S, t, c, N, wPot) {
-  var d = c.d, o = ovr(d) + hgauss(t.id + '|o|' + d.name + '|' + N) * 0.8, sc = o + evaluationMarketBonus(S, d), PL = PLAN[t.plan] || PLAN.build;
-  if (d.age < (d.pk || 28)) { var pe = estPot(t, d, N); sc += wPot * PL.pot * Math.max(0, pe - ovr(d)) * clamp((28 - d.age) / 6, 0.3, 1.2); }
+  var ld = typeof leadOn === 'function' && leadOn(S, N) && t.dev && t.dev.tp, tr = ld ? leadTPRating(t) : 0;
+  var d = c.d, o = ovr(d) + hgauss(t.id + '|o|' + d.name + '|' + N) * (ld ? leadLerp(LEAD.eyeOvr, tr) : 0.8), sc = o + evaluationMarketBonus(S, d), PL = PLAN[t.plan] || PLAN.build;
+  if (d.age < (d.pk || 28)) { var pe = estPot(t, d, N, ld ? leadLerp(LEAD.eyePot, tr) : 1); sc += wPot * PL.pot * Math.max(0, pe - ovr(d)) * clamp((28 - d.age) / 6, 0.3, 1.2); }
   if (c.from === t.id) sc += d.sk ? -9 : (d.miss || 0) >= 2 ? -4 : d.obj && d.obj.res === 'met' ? 4.5 : 3;
   if (c.k === 'jr' || c.k === 'new') { if (d.acad === t.id) sc += (1.5 + 4 * (t.dev.acad || 0.5)) * (0.6 + 0.4 * PL.ac); else if (d.acad != null) sc -= 5; }
   if (d.age >= 36) sc -= 4 * PL.old; else if (d.age >= 34) sc -= 2 * PL.old; else if (d.age >= 31 && PL.old > 1) sc -= 1.5;
-  if (MKTCTX && t.fin) { var proj = (MKTCTX.pay[t.id] || 0) + mktPay(c), cap = finPayCap(t); if (proj > cap) sc -= (proj - cap) * 0.35 * PL.cap; if (PL.cap > 1) sc -= mktPay(c) * 0.12; }   /* tak mampu gaji */
+  if (MKTCTX && t.fin) { var proj = (MKTCTX.pay[t.id] || 0) + mktPay(c), cap = finPayCap(t); if (ld) { cap *= leadCapMul(t, N, tr); } if (proj > cap) sc -= (proj - cap) * 0.35 * PL.cap * (ld ? leadLerp(LEAD.strict, tr) : 1); if (PL.cap > 1) sc -= mktPay(c) * 0.12; }   /* tak mampu gaji */
   return sc;
 }
 var MKTCTX = null;
@@ -10932,7 +10935,7 @@ var CHANGELOG = [
     "Technical directors now keep their quality. Until now a team's director quality was redrawn at random every winter whoever the person was, so the name on the door meant nothing. A director is now a real person with a rating (0 to 100) that moves only a little each year, so a strong one stays strong and a weak one stays weak, on any team.",
     "The principal decides, the director advises. Every upgrade decision is right with a chance that depends on both ratings and on how well the drivers explain the car. A weak principal is wrong more often, but in a believable way: he mixes up two parts that are close, he never pours a package into a part that is already maxed. He also leans on the director more, and when he overrules a director who was right, the better part loses out. Look for \"Right calls\" on a team's profile (Performance tab) and for stories like \"X overrules Y\". A director who is overruled too often can walk out.",
     "A good director builds better and fails less, by chance. A strong one has a much better chance of a hit package and a lower chance of a failed one; a weak one the reverse. Nothing is guaranteed, so a weak director can still land a good package.",
-    "The principal runs the programme: he decides what to build, when to bring it, when to give up on a lost season and when to prepare for new rules next year, and a good one gets these right far more often than a weak one. He also judges which director to hire, and a weak principal can pick the wrong one. You, as a driver, no longer pick the R&D focus: the Team tab now shows what the pit wall has decided.",
+    "The principal runs the programme: he decides what to build, when to bring it, when to give up on a lost season and when to prepare for new rules next year, and a good one gets these right far more often than a weak one. He also judges which director to hire and which drivers to sign, and a weak principal can misjudge both and overpay for drivers; a good one negotiates better deals. You, as a driver, no longer pick the R&D focus: the Team tab now shows what the pit wall has decided.",
     "A real staff market. Directors and principals have asking salaries, and they choose the best offer on pay, team prestige, how competitive the car is and loyalty. Pay comes out of the team's budget, so the best director is a real trade-off. Rich teams still land more of them, but for a reason. A team can buy a director out of his contract for a fee; look for the stories.",
     "Driver feedback now helps every team, not only yours. The two drivers' feedback sets how well the team's upgrades work (better advice, fewer failed packages). Your own team keeps a similar gain overall.",
     "Existing careers switch over without anyone changing strength. A save with nothing played yet this season switches straight away; a save part-way through a season finishes it as before and switches at the start of the next season."
@@ -12084,8 +12087,8 @@ function marketAI(g){
   var open=marketSeats(g,'f1',t.id).open-reserve;
   /* Each round permits fresh domino opportunities; some vacancies remain for the next round. */
   if(open<1||w.round<3&&t.id%2!==w.round%2)return;
-  pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)-worldRankCandidate(a)-(a.acad===t.id?1:0);});
-  while(open>0&&pool.length){var d=pool.shift(),pay=payFor(ovr(d),.75);if(t.fin&&pay>finPayCap(t))continue;
+  pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)+leadEye(g,t,b)-worldRankCandidate(a)-(a.acad===t.id?1:0)-leadEye(g,t,a);});
+  while(open>0&&pool.length){var d=pool.shift(),pay=payFor(ovr(d),.75)*leadPayMul(g,t);if(t.fin&&pay>finPayCap(t)*(leadOn(g,g.season+1)&&t.dev&&t.dev.tp?leadCapMul(t,g.season+1,leadTPRating(t)):1))continue;
    w.aiDeals.push({league:'f1',uid:d.uid,team:t.id,pay:pay,years:d.age>=35||t.prestige<=3?1:2});used[d.uid]=true;open--;
    marketNews(g,d.name+' agrees '+t.name+' deal','An expiring-contract driver has committed to an F1 seat for next season. Other unfilled vacancies remain in the market.');
   }
@@ -15722,7 +15725,12 @@ var LEAD = {
   stopRight: [0.25, 0.95], stopFalse: [0.12, 0.01],                  /* shelves the project when he should / when he should not */
   timeSd: [0.55, 0.10], suitSee: [0.4, 0.9],                         /* sd of his sense of timing; chance he notices a circuit that suits the part */
   regAlert: [0.2, 0.95], regBonus: 0.10,                             /* chance he prepares for next year's rules; effect on the team's readiness */
-  judgeRating: 25                                                    /* rating points of error when he judges a candidate, at the weakest principal */
+  judgeRating: 25,                                                   /* rating points of error when he judges a candidate, at the weakest principal */
+  /* Principal choosing drivers and managing the money (draft in mkt12.js). */
+  eyeOvr: [3.0, 0.5], eyePot: [1.7, 0.7],                            /* error in judging a driver's ability / potential, at rating 0 and 100 (OVR points, multiplier on the potential error) */
+  planMiss: 0.30,                                                    /* chance a rating-0 principal misreads the team's situation (win now / build / rebuild) */
+  capBias: [0.08, 0.0], capSd: [0.14, 0.03], strict: [0.45, 1.5],    /* payroll limit: a weak principal overspends and is lax about it; a good one sticks to it */
+  payMul: [1.10, 0.92]                                               /* what he pays a driver relative to the going rate: a good negotiator saves money, a weak one overpays */
 };
 
 function leadRating(kind, m) { var r = LEAD.rng[kind]; return Math.round(clamp((m - r[0]) / (r[1] - r[0]) * 100, 0, 100)); }
@@ -15920,4 +15928,11 @@ function leadShelve(S, t, ranks, round, last) {
 }
 /* new rules next season, either a major or a minor change */
 function leadRulesNext(S) { return S.regYear === S.season + 1 || (S.mode === 'pro' && S.regMinor === S.season + 1); }
+
+/* the payroll this principal is prepared to carry, relative to the usual limit: weak ones drift above it */
+function leadCapMul(t, N, tr) { return 1 + leadLerp(LEAD.capBias, tr) + leadLerp(LEAD.capSd, tr) * hgauss(t.id + '|cap|' + N); }
+
+/* Pro market: how the principal sees a driver (error in OVR points, same for a given team and driver every time) and what he pays him */
+function leadEye(g, t, d) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? leadLerp(LEAD.eyeOvr, leadTPRating(t)) * hgauss(t.id + '|' + (d.uid || d.name) + '|' + g.season) : 0; }
+function leadPayMul(g, t) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? leadLerp(LEAD.payMul, leadTPRating(t)) : 1; }
 </script>

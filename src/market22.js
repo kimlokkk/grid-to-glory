@@ -90,8 +90,8 @@ function marketAI(g){
   var open=marketSeats(g,'f1',t.id).open-reserve;
   /* Each round permits fresh domino opportunities; some vacancies remain for the next round. */
   if(open<1||w.round<3&&t.id%2!==w.round%2)return;
-  pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)-worldRankCandidate(a)-(a.acad===t.id?1:0);});
-  while(open>0&&pool.length){var d=pool.shift(),pay=payFor(ovr(d),.75);if(t.fin&&pay>finPayCap(t))continue;
+  pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)+leadEye(g,t,b)-worldRankCandidate(a)-(a.acad===t.id?1:0)-leadEye(g,t,a);});
+  while(open>0&&pool.length){var d=pool.shift(),pay=payFor(ovr(d),.75)*leadPayMul(g,t);if(t.fin&&pay>finPayCap(t)*(leadOn(g,g.season+1)&&t.dev&&t.dev.tp?leadCapMul(t,g.season+1,leadTPRating(t)):1))continue;
    w.aiDeals.push({league:'f1',uid:d.uid,team:t.id,pay:pay,years:d.age>=35||t.prestige<=3?1:2});used[d.uid]=true;open--;
    marketNews(g,d.name+' agrees '+t.name+' deal','An expiring-contract driver has committed to an F1 seat for next season. Other unfilled vacancies remain in the market.');
   }
