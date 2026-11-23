@@ -198,6 +198,52 @@ Principal style from Part A section 7 applies here too (aggressive switches focu
 - **Reviews** at rounds 6, 12 and 18. Possible actions: warning, R&D budget cut, forced driver change or engine supplier change, replacing the principal (new principal, new direction), or rewards (more budget, higher target).
 - The player is a driver, not a principal. Board actions reach the player as changes in the team: new principal, a driver forced in or out, a technical director leaving. These are also the "behind the garage" stories.
 
+## B5. Rating as the real value (**DECIDED**)
+
+Found while reading the S8 pack: a technical director "rating 0" was the weakest allowed multiplier (x0.90), shown on a 0.9 to 1.1 scale. Technical director, technical staff and team principal each had their own scale (0.9 to 1.1, 0.8 to 1.2, 0.75 to 1.25), so numbers could not be compared and many sat at exactly 0 or 100.
+
+- **One 0 to 100 rating** for team principal, technical director and technical staff, stored as the real value (like driver stats). The multiplier the development formula uses is **derived from the rating in one place** (`leadMul(rating)`), so a change of balance is one number, not a hunt through the code.
+- Starting mapping keeps today's effect: rating 50 is x1.00 and the director range stays about x0.90 to x1.10 until simulation says otherwise. Widening the range is a separate, tested decision.
+- Pool candidates are drawn from a proper distribution (mean 50, spread about 20, no clamp at the ends), so there is no pile-up at 0 and 100.
+- Existing saves: rating is **derived from the current multiplier** (migration, B7), so nobody changes strength on the day of the update.
+- Interim fix already shipped: the old display now uses the 0.8 to 1.2 scale for directors (display only).
+
+## B6. Technical director market (**DECIDED**, numbers to tune)
+
+Today (`mktStaff`): contracts that end join a pool with 2 random newcomers, then teams take the highest skill in order of team strength. No cost, no refusal, no fit. Good directors concentrate at strong teams, weak ones at the back, and it looks arbitrary.
+
+New model:
+
+- **Each director has** rating, age, asking salary (rises with rating), contract length and loyalty. Rating drifts slowly each year (about plus or minus 1 to 3, by age), so no one is stuck at 0 and newcomers join with a normal spread. Retirement by age.
+- **Offers both ways.** Each open team makes an offer (salary, length). The director scores each offer: pay, team prestige, how competitive the car and board target are, loyalty to the current team. The director takes the best, not the first team in line.
+- **Salary comes from the R&D fund**, which already sits close to the cost cap (S8: about $60M to $84M). A top director costs a lot, so there is a real trade-off with principal, staff, drivers and development. Rich teams still win more of them, but for a stated reason.
+- **Several rounds.** Directors with several offers decide first (best first). Teams that lose bid again for the next one. Same shape for principals.
+- **Poaching under contract** is possible with a buy-out fee, sized so it is rare. News: "Valerio tries to sign Pemberton".
+- **Leaving.** A director whose advice is overruled too often can leave (B3).
+- **News and visibility.** Offers, refusals, bidding wars, who left and why. Reg-year hires (Part A section 8) show as favourites a year ahead.
+
+## B7. Driver feedback as input to the director (**DECIDED**, numbers to tune)
+
+Today (`dev2.js`, `devPackage`): the driver's feedback stat multiplies upgrade gain **only for the player's own team** (about x1.14 at feedback 91, clamped 0.8 to 1.25, plus the Feedback ability). AI teams get nothing, whatever their drivers' feedback.
+
+New model:
+
+- **Team feedback = average of the two drivers** (the lead driver counts a little more). It applies to **every team**.
+- It is the quality of information the director gets: it raises the chance the director's **advice is correct** (illustration: about plus or minus 3 to 4 percentage points between feedback 60 and 90) and lowers the chance an upgrade **fails** a little.
+- It **replaces** the player-only multiplier, so there is no double count. Calibrated so the player's team keeps about the same average gain as today, and AI teams get their fair share. Expected spread in S8: from about x0.99 (Fairbourne) to x1.09 (Kaze, Brennhart).
+- AI teams include feedback when hiring drivers (to be checked in the market code first).
+
+## B8. Rollout and existing saves (**DECIDED**)
+
+The new leadership system is gated by a save field, `S.lead = { v: 1, from: <season> }`.
+
+- **New careers** start on it.
+- **Saves in progress** keep the old behaviour for the rest of the current season. At the **next new season** (the winter that starts season N+1) the migration runs and the new system is used from then on. Nobody changes mid-season.
+- **Migration** (one time, deterministic, no random numbers): derive the 0 to 100 rating from today's multipliers, create asking salaries and contracts for directors and principals from the existing ones, set team feedback from the current drivers, start board confidence at a neutral value from the current standing versus target. No team changes strength on the day it runs.
+- **A save that is at the start of a season with nothing played** (round 0, like S8 R0 right after the market) can opt in straight away: the migration runs before round 1, so the season is played on the new system. The hires for that season were already made under the old market, so the new market starts at the next winter.
+- The code keeps the old path until the gate is on, so old behaviour is not changed by shipping.
+- The save version is bumped, with tests: a save from before loads, migrates exactly once, and is not migrated twice.
+
 ---
 
 # Part C: Engine allocation
@@ -374,6 +420,7 @@ Patch 1, then Patch 2, then the major update in the order of E1 (phase 2 mechani
 - 4 power units per season. Wear affects race pace. Principal and technical director suggest, the driver decides.
 - Penalty tiers 1 to 3. No licence points.
 - Document is the **Major update design**. Triage for patches comes later.
+- Rating 0 to 100 is the real stored value for principal, director and staff (B5). Technical director market with offers, salary and poaching (B6). Driver feedback feeds the director for every team (B7). Rollout gated by `S.lead`, existing saves switch at the next new season (B8).
 
 ## F2. Decided in the tuning round
 
