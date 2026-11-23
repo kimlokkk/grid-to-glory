@@ -4,7 +4,7 @@
 
 - Gate `S.lead = { v:1, from }`. New careers on; a save with round 0 turns on at once; a save part-way through a season turns on from the next season. Gate off = old code and old random numbers (checked identical to 2.5.x over seeded seasons).
 - Director quality is the person's rating (0 to 100 = x0.8 to x1.2). The old winter random walk of the team's director value (`dev2.js` devWinter, sd 0.12 a year, 25 rating points a year on average) is skipped when on; ratings drift about 1.5 points a year in the market.
-- Principal decides, director advises (`leadPickPart`, B3 probabilities), overrule stories and walk-outs; "Right calls" on the team profile and in the Story pack.
+- Principal decides, director advises (`leadPickPart`): the best part is judged by the principal and the director with an error that falls with rating (log-normal noise, calibrated to the B3 probabilities), so mistakes are near misses, not maxed parts; overrule stories and walk-outs; "Right calls" on the team profile and in the Story pack.
 - Staff market (`leadMarket`): asking salary by rating, offers scored on pay, prestige, competitiveness and loyalty, salary limited by what the team can pay, buy-out poaching, retirement, walk-out when overruled, principals re-signed 78% of the time.
 - Team feedback (both drivers) replaces the player-only driver feedback multiplier; applies to every team; also lowers upgrade failure slightly.
 - `qa/leadership.js`.

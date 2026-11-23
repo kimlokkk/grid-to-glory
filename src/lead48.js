@@ -6,9 +6,11 @@ var LEAD = {
   v: 1,
   rng: { td: [0.8, 1.2], tp: [0.75, 1.25], staff: [0.8, 1.2] },   /* multiplier range that rating 0 to 100 maps onto (same scales the screens already used) */
   poolSd: 15, poolMin: 6, poolMax: 94,                               /* new directors: rating spread, no clamp pile-up at 0 and 100 */
-  pickBase: 0.55, pickSlope: 0.35,                                   /* principal's own pick correct: 55% at rating 0 to 90% at 100 */
+  /* A decision is the part with the most to gain. Each person judges the parts with some error (log-normal noise, sd = sigma), so a mistake is a near miss
+     (engine instead of chassis), almost never a part that is already maxed. Sigma falls with rating; calibrated so the chance of the right call matches the design. */
+  eps: 0.25,                                                         /* real uncertainty in what pays off, shared by principal and director */
+  sTP: [1.0, 0.15], sTD: [0.8, 0.07], fbSig: 0.004,                  /* judgement error at rating 0 and 100; feedback above 75 lowers the director's error */
   consBase: 0.77, consSlope: 0.24,                                   /* principal leans on advice: 77% at rating 0 to 53% at 100 */
-  advBase: 0.60, advSlope: 0.35, fbAdv: 0.0015,                      /* director's advice correct: 60% at rating 0 to 95% at 100; driver feedback adds a little */
   fbGain: 150,                                                       /* team feedback gain: 1 + (feedback - 70) / fbGain (was the player's driver only) */
   drift: 1.5, retireAge: 62,
   ask: [2, 10],                                                      /* asking salary ($M) at rating 0 and 100 */
@@ -39,25 +41,29 @@ function leadFeedback(S, t) {
 function leadFbGain(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbGain; }
 
 /* what the principal and the director each get right, as probabilities (also shown in the story pack) */
+/* chance of picking the best part for a given judgement error (measured: 400 draws over 160 real team states) */
+var LEAD_PC = [[0.05, 0.967], [0.1, 0.935], [0.15, 0.903], [0.2, 0.872], [0.3, 0.813], [0.4, 0.761], [0.5, 0.713], [0.7, 0.633], [1.0, 0.548], [1.3, 0.50]];
+function leadPc(sg) { var T = LEAD_PC; if (sg <= T[0][0]) return T[0][1]; for (var i = 1; i < T.length; i++) if (sg <= T[i][0]) return T[i - 1][1] + (T[i][1] - T[i - 1][1]) * (sg - T[i - 1][0]) / (T[i][0] - T[i - 1][0]); return T[T.length - 1][1]; }
 function leadOdds(S, t) {
   var tpR = leadRating('tp', t.dev.tp.skill), tdR = leadRating('td', t.dev.td), fb = leadFeedback(S, t);
-  var pick = LEAD.pickBase + LEAD.pickSlope * tpR / 100, cons = LEAD.consBase - LEAD.consSlope * tpR / 100;
-  var adv = clamp(LEAD.advBase + LEAD.advSlope * tdR / 100 + (fb - 75) * LEAD.fbAdv, 0.4, 0.98);
-  return { pick: pick, cons: cons, adv: adv, right: (1 - cons) * pick + cons * adv, tpR: tpR, tdR: tdR, fb: fb };
+  var sTP = LEAD.sTP[0] + (LEAD.sTP[1] - LEAD.sTP[0]) * tpR / 100, sTD = clamp((LEAD.sTD[0] + (LEAD.sTD[1] - LEAD.sTD[0]) * tdR / 100) * (1 - (fb - 75) * LEAD.fbSig), 0.04, 1.3);
+  var pick = leadPc(sTP), adv = leadPc(sTD), cons = LEAD.consBase - LEAD.consSlope * tpR / 100;
+  return { pick: pick, cons: cons, adv: adv, right: (1 - cons) * pick + cons * adv, tpR: tpR, tdR: tdR, fb: fb, sTP: sTP, sTD: sTD };
 }
 
-/* sample an index from weights */
-function leadSample(w) { var tot = 0, i; for (i = 0; i < w.length; i++) tot += w[i]; var x = rnd() * tot; for (i = 0; i < w.length - 1; i++) { if (x < w[i]) return i; x -= w[i]; } return w.length - 1; }
+function leadBest(a) { var b = 0; for (var i = 1; i < a.length; i++) if (a[i] > a[b]) b = i; return b; }
 
 /* Which part to work on. Both the winter package and the in-season project call this.
-   The sensible choice is drawn the way an average principal would draw it; the director advises it with probability `adv`,
-   the principal picks it with probability `pick`, and leans on the advice with probability `cons`. A wrong choice is a different part. */
+   The part with the most to gain is found from the team's weak spots and R&D philosophy plus some uncertainty nobody can remove. The principal and the director
+   each judge the parts with their own error (it falls with rating, and the director also benefits from good driver feedback). The principal leans on the
+   director's advice with some probability, otherwise follows his own judgement. So a weak principal is wrong more often but not stupid:
+   he mixes up two parts that are close, he does not pour a package into a part that is already maxed. */
 function leadPickPart(S, t, tops) {
   var d = t.dev, o = leadOdds(S, t), w = PARTS.map(function (k) { return d.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1); });
-  var good = leadSample(w.map(function (x) { return Math.pow(x, 1.4); }));
-  var wrong = function () { var ww = w.map(function (x, i) { return i === good ? 0 : x; }); return leadSample(ww); };
-  var own = rnd() < o.pick ? good : wrong(), advice = rnd() < o.adv ? good : wrong(), follows = rnd() < o.cons, ki = follows ? advice : own;
-  if (!follows && own !== advice) leadOverrule(S, t, PARTS[advice], PARTS[own], advice === good);
+  var base = w.map(function (x) { return Math.pow(x, 1.4) * Math.exp(LEAD.eps * gauss()); }), best = leadBest(base);
+  var judge = function (sg) { return leadBest(base.map(function (x) { return x * Math.exp(sg * gauss()); })); };
+  var own = judge(o.sTP), advice = judge(o.sTD), follows = rnd() < o.cons, ki = follows ? advice : own;
+  if (!follows && own !== advice) leadOverrule(S, t, PARTS[advice], PARTS[own], advice === best);
   return PARTS[ki];
 }
 

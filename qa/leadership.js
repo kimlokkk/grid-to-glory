@@ -37,6 +37,12 @@ const path = require('node:path');
       const T = S.teams[3], odds = (tp, td) => { T.dev.tp.skill = leadMul('tp', tp); T.dev.td = leadMul('td', td); return leadOdds(S, T); };
       const a = odds(10, 10), b = odds(10, 95), c = odds(90, 10), d = odds(90, 95);
       ck('odds follow the design: weak principal + great director beats weak + weak; great + great is best', b.right > a.right + 0.15 && d.right > c.right && d.right > b.right && a.right > 0.55 && d.right < 0.95, [a.right, b.right, c.right, d.right]);
+      /* 4b. a mistake is a near miss, not a package poured into a maxed part */
+      { const W = S.teams[3], keep = JSON.stringify(W.car), pn = pushNews; pushNews = () => { }; W.car = { aero: 99, engine: 70, chassis: 68, rel: 77 }; PARTS.forEach(k => W.dev.phil[k] = 1);
+        W.dev.tp.skill = leadMul('tp', 0); W.dev.td = leadMul('td', 0); S.drivers.filter(x => x.team === W.id).forEach(x => x.fb = 55);
+        const tops = { aero: 99, engine: 92, chassis: 90, rel: 90 }, cnt = { aero: 0, engine: 0, chassis: 0, rel: 0 }; for (let i = 0; i < 3000; i++) { S.lead.ev = {}; cnt[leadPickPart(S, W, tops)]++; }
+        pushNews = pn; W.car = JSON.parse(keep);
+        ck('even the weakest principal and director almost never pick a part that is already maxed', cnt.aero / 3000 < 0.01 && (cnt.engine + cnt.chassis) / 3000 > 0.85, cnt); }
       /* 5. feedback reaches every team */
       const aiT = S.teams.find(t => S.drivers[S.pi].team !== t.id), ds = S.drivers.filter(x => x.team === aiT.id);
       ds.forEach(x => x.fb = 95); const hi = leadFbGain(S, aiT); ds.forEach(x => x.fb = 55); const lo = leadFbGain(S, aiT);
