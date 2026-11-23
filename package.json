@@ -1,6 +1,6 @@
 {
   "name": "grid-to-glory",
-  "version": "2.5.6",
+  "version": "2.5.7",
   "description": "Browser-based motorsport career game in a single HTML file",
   "private": true,
   "scripts": {

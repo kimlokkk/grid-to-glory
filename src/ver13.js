@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.5.6', date: '19 Nov 2026', save: 2 };
+var APEX = { ver: '2.5.7', date: '19 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.5.7', d: 'Technical director rating', date: '23 Nov 2026', l: [
+    "Technical director ratings now use the same 0 to 100 scale as technical staff. Before, a director at the weak end of the market showed Rating 0 and a strong one 100, which made small differences look huge and the weakest look useless. A typical weak director now reads about 25 and a strong one about 75. Their real effect on car development has not changed.",
+    "Shown on the team profile, the Paddock panel and the Story pack."
+  ] },
   { v: '2.5.6', d: 'Training XP clarity', date: '22 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card (\"Training bought Consistency +1 for 7 XP\") and in Driver, Training.",
     "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.7 — 23 November 2026 (technical director rating)
+
+- Technical director rating display uses `pct100(td, 0.8, 1.2)` (was 0.9 to 1.1) on the team profile, Paddock panel and Story pack. Display only: the director multiplier (clamped 0.8 to 1.2, new candidates 0.9 to 1.1) and the development formula are unchanged.
+
 ## 2.5.6 — 22 November 2026 (training XP clarity)
 
 - Pro training sessions that use XP buy a skill automatically at the weekend lock; the spend is now shown on the weekend Focus card and in Driver > Training.
