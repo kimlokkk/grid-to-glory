@@ -2,7 +2,7 @@
 
 ## 2.6.0 — 23 November 2026 (Leadership)
 
-- Driver wages are paid outside the R&D fund; the principal sets a separate driver budget with a hard limit in the draft (design B13). Driver feedback now counts for more: faster development, fewer failures, a bad weekend setup costs less, good principals prefer it and pay a little more for it.
+- Driver wages are paid outside the R&D fund; the principal sets a separate driver budget with a hard limit in the draft (design B13). Driver feedback now counts for more: bigger and faster development gains, fewer failures, a bad weekend setup costs less (tuned so +10 feedback is worth about a third of +10 pace), good principals prefer it and pay a little more for it.
 - Gate `S.lead = { v:1, from }`. New careers on; a save with round 0 turns on at once; a save part-way through a season turns on from the next season. Gate off = old code and old random numbers (checked identical to 2.5.x over seeded seasons).
 - Director quality is the person's rating (0 to 100 = x0.8 to x1.2). The old winter random walk of the team's director value (`dev2.js` devWinter, sd 0.12 a year, 25 rating points a year on average) is skipped when on; ratings drift about 1.5 points a year in the market.
 - Principal decides, director advises (`leadPickPart`): the best part is judged by the principal and the director with an error that falls with rating (log-normal noise, calibrated to the B3 probabilities), so mistakes are near misses, not maxed parts; overrule stories and walk-outs; "Right calls" on the team profile and in the Story pack.

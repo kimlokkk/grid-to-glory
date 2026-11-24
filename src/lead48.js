@@ -11,7 +11,7 @@ var LEAD = {
   eps: 0.25,                                                         /* real uncertainty in what pays off, shared by principal and director */
   sTP: [1.0, 0.15], sTD: [0.8, 0.07], fbSig: 0.004,                  /* judgement error at rating 0 and 100; feedback above 75 lowers the director's error */
   consBase: 0.77, consSlope: 0.24,                                   /* principal leans on advice: 77% at rating 0 to 53% at 100 */
-  fbGain: 110, fbFail: 400, fbRate: 250, setupFb: 0.035,                             /* team feedback: gain 1 + (feedback - 70) / fbGain (was the player's driver only), failure x(1 - (feedback - 70) / fbFail), progress per round x(1 + (feedback - 70) / fbRate) */
+  fbGain: 55, fbFail: 200, fbRate: 125, setupFb: 0.05,                             /* team feedback: gain 1 + (feedback - 70) / fbGain (was the player's driver only), failure x(1 - (feedback - 70) / fbFail), progress per round x(1 + (feedback - 70) / fbRate) */
   fitFb: 0.10, payFb: 0.003,                                            /* a good principal values feedback when choosing drivers (OVR points per feedback point) and pays for it (share of pay per point) */
   budShare: { win: 0.30, build: 0.27, rebuild: 0.23, cut: 0.20 }, budErr: [0.20, 0.03], /* driver budget as a share of revenue by plan, and how far a principal at rating 0 / 100 is off it */
   drift: 1.5, retireAge: 62,
