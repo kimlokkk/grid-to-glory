@@ -529,3 +529,10 @@ Patch 1, then Patch 2, then the major update in the order of E1 (phase 2 mechani
 2. Steward thresholds (D2): 0.05 and 0.12 are starting values. Tune by simulation, with a target of about 1 penalised contact per race.
 3. Real-world check of the engine penalty values once built (C8 limits).
 4. Remaining open items from Part A section 11.
+
+## B13. Driver pay separate from the R&D fund; what driver feedback is worth (2.6.0)
+
+- Driver wages no longer come out of the R&D fund (`finSeason` subtracts team staff payroll plus a reference driver payroll, `leadDriverRef`). The principal gets a separate driver budget (`leadDriverBudget`: revenue x share by plan win/build/rebuild/cut, with a budget error that shrinks with rating). In the pro draft a team takes the first driver it can afford (`leadPickAffordable`). So the principal's money choice is "who is worth the wage", not "driver or R&D".
+- Measured (randomised, 24 seeds x 8 years, n=1920): +1 OVR on both drivers = +12.7 constructor points; +$10M R&D = +10 pts; +10 feedback on both drivers = about +0.2 to +0.35 car power (+4 to +8 pts). Feedback is a small lever per step but the real range is wide (55 to 90), so a 35 point gap is about 2 OVR of value. Money cannot raise a driver's OVR, so feedback is the one driver stat a team gets back through development.
+- Locked benefits of feedback: team gain 1+(fb-70)/110, failure x(1-(fb-70)/400), in-season progress x(1+(fb-70)/250), a bad weekend setup costs less (`leadSetup`, 2% per point; good setups unchanged), good principals prefer it in the draft (`fitFb` 0.10) and the market pays a little more (`payFb` 0.003). The weekend setup effect alone is inside the noise (+1.4 +/- 2.1 pts per +10), kept because it is cheap and only active under the gate.
+- Gate off = unchanged. QA: same 16 UI-flow failures with and without this change (browser flow timeouts in this container); leadership suite passes.

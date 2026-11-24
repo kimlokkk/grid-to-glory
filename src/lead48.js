@@ -11,8 +11,8 @@ var LEAD = {
   eps: 0.25,                                                         /* real uncertainty in what pays off, shared by principal and director */
   sTP: [1.0, 0.15], sTD: [0.8, 0.07], fbSig: 0.004,                  /* judgement error at rating 0 and 100; feedback above 75 lowers the director's error */
   consBase: 0.77, consSlope: 0.24,                                   /* principal leans on advice: 77% at rating 0 to 53% at 100 */
-  fbGain: 150, fbFail: 600, fbRate: 400,                             /* team feedback: gain 1 + (feedback - 70) / fbGain (was the player's driver only), failure x(1 - (feedback - 70) / fbFail), progress per round x(1 + (feedback - 70) / fbRate) */
-  fitFb: 0.0, payFb: 0.0,                                            /* a good principal values feedback when choosing drivers (OVR points per feedback point) and pays for it (share of pay per point) */
+  fbGain: 110, fbFail: 400, fbRate: 250, setupFb: 0.02,                             /* team feedback: gain 1 + (feedback - 70) / fbGain (was the player's driver only), failure x(1 - (feedback - 70) / fbFail), progress per round x(1 + (feedback - 70) / fbRate) */
+  fitFb: 0.10, payFb: 0.003,                                            /* a good principal values feedback when choosing drivers (OVR points per feedback point) and pays for it (share of pay per point) */
   budShare: { win: 0.30, build: 0.27, rebuild: 0.23, cut: 0.20 }, budErr: [0.20, 0.03], /* driver budget as a share of revenue by plan, and how far a principal at rating 0 / 100 is off it */
   drift: 1.5, retireAge: 62,
   ask: [2, 10],                                                      /* asking salary ($M) at rating 0 and 100 */
@@ -60,6 +60,11 @@ function leadFeedback(S, t) {
   var fb = S.drivers.filter(function (d) { return d.team === t.id; }).map(function (d) { return Number.isFinite(d.fb) ? d.fb : 70; }).sort(function (a, b) { return b - a; });
   if (!fb.length) return 70;
   return fb.length > 1 ? 0.6 * fb[0] + 0.4 * fb[1] : fb[0];
+}
+/* weekend setup: a bad setup day costs less when the drivers give good feedback (good days unchanged) */
+function leadSetup(t, g) {
+  if (g >= 0 || typeof S === 'undefined' || !S || !leadOn(S, S.season)) return g;
+  return g * clamp(1 - (leadFeedback(S, t) - 70) * LEAD.setupFb, 0.5, 1.5);
 }
 function leadFbGain(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbGain; }
 function leadFbRate(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbRate; }
