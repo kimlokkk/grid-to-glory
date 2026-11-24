@@ -29,7 +29,12 @@ var LEAD = {
   eyeOvr: [3.0, 0.5], eyePot: [1.7, 0.7],                            /* error in judging a driver's ability / potential, at rating 0 and 100 (OVR points, multiplier on the potential error) */
   planMiss: 0.30,                                                    /* chance a rating-0 principal misreads the team's situation (win now / build / rebuild) */
   capBias: [0.08, 0.0], capSd: [0.14, 0.03], strict: [0.45, 1.5],    /* payroll limit: a weak principal overspends and is lax about it; a good one sticks to it */
-  payMul: [1.10, 0.92]                                               /* what he pays a driver relative to the going rate: a good negotiator saves money, a weak one overpays */
+  payMul: [1.10, 0.92],                                              /* what he pays a driver relative to the going rate: a good negotiator saves money, a weak one overpays */
+  /* Money through the season (Economy). Prize money and sponsor bonuses arrive race by race on the live standings, so a team that climbs can afford more upgrades,
+     and the winter package is smaller so the budget lasts the year. Winter size 2.2 was the old value. */
+  costMul: 1, gainIn: 1, gainWin: 1, rate: 0.45,                    /* package cost and gain scale (in-season gain, winter gain) and progress per round; tuned by simulation */
+  winterSize: 1.3, prizeIn: 0.5, sponPoint: 0.025,                   /* share of the annual prize paid race by race; sponsor bonus ($M) per championship point */
+  winterErr: [0.30, 0.05]                                            /* how far off the right winter size a principal is at rating 0 and 100 */
 };
 
 function leadRating(kind, m) { var r = LEAD.rng[kind]; return Math.round(clamp((m - r[0]) / (r[1] - r[0]) * 100, 0, 100)); }
@@ -234,3 +239,20 @@ function leadCapMul(t, N, tr) { return 1 + leadLerp(LEAD.capBias, tr) + leadLerp
 /* Pro market: how the principal sees a driver (error in OVR points, same for a given team and driver every time) and what he pays him */
 function leadEye(g, t, d) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? leadLerp(LEAD.eyeOvr, leadTPRating(t)) * hgauss(t.id + '|' + (d.uid || d.name) + '|' + g.season) : 0; }
 function leadPayMul(g, t) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? leadLerp(LEAD.payMul, leadTPRating(t)) : 1; }
+
+/* Economy: prize money and sponsor bonuses paid after each round, on the standings as they are. Called once per round from devInSeason. */
+function leadIncome(S, round) {
+  var rounds = seasonRounds(S), rk = devRank(S);
+  S.teams.forEach(function (t) {
+    var f = t.fin; if (!f) return;
+    var prize = LEAD.prizeIn * FIN.prize[rk[t.id] - 1] / rounds, dp = t.pts - (t.dev.ptsSeen || 0), spon = LEAD.sponPoint * Math.max(0, dp);
+    t.dev.ptsSeen = t.pts;
+    f.cash += prize + spon; f.paidPz = (f.paidPz || 0) + prize; f.paidSp = (f.paidSp || 0) + spon;
+  });
+}
+/* winter package size: smaller than before; a good principal gets it about right and builds more when new rules are coming */
+function leadWinterSize(S, t) {
+  var tr = leadTPRating(t), err = leadLerp(LEAD.winterErr, tr) * hgauss(t.id + '|win|' + S.season), mul = 1 + err;
+  if (leadRulesNext(S) && t.dev.regReady) mul *= 1.3;
+  return LEAD.winterSize * clamp(mul, 0.6, 1.6);
+}

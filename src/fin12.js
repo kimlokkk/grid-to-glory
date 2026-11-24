@@ -41,7 +41,7 @@ function finSeason(S) {
     f.pay = finPayroll(S, t);
     var carry = clamp(f.cash, 0, 0.25 * FIN.cap) * 0.7, debt = Math.max(0, -f.cash) * 1.25 + (f.debt || 0);
     if (typeof facLoan === 'function') debt = facLoan(S, t, f, debt);
-    var raw = f.rev - FIN.ops - f.pay - finAcad(S, t) + carry - debt - (f.bonus || 0); f.bonus = 0;
+    var raw = f.rev - FIN.ops - f.pay - finAcad(S, t) + carry - debt - (f.bonus || 0) - (f.paidPz || 0); f.bonus = 0; f.paidPz = 0; f.paidSp = 0;   /* prize money already paid during the season (Leadership economy) is not paid twice */
     f.fund = finEff(Math.max(8, raw)); f.cash = f.fund; f.spent = 0; f.debt = 0; f.brk = false;
     f.hist.push({ s: S.season + 1, rev: +f.rev.toFixed(1), pay: +f.pay.toFixed(1), fund: +f.fund.toFixed(1) });
     if (f.hist.length > 8) f.hist.shift();
@@ -62,8 +62,8 @@ function finAvail(t) {
   return t.fin.cash - res + allow;
 }
 /* pakej musim sejuk: sentiasa dibuat, tapi kecil kalau dana tak cukup */
-function finWinter(t, size) {
-  var cost = finCostOf(size, false, size >= 3), a = clamp(t.fin.cash / cost, 0.5, 1);
+function finWinter(t, size, cm) {
+  var cost = finCostOf(size, false, size >= 3) * (cm || 1), a = clamp(t.fin.cash / cost, 0.5, 1);
   t.fin.cash -= cost * a; t.fin.spent += cost * a; return a;
 }
 function finStatus(t) {

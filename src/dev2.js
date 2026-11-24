@@ -84,6 +84,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
   else gain = size * bud * (lp ? lp.q : t.dev.td) * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, lp ? LEAD.tpG : DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
+  if (lead && gain > 0) gain *= (opt && opt.k ? LEAD.gainIn : LEAD.gainWin);
   if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
   else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
@@ -127,11 +128,12 @@ function devThresholdLead(S, t, rk, nextC) {
 function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-'round' (1..) siap */
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
   var nextC = S.cal && round < S.cal.length ? circuitFor(S, S.cal[round]) : null, last = round >= seasonRounds(S), lead = typeof leadOn === 'function' && leadOn(S);
+  if (lead) leadIncome(S, round);
   S.teams.forEach(function (t) {
     var d = t.dev;
     if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * (lead ? leadLerp(LEAD.timeSd, leadTPRating(t)) : 0.2); }
     if (d.banked) return;
-    d.prog = (d.prog || 0) + DEV.rate * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
+    d.prog = (d.prog || 0) + (lead ? LEAD.rate : DEV.rate) * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
     /* TP bijak tutup projek musim ni bila jauh dari sasaran, simpan untuk kereta tahun depan */
     var shelve = lead ? leadShelve(S, t, ranks, round, last) : (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0);
     if (shelve) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
@@ -140,7 +142,7 @@ function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-
     if (d.prog >= th) {
       var p = d.prog, rush = p < 1.2, big = p >= 2.0, sz = DEV.pkg * p / DEV.std;
       if (typeof finAvail === 'function' && t.fin) {
-        var cost0 = finCostOf(sz, rush, big), av = finAvail(t);
+        var cost0 = finCostOf(sz, rush, big) * (lead ? LEAD.costMul : 1), av = finAvail(t);
         if (av < 0.3 * cost0) { d.prog = Math.min(d.prog, 3.4); if (!t.fin.brk) { t.fin.brk = true; if (log) log.push({ t: t.id, broke: true, k: d.next }); } return; }   /* tak mampu: tunggu */
         var af = Math.min(1, av / cost0); sz *= af; t.fin.cash -= cost0 * af; t.fin.spent += cost0 * af;
       }
@@ -188,7 +190,7 @@ function devWinter(S, log) {
     if (pro) { S.regMinor = regNextMinor(S, kind); S.regLast = { kind: kind, season: S.season + 1 }; }
     if (log) log.push({ reg: true, kind: kind });
   }
-  S.teams.forEach(function (t) { var wsz = DEV.winter + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.regReady = false; t.dev.regDecided = false; t.dev.rum = false; t.dev.next = null; });
+  S.teams.forEach(function (t) { var wsz = (typeof leadOn === 'function' && leadOn(S, S.season + 1) && t.dev.tp ? leadWinterSize(S, t) : DEV.winter) + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz, typeof leadOn === 'function' && leadOn(S, S.season + 1) ? LEAD.costMul : 1); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.regReady = false; t.dev.regDecided = false; t.dev.rum = false; t.dev.next = null; });
   if (typeof e4Winter === 'function') e4Winter(S, log);
   if (DEV.meanKeep) PARTS.forEach(function (k) { var d = S.target[k] - leagueMean(S, k); S.teams.forEach(function (t) { t.car[k] = clamp(t.car[k] + d, 45, 99); }); });
   if (DEV.sdTarget) {
