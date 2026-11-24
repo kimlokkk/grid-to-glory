@@ -86,7 +86,7 @@ function finHTML(t) {
 /* kad dana untuk skrin R&D pemain */
 function finCardHTML(t) {
   var f = t.fin, d = t.dev; if (!f || !d) return '';
-  var st = finStatus(t), p = d.prog || 0, c = finCostOf(DEV.pkg * Math.max(p, 1.0) / DEV.std, p < 1.2, p >= 2.0);
+  var st = finStatus(t), p = d.prog || 0, c = finCostOf(DEV.pkg * Math.max(p, 1.0) / DEV.std, p < 1.2, p >= 2.0) * (typeof leadOn === 'function' && typeof S !== 'undefined' && leadOn(S) ? LEAD.costMul : 1);
   return '<div class="fin-card ' + st.k + '"><div><small>R&D fund left</small><b>$' + Math.round(f.cash) + 'M</b><span>of $' + Math.round(f.fund) + 'M · ' + st.txt + '</span></div><div><small>Next package costs</small><b>~$' + Math.round(c) + 'M</b><span>' + (finAvail(t) >= c ? 'Affordable' : 'Over budget: it will be scaled down') + '</span></div></div>';
 }
 function finReport(S) {

@@ -62,6 +62,12 @@ const path = require('node:path');
         const pay = (r) => { W.dev.tp.skill = leadMul('tp', r); return leadPayMul(S, W); };
         ck('a weak principal misjudges drivers more and pays more for them; a good one the reverse', eye(0) > eye(100) * 2.5 && pay(0) > 1.05 && pay(100) < 0.97, [eye(0), eye(100), pay(0), pay(100)]);
         const k = S.lead; S.lead = { v: 1, from: 99 }; ck('with the gate off these never apply', leadEye(S, W, d0) === 0 && leadPayMul(S, W) === 1); S.lead = k; }
+      /* 4g. economy: prize money and sponsor bonuses arrive race by race and are not paid twice */
+      { seedRnd(24); S = newProCareer('Eco', 'pace', 7, 'f1'); const t1 = S.teams[0], t2 = S.teams[9]; S.teams.forEach((t, i) => { t.pts = 200 - i * 20; t.dev.ptsSeen = 0; t.fin.paidPz = 0; t.fin.paidSp = 0; });
+        const c0 = S.teams.map(t => t.fin.cash); leadIncome(S, 1);
+        ck('after a round the leader gets more prize and sponsor money than the back marker, and it is recorded', t1.fin.cash - c0[0] > (t2.fin.cash - c0[9]) * 3 && t1.fin.paidPz > t2.fin.paidPz && t1.fin.paidSp > t2.fin.paidSp, [t1.fin.cash - c0[0], t2.fin.cash - c0[9]]);
+        const paid = t1.fin.paidPz; t1.fin.fund = 0; finSeason(S); ck('the prize already paid is taken off next year\'s fund and the counter resets', paid > 0 && t1.fin.paidPz === 0 && t1.fin.paidSp === 0, paid);
+        ck('the winter package is smaller than the old one and the in-season package costs less', LEAD.winterSize < DEV.winter && LEAD.costMul < 1 && LEAD.gainIn > 1); }
       /* 5. feedback reaches every team */
       const aiT = S.teams.find(t => S.drivers[S.pi].team !== t.id), ds = S.drivers.filter(x => x.team === aiT.id);
       ds.forEach(x => x.fb = 95); const hi = leadFbGain(S, aiT); ds.forEach(x => x.fb = 55); const lo = leadFbGain(S, aiT);

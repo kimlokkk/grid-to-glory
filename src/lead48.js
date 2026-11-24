@@ -32,8 +32,8 @@ var LEAD = {
   payMul: [1.10, 0.92],                                              /* what he pays a driver relative to the going rate: a good negotiator saves money, a weak one overpays */
   /* Money through the season (Economy). Prize money and sponsor bonuses arrive race by race on the live standings, so a team that climbs can afford more upgrades,
      and the winter package is smaller so the budget lasts the year. Winter size 2.2 was the old value. */
-  costMul: 1, gainIn: 1, gainWin: 1, rate: 0.45,                    /* package cost and gain scale (in-season gain, winter gain) and progress per round; tuned by simulation */
-  winterSize: 1.3, prizeIn: 0.5, sponPoint: 0.025,                   /* share of the annual prize paid race by race; sponsor bonus ($M) per championship point */
+  costMul: 0.65, gainIn: 2.4, gainWin: 1.3, rate: 0.45,              /* package cost and gain scale (in-season gain, winter gain) and progress per round; tuned by simulation (see MAJOR-UPDATE-DESIGN.md B11) */
+  winterSize: 1.5, prizeIn: 0.7, sponPoint: 0.04,                    /* winter package size (was 2.2); share of the annual prize paid race by race; sponsor bonus ($M) per championship point */
   winterErr: [0.30, 0.05]                                            /* how far off the right winter size a principal is at rating 0 and 100 */
 };
 

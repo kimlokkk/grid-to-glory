@@ -298,6 +298,28 @@ The grid does not freeze and the spread is unchanged. Directors who are good are
 
 **Measured (12 seeds x 10 seasons), change in team power a season per +10 rating, controlling for the team's starting strength:** director +0.25, principal +0.11, staff +0.16 (about plus or minus 0.04). Spread of team power 6.28, rank change 0.95 a year, no frozen order. A driver no longer steers R&D (the focus buttons are replaced by a read-only view of the pit wall's decision).
 
+## B11. Economy and in-season development (tuned in 2.6.0)
+
+**Problem (measured, 192 seasons, years without new rules).** Teams almost never changed place during a season: 3% moved two or more places and the average change was 0.3 places. The second half of the season had 4% of the first half's development. A year's movement happened at the winter (70%) or at a regulation change. Cause: the winter package cost about $41M of a ~$75M fund and left room for about one package in the season; and even with more money the packages were too small to separate teams whose gaps are about 0.6 power apart. From memory of real F1 (not checked here), teams bring upgrades most race weekends and the order moves during a season without new rules (McLaren 2024, Aston Martin 2023, Mercedes recovering, Ferrari and Red Bull 2022).
+
+**What changed (only while Leadership is on).**
+- Prize money: 70% of the annual prize is paid race by race on the live standings (the winter fund no longer counts it twice). Sponsors pay $0.04M for every championship point scored. A team that climbs gets more to spend.
+- Winter package 1.5 (was 2.2). In-season packages cost x0.65 and gain x2.4, winter gain x1.3.
+- The principal sets the winter package size with an error that falls with rating, and builds more when new rules are coming (readiness).
+
+**Tuning (24 seeds x 8 seasons, years without new rules).**
+
+| | 2+ places in a season | Rank change in a season | 2nd half / 1st half | Power spread | Different champions in 8 years | Cash below zero | Cash left |
+|---|---|---|---|---|---|---|---|
+| Before | 4% | 0.31 | 0.04 | 6.31 | 3.0 | 31% | $8M |
+| Cheap packages (cost x0.5, gain x2) | 32% | 1.25 | 0.78 | 6.05 | 2.9 | 1% | $27M |
+| Cost x0.8, gain x2.2 | 20% | 0.86 | 0.38 | 6.91 | 2.8 | 12% | $14M |
+| **Chosen (cost x0.65, gain x2.4, prize 70%, sponsor $0.04M a point)** | **28%** | **1.11** | **0.66** | **6.89** | **3.5** | **4%** | **$19.5M** |
+
+Cheap packages made money almost irrelevant (1% in the red), which is the opposite of what is wanted; the chosen mix keeps money binding without freezing the second half. The power spread is measured at the finale before the winter normalisation (sdTarget), so it is a little higher than at the start of a season.
+
+**Not done.** Letting the principal decide the split of the budget between drivers and the car as a real trade-off (B10): money now matters more (about $10M is worth about 0.2 power a year, measured before this change, to be re-measured), but a principal's driver-budget decision is still not modelled.
+
 ---
 
 # Part C: Engine allocation
