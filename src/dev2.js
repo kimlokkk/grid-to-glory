@@ -75,7 +75,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var mine = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id;
   if (!lead && mine && S.rd && rnd() < 0.75) k = S.rd;                          /* pasukan pemain ikut fokus R&D pilihan (Leadership: the principal and director decide, not the driver) */
   if (opt && opt.k) k = opt.k;
-  var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * DEV.staffK);
+  var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * (lead ? LEAD.staffK : DEV.staffK));
   if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / 600;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }

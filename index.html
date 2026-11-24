@@ -6281,7 +6281,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var mine = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id;
   if (!lead && mine && S.rd && rnd() < 0.75) k = S.rd;                          /* pasukan pemain ikut fokus R&D pilihan (Leadership: the principal and director decide, not the driver) */
   if (opt && opt.k) k = opt.k;
-  var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * DEV.staffK);
+  var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * (lead ? LEAD.staffK : DEV.staffK));
   if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / 600;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }
@@ -15724,6 +15724,7 @@ var LEAD = {
   /* Director: build quality by probability, never by certainty. A package can be a hit (bigger gain) or a miss (smaller), and fails more or less often. */
   hit: [0.06, 0.54], miss: [0.54, 0.06], hitMul: 1.55, missMul: 0.45, // chance of a hit / a miss at rating 0 and 100
   failTD: [1.35, 0.65],                                              /* failure chance multiplier at rating 0 and 100 */
+  staffK: 2.5,                                                       /* how much a weak staff raises the failure chance (old value 2.5) */
   staffG: 2,                                                         /* staff effect on gain (old value 2); tuned so the director matters most, then the principal, then staff */
   tpG: 2.2,                                                          /* the principal's direct grip on the programme (was 1.5). Interim: his decisions (part, timing, stopping) cost little on their own, so this keeps him meaningful until he also chooses drivers and money (next phase); then lower it */
   /* Principal: when to stop and when to bring the package. Chance of the right call at rating 0 and 100. */
