@@ -67,7 +67,7 @@ const path = require('node:path');
         const c0 = S.teams.map(t => t.fin.cash); leadIncome(S, 1);
         ck('after a round the leader gets more prize and sponsor money than the back marker, and it is recorded', t1.fin.cash - c0[0] > (t2.fin.cash - c0[9]) * 3 && t1.fin.paidPz > t2.fin.paidPz && t1.fin.paidSp > t2.fin.paidSp, [t1.fin.cash - c0[0], t2.fin.cash - c0[9]]);
         const paid = t1.fin.paidPz; t1.fin.fund = 0; finSeason(S); ck('the prize already paid is taken off next year\'s fund and the counter resets', paid > 0 && t1.fin.paidPz === 0 && t1.fin.paidSp === 0, paid);
-        ck('the winter package is smaller than the old one and the in-season package costs less', LEAD.winterSize < DEV.winter && LEAD.costMul < 1 && LEAD.gainIn > 1); }
+        ck('packages cost less than before (winter and in-season) and gain more', finCostOf(LEAD.winterSize, false, true) * LEAD.costMul < finCostOf(DEV.winter, false, false) && LEAD.costMul < 1 && LEAD.gainIn > 1 && LEAD.gainWin > 1); }
       /* 5. feedback reaches every team */
       const aiT = S.teams.find(t => S.drivers[S.pi].team !== t.id), ds = S.drivers.filter(x => x.team === aiT.id);
       ds.forEach(x => x.fb = 95); const hi = leadFbGain(S, aiT); ds.forEach(x => x.fb = 55); const lo = leadFbGain(S, aiT);

@@ -304,7 +304,7 @@ The grid does not freeze and the spread is unchanged. Directors who are good are
 
 **What changed (only while Leadership is on).**
 - Prize money: 70% of the annual prize is paid race by race on the live standings (the winter fund no longer counts it twice). Sponsors pay $0.04M for every championship point scored. A team that climbs gets more to spend.
-- Winter package 1.5 (was 2.2). In-season packages cost x0.65 and gain x2.4, winter gain x1.3.
+- Winter package size 3.0 (was 2.2) at cost x0.65 and gain x2.0; in-season packages cost x0.65 and gain x2.4. A first pass cut the winter package to 1.5 to spread money across the year and made winters too quiet (0.38 places a year in years without new rules, 6% of teams moving two or more); a team that shelves its season early is supposed to put its effort into next year's car, so it must get a clearly bigger winter step. Measured: a shelved team gains +0.39 over the winter, the others -0.09.
 - The principal sets the winter package size with an error that falls with rating, and builds more when new rules are coming (readiness).
 
 **Tuning (24 seeds x 8 seasons, years without new rules).**
@@ -315,6 +315,9 @@ The grid does not freeze and the spread is unchanged. Directors who are good are
 | Cheap packages (cost x0.5, gain x2) | 32% | 1.25 | 0.78 | 6.05 | 2.9 | 1% | $27M |
 | Cost x0.8, gain x2.2 | 20% | 0.86 | 0.38 | 6.91 | 2.8 | 12% | $14M |
 | **Chosen (cost x0.65, gain x2.4, prize 70%, sponsor $0.04M a point)** | **28%** | **1.11** | **0.66** | **6.89** | **3.5** | **4%** | **$19.5M** |
+| **Final (as chosen, winter package 3.0 and winter gain x2.0)** | **27%** | **1.11** | **0.56** | **7.21** | **3.1** | **8%** | **$16.9M** |
+
+Winter in years without new rules (rank change a year, teams moving 2+ places): before 0.65 and 13%; first choice 0.38 and 6%; final 0.78 and 17%.
 
 Cheap packages made money almost irrelevant (1% in the red), which is the opposite of what is wanted; the chosen mix keeps money binding without freezing the second half. The power spread is measured at the finale before the winter normalisation (sdTarget), so it is a little higher than at the start of a season.
 
