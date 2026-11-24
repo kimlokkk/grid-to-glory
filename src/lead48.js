@@ -17,11 +17,11 @@ var LEAD = {
   poach: 0.25, quitOver: 3,
   keepTP: 0.78,                                                      /* principals re-signed without a market */
   /* Director: build quality by probability, never by certainty. A package can be a hit (bigger gain) or a miss (smaller), and fails more or less often. */
-  hit: [0.06, 0.54], miss: [0.54, 0.06], hitMul: 1.55, missMul: 0.45, // chance of a hit / a miss at rating 0 and 100
+  hit: [0.06, 0.54], miss: [0.54, 0.06], hitMul: 1.65, missMul: 0.4, // chance of a hit / a miss at rating 0 and 100
   failTD: [1.35, 0.65],                                              /* failure chance multiplier at rating 0 and 100 */
-  staffK: 2.5,                                                       /* how much a weak staff raises the failure chance (old value 2.5) */
-  staffG: 2,                                                         /* staff effect on gain (old value 2); tuned so the director matters most, then the principal, then staff */
-  tpG: 2.2,                                                          /* the principal's direct grip on the programme (was 1.5). Interim: his decisions (part, timing, stopping) cost little on their own, so this keeps him meaningful until he also chooses drivers and money (next phase); then lower it */
+  staffK: 0.8,                                                       /* how much a weak staff raises the failure chance (old value 2.5) */
+  staffG: 0.8,                                                         /* staff effect on gain (old value 2); tuned so the director matters most, then the principal, then staff */
+  tpG: 1.1,                                                          /* the principal's direct grip on the programme (old value 1.5). Tuned with the director (hit and miss), staff and money so that the director matters most, then the principal, then staff (B12) */
   /* Principal: when to stop and when to bring the package. Chance of the right call at rating 0 and 100. */
   stopRight: [0.25, 0.95], stopFalse: [0.12, 0.01],                  /* shelves the project when he should / when he should not */
   timeSd: [0.55, 0.10], suitSee: [0.4, 0.9],                         /* sd of his sense of timing; chance he notices a circuit that suits the part */
@@ -34,7 +34,7 @@ var LEAD = {
   payMul: [1.10, 0.92],                                              /* what he pays a driver relative to the going rate: a good negotiator saves money, a weak one overpays */
   /* Money through the season (Economy). Prize money and sponsor bonuses arrive race by race on the live standings, so a team that climbs can afford more upgrades,
      and the winter package is smaller so the budget lasts the year. Winter size 2.2 was the old value. */
-  costMul: 0.65, gainIn: 2.4, gainWin: 2.0, rate: 0.45,              /* package cost and gain scale (in-season gain, winter gain) and progress per round; tuned by simulation (see MAJOR-UPDATE-DESIGN.md B11) */
+  costMul: 0.8, gainIn: 2.6, gainWin: 2.0, rate: 0.45,              /* package cost and gain scale (in-season gain, winter gain) and progress per round; tuned by simulation (see MAJOR-UPDATE-DESIGN.md B11) */
   winterSize: 3.0, prizeIn: 0.7, sponPoint: 0.04,                    /* winter package size (was 2.2, but it now costs x0.65 and gains x2, so about as large as the old one in cost and much larger in effect); share of the annual prize paid race by race; sponsor bonus ($M) per championship point */
   winterErr: [0.30, 0.05]                                            /* how far off the right winter size a principal is at rating 0 and 100 */
 };

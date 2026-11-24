@@ -323,6 +323,19 @@ Cheap packages made money almost irrelevant (1% in the red), which is the opposi
 
 **Not done.** Letting the principal decide the split of the budget between drivers and the car as a real trade-off (B10): money now matters more (about $10M is worth about 0.2 power a year, measured before this change, to be re-measured), but a principal's driver-budget decision is still not modelled.
 
+## B12. Balancing the director, the principal, staff and money (2.6.0)
+
+**What the first economy tuning did.** Making upgrades bigger (B11) multiplied everything. Measured over 24 seeds x 8 seasons, years without new rules, per +10 rating, car power a year: director +0.25, **principal +0.68, staff +0.65**, and +$10M of R&D money +0.89. A team with a strong director, principal and staff (80, 80, 70) beat one with weak ones (20, 20, 30) by **8 power points a year**, more than the whole spread of the league (about 7). The intent is the other way round: the director decides how good a package is, the principal how well the programme is run, staff how reliably it is built. The winter step also did not depend on the director at all (-0.02), because the winter is dominated by catch-up and the league re-centring.
+
+**What was done.** Lowered the principal's direct effect (gain exponent 2.2 to 1.1) and staff (gain exponent 2 to 0.8, failure factor 2.5 to 0.8); widened the director's hit and miss (hit x1.55 to x1.65, miss x0.45 to x0.4); made packages a little dearer (cost x0.65 to x0.8) with more gain (x2.4 to x2.6) so money still binds without dominating.
+
+| Tuning | Director | Principal | Staff | +$10M | Strong team minus weak team | In-season 2+ places | Winter 2+ places | Shelved early: winter step |
+|---|---|---|---|---|---|---|---|---|
+| Before balancing | +0.25 | +0.68 | +0.65 | +0.89 | +8.2 | 27% | 17% | +0.39 vs -0.09 |
+| **Final** | **+0.50** | **+0.25** | **+0.24** | **+0.37** | **+5.5** | **28%** | **23%** | **+0.81 vs -0.21** |
+
+Order is now director, principal, staff. The strong-minus-weak gap is 5.5 against the aim of 3 to 4: the 80 versus 20 contrast is extreme, and a typical gap between teams (one standard deviation each, about 1.4 power a year in total) is modest next to the spread of the league (about 6.7). Measurement error on each effect is about plus or minus 0.07 to 0.09, so small differences between tunings are noise; the director comes out higher than the aim of 0.35. Money (+0.37 per $10M) binds: 14% of teams finish a season in the red and the average left over is $14M.
+
 ---
 
 # Part C: Engine allocation
