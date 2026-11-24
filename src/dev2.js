@@ -76,7 +76,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   if (!lead && mine && S.rd && rnd() < 0.75) k = S.rd;                          /* pasukan pemain ikut fokus R&D pilihan (Leadership: the principal and director decide, not the driver) */
   if (opt && opt.k) k = opt.k;
   var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * (lead ? LEAD.staffK : DEV.staffK));
-  if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / 600;                           /* a driver who explains the car well: fewer failed upgrades */
+  if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / LEAD.fbFail;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }
   if (opt && opt.fm) fail *= opt.fm;
@@ -133,7 +133,7 @@ function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-
     var d = t.dev;
     if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * (lead ? leadLerp(LEAD.timeSd, leadTPRating(t)) : 0.2); }
     if (d.banked) return;
-    d.prog = (d.prog || 0) + (lead ? LEAD.rate : DEV.rate) * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
+    d.prog = (d.prog || 0) + (lead ? LEAD.rate * leadFbRate(S, t) : DEV.rate) * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
     /* TP bijak tutup projek musim ni bila jauh dari sasaran, simpan untuk kereta tahun depan */
     var shelve = lead ? leadShelve(S, t, ranks, round, last) : (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0);
     if (shelve) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }

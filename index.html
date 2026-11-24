@@ -4819,14 +4819,14 @@ function worldQualifiesF1(d){return d.age>=18&&(d.originLeague==='initial-f2'||(
 /* Pay drivers: poorer F1 teams weigh sponsor backing against raw rating. */
 function worldPayBonus(t,d){return t.prestige<=5?(d.pay||0)*(6-t.prestige)*3.2:0;}
 function worldRankCandidate(d){var last=(d.worldHistory||[]).slice(-1)[0];return rating(d)+Math.max(0,(d.pot||rating(d))-rating(d))*.15+(last&&last.pos?Math.max(0,5-last.pos)*.8:0);}
-function worldAssign(game,league,drivers,teams,startYear){var N=startYear==null?game.season+1:startYear,previous={},used={},nums={},player=progressionPlayer(game);drivers.forEach(function(d,i){previous[d.uid]=d.teamKey;d.id=i;d.vac=false;d.teamKey=league==='f1'?'f1:'+d.team:teams[d.team].key;if(d.uid===game.playerUid||league===leagueOf(game)&&game.sit&&d.stand){game.pi=i;nums[d.num]=true;}});drivers.forEach(function(d){if(d.uid!==game.playerUid&&!(league===leagueOf(game)&&game.sit&&d.stand)){if(!d.num||nums[d.num]){var n=2;while(nums[n])n++;d.num=n;}nums[d.num]=true;}d.code=mkCode(d.name,used);d.pts=0;d.wins=0;d.pods=0;d.fp=[];d.perf={n:0,s:0};if(d.uid!==game.playerUid&&(!d.con||d.con.end<N||previous[d.uid]!==d.teamKey)){var length=league==='f1'?(d.age>=35||teams[d.team].prestige<=3?1:2+Math.floor(rnd()*2)):1;d.con={len:length,end:N+length-1,pay:league==='f1'?payFor(ovr(d),.75)*(typeof leadPayMul==='function'&&teams[d.team]?leadPayMul(game,teams[d.team]):1):league==='f2'?.6:.1};}});}
+function worldAssign(game,league,drivers,teams,startYear){var N=startYear==null?game.season+1:startYear,previous={},used={},nums={},player=progressionPlayer(game);drivers.forEach(function(d,i){previous[d.uid]=d.teamKey;d.id=i;d.vac=false;d.teamKey=league==='f1'?'f1:'+d.team:teams[d.team].key;if(d.uid===game.playerUid||league===leagueOf(game)&&game.sit&&d.stand){game.pi=i;nums[d.num]=true;}});drivers.forEach(function(d){if(d.uid!==game.playerUid&&!(league===leagueOf(game)&&game.sit&&d.stand)){if(!d.num||nums[d.num]){var n=2;while(nums[n])n++;d.num=n;}nums[d.num]=true;}d.code=mkCode(d.name,used);d.pts=0;d.wins=0;d.pods=0;d.fp=[];d.perf={n:0,s:0};if(d.uid!==game.playerUid&&(!d.con||d.con.end<N||previous[d.uid]!==d.teamKey)){var length=league==='f1'?(d.age>=35||teams[d.team].prestige<=3?1:2+Math.floor(rnd()*2)):1;d.con={len:length,end:N+length-1,pay:league==='f1'?payFor(ovr(d),.75)*(typeof leadPayMul==='function'&&teams[d.team]?leadPayMul(game,teams[d.team])*leadFbPay(game,teams[d.team],d):1):league==='f2'?.6:.1};}});}
 function worldNewSeason(game,log){
  var w=game.world;if(w.advanced===game.season)return;worldPrepareAnnual(game);marketApplyAI(game);game.mkt={s:game.season+1,moves:[],staff:[],gold:null,seen:false};var active=leagueOf(game),views={};['f1','f2','f3'].forEach(function(l){views[l]=worldView(game,l);});
  var player=progressionPlayer(game),retiring={};['f1','f2','f3'].forEach(function(l){var v=views[l];v.drivers.concat(v.reserves).forEach(function(d){if(d.uid===game.playerUid)return;if(l!==active||v.reserves.indexOf(d)>=0)d.age++;if(d.age>=AGEING.retireAt||l==='f1'&&d.age>=34&&rnd()<.04*(d.age-33)){retiring[d.uid]=true;worldArchive(game,d,'Retired',l);return;}var last=(d.worldHistory||[]).slice(-1)[0];var team=d.team>=0?v.teams[d.team]:null,coaching=team&&team.ops?clamp(.9+team.ops.coaching*.2,.9,1.1):1;drvGrow(d,(last&&last.pos<=3?1.1:1)*coaching*(d.mentor&&d.mentor.season===game.season?1.03:1));d.fb=clamp(Math.round(d.fb+(d.age<30?.6:0)),40,99);});});
  var taken={},f1=views.f1,kept=[],pool=[];
  f1.drivers.concat(f1.reserves).forEach(function(d){if(retiring[d.uid])return;if(d.uid===game.playerUid||f1.drivers.indexOf(d)>=0&&d.con&&d.con.end>=game.season+1)kept.push(d);else pool.push(d);});
  var candidates=views.f2.drivers.concat(views.f2.reserves).filter(function(d){return d.uid!==game.playerUid&&!retiring[d.uid]&&worldQualifiesF1(d);});pool=pool.concat(candidates);
- var final=[];f1.teams.slice().sort(function(a,b){return teamPower(b)+b.prestige*.2-teamPower(a)-a.prestige*.2;}).forEach(function(t){var here=kept.filter(function(d){return d.team===t.id;}).sort(function(a,b){return (b.uid===game.playerUid?999:worldRankCandidate(b))-(a.uid===game.playerUid?999:worldRankCandidate(a));});while(here.length>2)pool.push(here.pop());while(here.length<2){pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)+worldPayBonus(t,b)+leadEye(game,t,b)-worldRankCandidate(a)-(a.acad===t.id?1:0)-worldPayBonus(t,a)-leadEye(game,t,a);});var d=pool.shift();if(!d)throw new Error('No qualified F2/F1 candidate for an F1 vacancy');d.team=t.id;here.push(d);}here.forEach(function(d){taken[d.uid]=true;final.push(d);});});f1.drivers=final;
+ var final=[];f1.teams.slice().sort(function(a,b){return teamPower(b)+b.prestige*.2-teamPower(a)-a.prestige*.2;}).forEach(function(t){var here=kept.filter(function(d){return d.team===t.id;}).sort(function(a,b){return (b.uid===game.playerUid?999:worldRankCandidate(b))-(a.uid===game.playerUid?999:worldRankCandidate(a));});while(here.length>2)pool.push(here.pop());while(here.length<2){pool.sort(function(a,b){return worldRankCandidate(b)+(b.acad===t.id?1:0)+worldPayBonus(t,b)+leadEye(game,t,b)+leadFit(game,t,b)-worldRankCandidate(a)-(a.acad===t.id?1:0)-worldPayBonus(t,a)-leadEye(game,t,a)-leadFit(game,t,a);});var d=leadPickAffordable(game,t,pool,here)||pool.shift();if(!d)throw new Error('No qualified F2/F1 candidate for an F1 vacancy');d.team=t.id;here.push(d);}here.forEach(function(d){taken[d.uid]=true;final.push(d);});});f1.drivers=final;
  var spare=pool.filter(function(d){return !taken[d.uid];}).sort(function(a,b){return worldRankCandidate(b)-worldRankCandidate(a);});f1.reserves=spare.slice(0,6);f1.reserves.forEach(function(d){taken[d.uid]=true;d.team=-1;d.id=-1;});
  function fillJunior(l,from){var v=views[l],old=v.drivers.concat(v.reserves),next=[],release=[];old.forEach(function(d){if(taken[d.uid]||retiring[d.uid])return;if(d.uid===game.playerUid||d.age<=(l==='f2'?24:21)&&d.uid!==v.championUid)next.push(d);else release.push(d);});
   var promote=from?views[from].drivers.concat(views[from].reserves).filter(function(d){return d.uid!==game.playerUid&&!taken[d.uid]&&!retiring[d.uid]&&d.age>=17;}):[];promote.sort(function(a,b){return (b.uid===views[from].championUid?1000:worldRankCandidate(b))-(a.uid===views[from].championUid?1000:worldRankCandidate(a));});
@@ -6282,7 +6282,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   if (!lead && mine && S.rd && rnd() < 0.75) k = S.rd;                          /* pasukan pemain ikut fokus R&D pilihan (Leadership: the principal and director decide, not the driver) */
   if (opt && opt.k) k = opt.k;
   var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * (lead ? LEAD.staffK : DEV.staffK));
-  if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / 600;                           /* a driver who explains the car well: fewer failed upgrades */
+  if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / LEAD.fbFail;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }
   if (opt && opt.fm) fail *= opt.fm;
@@ -6339,7 +6339,7 @@ function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-
     var d = t.dev;
     if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * (lead ? leadLerp(LEAD.timeSd, leadTPRating(t)) : 0.2); }
     if (d.banked) return;
-    d.prog = (d.prog || 0) + (lead ? LEAD.rate : DEV.rate) * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
+    d.prog = (d.prog || 0) + (lead ? LEAD.rate * leadFbRate(S, t) : DEV.rate) * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
     /* TP bijak tutup projek musim ni bila jauh dari sasaran, simpan untuk kereta tahun depan */
     var shelve = lead ? leadShelve(S, t, ranks, round, last) : (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0);
     if (shelve) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
@@ -10131,7 +10131,8 @@ function finSeason(S) {
     f.pay = finPayroll(S, t);
     var carry = clamp(f.cash, 0, 0.25 * FIN.cap) * 0.7, debt = Math.max(0, -f.cash) * 1.25 + (f.debt || 0);
     if (typeof facLoan === 'function') debt = facLoan(S, t, f, debt);
-    var raw = f.rev - FIN.ops - f.pay - finAcad(S, t) + carry - debt - (f.bonus || 0) - (f.paidPz || 0); f.bonus = 0; f.paidPz = 0; f.paidSp = 0;   /* prize money already paid during the season (Leadership economy) is not paid twice */
+    var payFund = f.pay; if (typeof leadOn === 'function' && leadOn(S, S.season + 1) && typeof leadDriverRef === 'function') payFund = teamPayroll(S, t).st + leadDriverRef(S);   /* Leadership: drivers are paid from their own budget, so the R&D fund only carries staff and a league-average reference for the drivers */
+    var raw = f.rev - FIN.ops - payFund - finAcad(S, t) + carry - debt - (f.bonus || 0) - (f.paidPz || 0); f.bonus = 0; f.paidPz = 0; f.paidSp = 0;   /* prize money already paid during the season (Leadership economy) is not paid twice */
     f.fund = finEff(Math.max(8, raw)); f.cash = f.fund; f.spent = 0; f.debt = 0; f.brk = false;
     f.hist.push({ s: S.season + 1, rev: +f.rev.toFixed(1), pay: +f.pay.toFixed(1), fund: +f.fund.toFixed(1) });
     if (f.hist.length > 8) f.hist.shift();
@@ -15716,7 +15717,9 @@ var LEAD = {
   eps: 0.25,                                                         /* real uncertainty in what pays off, shared by principal and director */
   sTP: [1.0, 0.15], sTD: [0.8, 0.07], fbSig: 0.004,                  /* judgement error at rating 0 and 100; feedback above 75 lowers the director's error */
   consBase: 0.77, consSlope: 0.24,                                   /* principal leans on advice: 77% at rating 0 to 53% at 100 */
-  fbGain: 150,                                                       /* team feedback gain: 1 + (feedback - 70) / fbGain (was the player's driver only) */
+  fbGain: 150, fbFail: 600, fbRate: 400,                             /* team feedback: gain 1 + (feedback - 70) / fbGain (was the player's driver only), failure x(1 - (feedback - 70) / fbFail), progress per round x(1 + (feedback - 70) / fbRate) */
+  fitFb: 0.0, payFb: 0.0,                                            /* a good principal values feedback when choosing drivers (OVR points per feedback point) and pays for it (share of pay per point) */
+  budShare: { win: 0.30, build: 0.27, rebuild: 0.23, cut: 0.20 }, budErr: [0.20, 0.03], /* driver budget as a share of revenue by plan, and how far a principal at rating 0 / 100 is off it */
   drift: 1.5, retireAge: 62,
   ask: [2, 10],                                                      /* asking salary ($M) at rating 0 and 100 */
   poach: 0.25, quitOver: 3,
@@ -15765,6 +15768,7 @@ function leadFeedback(S, t) {
   return fb.length > 1 ? 0.6 * fb[0] + 0.4 * fb[1] : fb[0];
 }
 function leadFbGain(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbGain; }
+function leadFbRate(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbRate; }
 function leadLerp(pair, rating) { return pair[0] + (pair[1] - pair[0]) * clamp(rating, 0, 100) / 100; }
 /* the director's effect on one package: a gain factor (hit / normal / miss) and a failure multiplier */
 function leadPackage(S, t) {
@@ -15962,5 +15966,26 @@ function leadWinterSize(S, t) {
   var tr = leadTPRating(t), err = leadLerp(LEAD.winterErr, tr) * hgauss(t.id + '|win|' + S.season), mul = 1 + err;
   if (leadRulesNext(S) && t.dev.regReady) mul *= 1.3;
   return LEAD.winterSize * clamp(mul, 0.6, 1.6);
+}
+
+/* ---------- Driver budget (separate from the R&D fund) ---------- */
+function leadDriverRef(S) { var tot = 0, n = 0; S.teams.forEach(function (t) { if (t.fin && typeof teamPayroll === 'function') { tot += teamPayroll(S, t).dr; n++; } }); return n ? tot / n : 30; }
+function leadPlan(g, t) {
+  var cash = t.fin ? t.fin.cash : 0, rk = 1 + g.teams.filter(function (o) { return teamPower(o) > teamPower(t); }).length, amb = t.dev && t.dev.tp ? t.dev.tp.amb : 1;
+  return cash < -5 ? 'cut' : rk <= 4 || (rk <= 7 && amb >= 2) ? 'win' : rk >= 8 ? 'rebuild' : 'build';
+}
+/* what the principal is willing to spend on his two drivers next season */
+function leadDriverBudget(g, t) {
+  var rev = t.fin && t.fin.rev ? t.fin.rev : 140, share = LEAD.budShare[leadPlan(g, t)] || 0.26, tr = leadTPRating(t);
+  return rev * share * clamp(1 + leadLerp(LEAD.budErr, tr) * hgauss(t.id + '|bud|' + g.season), 0.6, 1.4);
+}
+function leadFbPay(g, t, d) { return leadOn(g, g.season + 1) && t && t.dev && t.dev.tp ? 1 + Math.max(0, (Number.isFinite(d.fb) ? d.fb : 70) - 70) * LEAD.payFb * leadTPRating(t) / 100 : 1; }
+function leadFit(g, t, d) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? LEAD.fitFb * leadTPRating(t) / 100 * ((Number.isFinite(d.fb) ? d.fb : 70) - 70) : 0; }
+/* the best candidate he can afford inside the budget (pool is already sorted best first); null when none fits */
+function leadPickAffordable(g, t, pool, here) {
+  if (!leadOn(g, g.season + 1) || !t.dev || !t.dev.tp) return null;
+  var budget = leadDriverBudget(g, t), spent = here.reduce(function (a, d) { return a + (d.con && Number.isFinite(d.con.pay) ? d.con.pay : payFor(ovr(d), 0.75)); }, 0);
+  for (var i = 0; i < pool.length; i++) { var d = pool[i], pay = payFor(ovr(d), 0.75) * leadPayMul(g, t) * leadFbPay(g, t, d); if (spent + pay <= budget) { pool.splice(i, 1); return d; } }
+  return null;
 }
 </script>

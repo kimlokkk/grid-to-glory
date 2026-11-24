@@ -11,7 +11,9 @@ var LEAD = {
   eps: 0.25,                                                         /* real uncertainty in what pays off, shared by principal and director */
   sTP: [1.0, 0.15], sTD: [0.8, 0.07], fbSig: 0.004,                  /* judgement error at rating 0 and 100; feedback above 75 lowers the director's error */
   consBase: 0.77, consSlope: 0.24,                                   /* principal leans on advice: 77% at rating 0 to 53% at 100 */
-  fbGain: 150,                                                       /* team feedback gain: 1 + (feedback - 70) / fbGain (was the player's driver only) */
+  fbGain: 150, fbFail: 600, fbRate: 400,                             /* team feedback: gain 1 + (feedback - 70) / fbGain (was the player's driver only), failure x(1 - (feedback - 70) / fbFail), progress per round x(1 + (feedback - 70) / fbRate) */
+  fitFb: 0.0, payFb: 0.0,                                            /* a good principal values feedback when choosing drivers (OVR points per feedback point) and pays for it (share of pay per point) */
+  budShare: { win: 0.30, build: 0.27, rebuild: 0.23, cut: 0.20 }, budErr: [0.20, 0.03], /* driver budget as a share of revenue by plan, and how far a principal at rating 0 / 100 is off it */
   drift: 1.5, retireAge: 62,
   ask: [2, 10],                                                      /* asking salary ($M) at rating 0 and 100 */
   poach: 0.25, quitOver: 3,
@@ -60,6 +62,7 @@ function leadFeedback(S, t) {
   return fb.length > 1 ? 0.6 * fb[0] + 0.4 * fb[1] : fb[0];
 }
 function leadFbGain(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbGain; }
+function leadFbRate(S, t) { return 1 + (leadFeedback(S, t) - 70) / LEAD.fbRate; }
 function leadLerp(pair, rating) { return pair[0] + (pair[1] - pair[0]) * clamp(rating, 0, 100) / 100; }
 /* the director's effect on one package: a gain factor (hit / normal / miss) and a failure multiplier */
 function leadPackage(S, t) {
@@ -257,4 +260,25 @@ function leadWinterSize(S, t) {
   var tr = leadTPRating(t), err = leadLerp(LEAD.winterErr, tr) * hgauss(t.id + '|win|' + S.season), mul = 1 + err;
   if (leadRulesNext(S) && t.dev.regReady) mul *= 1.3;
   return LEAD.winterSize * clamp(mul, 0.6, 1.6);
+}
+
+/* ---------- Driver budget (separate from the R&D fund) ---------- */
+function leadDriverRef(S) { var tot = 0, n = 0; S.teams.forEach(function (t) { if (t.fin && typeof teamPayroll === 'function') { tot += teamPayroll(S, t).dr; n++; } }); return n ? tot / n : 30; }
+function leadPlan(g, t) {
+  var cash = t.fin ? t.fin.cash : 0, rk = 1 + g.teams.filter(function (o) { return teamPower(o) > teamPower(t); }).length, amb = t.dev && t.dev.tp ? t.dev.tp.amb : 1;
+  return cash < -5 ? 'cut' : rk <= 4 || (rk <= 7 && amb >= 2) ? 'win' : rk >= 8 ? 'rebuild' : 'build';
+}
+/* what the principal is willing to spend on his two drivers next season */
+function leadDriverBudget(g, t) {
+  var rev = t.fin && t.fin.rev ? t.fin.rev : 140, share = LEAD.budShare[leadPlan(g, t)] || 0.26, tr = leadTPRating(t);
+  return rev * share * clamp(1 + leadLerp(LEAD.budErr, tr) * hgauss(t.id + '|bud|' + g.season), 0.6, 1.4);
+}
+function leadFbPay(g, t, d) { return leadOn(g, g.season + 1) && t && t.dev && t.dev.tp ? 1 + Math.max(0, (Number.isFinite(d.fb) ? d.fb : 70) - 70) * LEAD.payFb * leadTPRating(t) / 100 : 1; }
+function leadFit(g, t, d) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp ? LEAD.fitFb * leadTPRating(t) / 100 * ((Number.isFinite(d.fb) ? d.fb : 70) - 70) : 0; }
+/* the best candidate he can afford inside the budget (pool is already sorted best first); null when none fits */
+function leadPickAffordable(g, t, pool, here) {
+  if (!leadOn(g, g.season + 1) || !t.dev || !t.dev.tp) return null;
+  var budget = leadDriverBudget(g, t), spent = here.reduce(function (a, d) { return a + (d.con && Number.isFinite(d.con.pay) ? d.con.pay : payFor(ovr(d), 0.75)); }, 0);
+  for (var i = 0; i < pool.length; i++) { var d = pool[i], pay = payFor(ovr(d), 0.75) * leadPayMul(g, t) * leadFbPay(g, t, d); if (spent + pay <= budget) { pool.splice(i, 1); return d; } }
+  return null;
 }
