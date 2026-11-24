@@ -19,6 +19,7 @@ var LEAD = {
   /* Director: build quality by probability, never by certainty. A package can be a hit (bigger gain) or a miss (smaller), and fails more or less often. */
   hit: [0.06, 0.54], miss: [0.54, 0.06], hitMul: 1.55, missMul: 0.45, // chance of a hit / a miss at rating 0 and 100
   failTD: [1.35, 0.65],                                              /* failure chance multiplier at rating 0 and 100 */
+  staffG: 2,                                                         /* staff effect on gain (old value 2); tuned so the director matters most, then the principal, then staff */
   tpG: 2.2,                                                          /* the principal's direct grip on the programme (was 1.5). Interim: his decisions (part, timing, stopping) cost little on their own, so this keeps him meaningful until he also chooses drivers and money (next phase); then lower it */
   /* Principal: when to stop and when to bring the package. Chance of the right call at rating 0 and 100. */
   stopRight: [0.25, 0.95], stopFalse: [0.12, 0.01],                  /* shelves the project when he should / when he should not */

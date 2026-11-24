@@ -6289,7 +6289,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var lp = lead ? leadPackage(S, t) : null; if (lp) fail *= lp.fail;
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
-  else gain = size * bud * (lp ? lp.q : t.dev.td) * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, lp ? LEAD.tpG : DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
+  else gain = size * bud * (lp ? lp.q : t.dev.td) * Math.pow(t.dev.staff, lp ? LEAD.staffG : DEV.staffG) * Math.pow(t.dev.tp.skill, lp ? LEAD.tpG : DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
   if (lead && gain > 0) gain *= (opt && opt.k ? LEAD.gainIn : LEAD.gainWin);
   if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
   else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
@@ -15724,6 +15724,7 @@ var LEAD = {
   /* Director: build quality by probability, never by certainty. A package can be a hit (bigger gain) or a miss (smaller), and fails more or less often. */
   hit: [0.06, 0.54], miss: [0.54, 0.06], hitMul: 1.55, missMul: 0.45, // chance of a hit / a miss at rating 0 and 100
   failTD: [1.35, 0.65],                                              /* failure chance multiplier at rating 0 and 100 */
+  staffG: 2,                                                         /* staff effect on gain (old value 2); tuned so the director matters most, then the principal, then staff */
   tpG: 2.2,                                                          /* the principal's direct grip on the programme (was 1.5). Interim: his decisions (part, timing, stopping) cost little on their own, so this keeps him meaningful until he also chooses drivers and money (next phase); then lower it */
   /* Principal: when to stop and when to bring the package. Chance of the right call at rating 0 and 100. */
   stopRight: [0.25, 0.95], stopFalse: [0.12, 0.01],                  /* shelves the project when he should / when he should not */
