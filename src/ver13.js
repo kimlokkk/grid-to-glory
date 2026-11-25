@@ -1,6 +1,12 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.0', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.1', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.1', d: 'Regulations: the new car comes from the people', date: '25 Nov 2026', l: [
+    "A major change no longer drags the champion down by rule. The new car now comes from the team: a strong technical director builds a better concept, a principal who started the new car in time gains, technical staff make it reliable and money pays for the programme. Luck still plays a part, more so with a weak director. In testing, a champion with a strong principal and director stayed in the top three about half the time, and almost never before.",
+    "A minor change is now different in kind: it targets one or two areas (aero most often, then chassis, then engine) and reworks about 75% of those, the rest of the car carries over. A major change rebuilds about 70% of every car. Regulation Watch, the news and the Reg Report name the areas.",
+    "The slowest team still gets some help on a major change, and more of it when it already has a good director or prepared in time, so a well-run underdog can jump up the order. In testing the slowest team reached the top half about a third of the time.",
+    "Applies from the next regulation change in careers with Leadership. Classic and junior series are unchanged."
+  ] },
   { v: '2.6.0', d: 'Leadership', date: '25 Nov 2026', l: [
     "Technical directors now keep their quality. Until now a team's director quality was redrawn at random every winter whoever the person was, so the name on the door meant nothing. A director is now a real person with a rating (0 to 100) that moves only a little each year, so a strong one stays strong and a weak one stays weak, on any team.",
     "The principal decides, the director advises. Every upgrade decision is right with a chance that depends on both ratings and on how well the drivers explain the car. A weak principal is wrong more often, but in a believable way: he mixes up two parts that are close, he never pours a package into a part that is already maxed. He also leans on the director more, and when he overrules a director who was right, the better part loses out. Look for \"Right calls\" on a team's profile (Performance tab) and for stories like \"X overrules Y\". A director who is overruled too often can walk out.",

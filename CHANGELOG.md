@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.1 — 25 November 2026 (regulations: the new car comes from the people)
+
+- Phase A: a major change rebuilds 70% of every part (was 60%); a minor change targets one or two areas (aero 50%, chassis 30%, engine 20% weights, chosen from a hash) and reworks 75% of those (was 30% of every part). Words in news, Regulation Watch, Reg Report and story pack come from `regWords`.
+- Phase B (`S.lead.reg >= 2`): new-car concept = director (7 points from rating 0 to 100 around 50), principal (3), preparation (+3), money (2), luck (sd 3, wider with a weak director), part noise sd 4 (was 9); staff execution on reliability. No forced drop for the champion; the slowest team is lifted to P8, or P7 when it has a director rated 55+ or prepared in time. Measured with 24 seeds x 20 seasons (about 80 majors and 80 minors): champion stays top 3 after a major 45% (was 1%), with strong leadership 48%; top-3 teams with TD 60+ stay top 3 55%, TD below 45 14%; slowest team into the top half 37% (was 48% with the forced rules, 25% without the director link); champion repeats 34% (was 32%).
+
 ## 2.6.0 — 25 November 2026 (Leadership)
 
 - Principals and directors on screen: a dossier in the same Paddock frame as a driver (portrait in team colours, rating badge, Overview with upgrade odds or judgement, rating over time, Career table, Contract), a Staff tab in the Paddock browser with a card for every principal, director and free agent, and free-agent cards in the winter recap. Nationalities of the existing staff names now match the names. The story pack has a new PRINCIPALS AND DIRECTORS section (winter moves, firings, free agents, retirements) and each team line describes its principal and director as a person.

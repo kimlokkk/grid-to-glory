@@ -180,18 +180,20 @@ function devWinter(S, log) {
   /* peraturan baru: sebahagian kereta diundi semula, falsafah diundi semula */
   var pro = S.mode === 'pro' && S.world && S.world.era, kind = S.season + 1 >= S.regYear ? 'major' : (pro && S.regMinor && S.season + 1 >= S.regMinor ? 'minor' : null), reg = !!kind;
   if (reg) {
+    var rgParts = kind === 'minor' && regAOn(S) ? regMinorParts(S).slice() : null;
     var mix = regMix(!!pro, kind), before = powerRank(S), champId = S.teams.slice().sort(function (a, b) { return b.pts - a.pts; })[0].id;
     var lastId = S.teams.slice().sort(function (a, b) { return teamPower(a) - teamPower(b); })[0].id;
     if (typeof rgBegin === 'function') rgCtx = rgBegin(S, kind, mix, champId, lastId);
+    var merit = pro && regMeritOn(S), offs = {}; if (merit) S.teams.forEach(function (t) { offs[t.id] = regConcept(S, t, true); });
     S.teams.forEach(function (t) {
-      PARTS.forEach(function (k) { var nv = clamp(S.target[k] + gauss() * 9, 50, 97); t.car[k] = (1 - mix) * t.car[k] + mix * nv; if (kind !== 'minor') t.dev.phil[k] = rr(0.75, 1.25); });
+      PARTS.forEach(function (k) { var nv = clamp(S.target[k] + gauss() * (merit ? REGB.sd : 9) + (merit ? regOffPart(offs[t.id], k) * (kind === 'minor' ? REGB.minorK : 1) : 0), 50, 97), m = pro ? regPartMix(S, kind, k) : mix; t.car[k] = (1 - m) * t.car[k] + m * nv; if (kind !== 'minor') t.dev.phil[k] = rr(0.75, 1.25); });
     });
     if (typeof rgMid === 'function') rgMid(rgCtx, 1);
-    if (pro) regBalance(S, kind, champId, lastId, before);
+    if (pro) regBalance(S, kind, champId, lastId, before, merit);
     if (typeof rgMid === 'function') rgMid(rgCtx, 2);
     if (kind === 'major' || !pro) S.regYear = pro ? S.world.era.next : S.season + 1 + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
     if (pro) { S.regMinor = regNextMinor(S, kind); S.regLast = { kind: kind, season: S.season + 1 }; }
-    if (log) log.push({ reg: true, kind: kind });
+    if (log) log.push({ reg: true, kind: kind, parts: rgParts });
   }
   S.teams.forEach(function (t) { var wsz = (typeof leadOn === 'function' && leadOn(S, S.season + 1) && t.dev.tp ? leadWinterSize(S, t) : DEV.winter) + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz, typeof leadOn === 'function' && leadOn(S, S.season + 1) ? LEAD.costMul : 1); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.regReady = false; t.dev.regDecided = false; t.dev.rum = false; t.dev.next = null; });
   if (typeof e4Winter === 'function') e4Winter(S, log);
@@ -209,12 +211,62 @@ function devWinter(S, log) {
 /* Regulation changes (Pro): a dynasty drops after a major change; minor changes shuffle the leaders a little. Preparation softens the fall. */
 /* share of each car that is rebuilt on a regulation change (one source for the winter re-roll and the Garage Watch expectation) */
 function regMix(pro, kind) { return !pro ? DEV.regMix : kind === 'major' ? 0.6 : 0.3; }
+/* Regulations phase A (Leadership saves, S.lead.reg): a major change rebuilds 70% of every part; a minor change targets one or two
+   areas (aero most often, then chassis, then engine) and reworks 75% of those, the rest carries over. Chosen from a hash, so no race random numbers move. */
+var REGA = { major: 0.7, minor: 0.75, w: [['aero', 0.5], ['chassis', 0.3], ['engine', 0.2]] };
+function regAOn(S) { return !!(S && S.mode === 'pro' && S.lead && S.lead.reg >= 1); }
+function regMinorParts(S) {
+  if (!S.regMinor) return [];
+  if (S.regParts && S.regParts.s === S.regMinor) return S.regParts.p;
+  var pickOne = function (u, not) { var L = REGA.w.filter(function (x) { return x[0] !== not; }), tot = L.reduce(function (a, x) { return a + x[1]; }, 0), c = 0, i; for (i = 0; i < L.length; i++) { c += L[i][1] / tot; if (u < c) return L[i][0]; } return L[L.length - 1][0]; };
+  var a = pickOne(hash01(S.regMinor * 17 + 3, 9)), parts = [a];
+  if (hash01(S.regMinor * 29 + 5, 11) < 0.5) parts.push(pickOne(hash01(S.regMinor * 41 + 7, 13), a));
+  S.regParts = { s: S.regMinor, p: parts }; return parts;
+}
+function regPartMix(S, kind, k) {
+  var pro = S.mode === 'pro';
+  if (!regAOn(S)) return regMix(pro, kind);
+  if (kind === 'major') return REGA.major;
+  return regMinorParts(S).indexOf(k) >= 0 ? REGA.minor : 0;
+}
+/* Regulations phase B (S.lead.reg >= 2): the new car comes from the people, not from a fixed handicap.
+   Concept = director rating + principal rating + preparation (the principal started the new car in time) + money + luck (wider for a weak director).
+   Execution = technical staff (reliability and the first packages). No forced drop for the champion; the slowest team gets a smaller lift. */
+var REGB = { td: 7, tp: 3, prep: 3, money: 2, staff: 2, luck: 3, sd: 4, minorK: 0.6, lift: 8, liftTD: 55 };
+function regMeritOn(S) { return regAOn(S) && S.lead.reg >= 2 && typeof leadOn === 'function' && leadOn(S, S.season + 1); }
+function regRatings(t) {
+  var dv = t.dev || {};
+  return { td: dv.tdp && typeof leadRating === 'function' ? leadRating('td', dv.td) : 50, tp: dv.tp && typeof leadRating === 'function' ? leadRating('tp', dv.tp.skill) : 50,
+    st: clamp((((dv.staff || 1) - 0.8) / 0.4) * 100, 0, 100), ready: !!dv.regReady };
+}
+/* expected offset (no luck) and the luck draw; `draw` false gives the expectation only (Regulation Watch) */
+function regConcept(S, t, draw) {
+  var r = regRatings(t), funds = S.teams.map(function (o) { return o.fin ? o.fin.fund : 0; }), mf = funds.reduce(function (a, x) { return a + x; }, 0) / funds.length || 1;
+  var money = t.fin ? clamp((t.fin.fund - mf) / mf, -0.5, 0.5) * 2 : 0;
+  var c = REGB.td * (r.td - 50) / 50 + REGB.tp * (r.tp - 50) / 50 + (r.ready ? REGB.prep : 0) + REGB.money * money;
+  if (draw) c += gauss() * REGB.luck * (1.3 - 0.6 * r.td / 100);
+  return { c: c, s: REGB.staff * (r.st - 50) / 50 };
+}
+function regOffPart(o, k) { return !o ? 0 : k === 'aero' || k === 'chassis' ? o.c + 0.5 * o.s : k === 'engine' ? 0.3 * o.c : 0.3 * o.c + 1.5 * o.s; }
+function regAvgMix(S, kind) { var m = 0; PARTS.forEach(function (k) { m += regPartMix(S, kind, k); }); return m / PARTS.length; }
+function regPartsText(parts) { var n = { aero: 'aero', chassis: 'chassis', engine: 'engine' }; return parts.map(function (k) { return n[k] || k; }).join(' and '); }
+/* the words every screen uses for a change, so the news, Regulation Watch and the story pack never disagree with the mechanics */
+function regWords(S, kind) {
+  if (!regAOn(S)) return kind === 'major' ? { pct: '60%', badge: 'MAJOR · 60% REBUILT', line: 'About 60% of every car will be rebuilt from scratch.' } : { pct: '30%', badge: 'MINOR · 30% REWORKED', line: 'About a third of every car is reworked. Quick adapters gain ground, but nothing is rebuilt from scratch.' };
+  if (kind === 'major') return { pct: '70%', badge: 'MAJOR · 70% REBUILT', line: 'About 70% of every car will be rebuilt from scratch.' };
+  var pt = regPartsText(regMinorParts(S));
+  return { pct: '75% of ' + pt, badge: 'MINOR · ' + pt.toUpperCase() + ' RULES', parts: pt, line: 'The ' + pt + ' rules change: about 75% of ' + (regMinorParts(S).length > 1 ? 'those areas is' : 'that area is') + ' reworked and the rest of the car carries over. Teams strong in ' + pt + ' have the most to lose.' };
+}
 function regPrep(t) { return clamp(((t.prestige || 5) - 5) * 0.04 + ((t.dev && t.dev.td) || 1) - 1 + ((t.dev && t.dev.staff) || 1) - 1 + (t.dev && t.dev.regReady ? LEAD.regBonus : 0), -0.2, 0.35); }
-function regBalance(S, kind, champId, lastId, before) {
+function regBalance(S, kind, champId, lastId, before, merit) {
   var champ = S.teams[champId], last = S.teams[lastId];
   function crew(t) { var ds = S.drivers.filter(function (d) { return d.team === t.id; }); return ds.length ? ds.reduce(function (a, d) { return a + baseOverall(d); }, 0) / ds.length : 70; }
   function strength(t) { return teamPower(t) + (kind === 'major' ? 0.8 : 0.5) * crew(t); }
   function rankOf(t) { var st = strength(t); return 1 + S.teams.filter(function (o) { return o !== t && strength(o) > st; }).length; }
+  if (merit) {   /* phase B: no handicap for the champion; only the slowest team gets a smaller lift on a major change */
+    if (kind === 'major' && last.id !== champId) { var lr = regRatings(last), g0 = 0, lift0 = (lr.td >= REGB.liftTD || lr.ready ? REGB.lift - 1 : REGB.lift) - Math.round(regPrep(last) * 2);   /* a slow team that already has a good director, or prepared in time, gets more help */ while (rankOf(last) > lift0 && g0++ < 40) PARTS.forEach(function (k) { last.car[k] = clamp(last.car[k] + 1, 45, 99); }); }
+    return;
+  }
   var drop = kind === 'major' ? (rnd() < 0.5 ? 5 : 6) : before[champId] + 1 + Math.floor(rnd() * 3);
   drop = clamp(Math.round(drop - regPrep(champ) * (kind === 'major' ? 3 : 1)), 2, 10);
   var guard = 0; while (rankOf(champ) < drop && guard++ < 40) PARTS.forEach(function (k) { champ.car[k] = clamp(champ.car[k] - 1, 45, 99); });
