@@ -4,7 +4,9 @@ var CHANGELOG = [
   { v: '2.6.6', d: 'Weekend hold and honest winter news', date: '25 Nov 2026', l: [
     "Leaving a race weekend during qualifying or on the strategy page still takes you Home, and Start weekend now continues exactly where you left it, even after closing the game. Before, qualifying started again with a new result, so a bad grid could be re-rolled. Leaving during the race still finishes the race for you, as before.",
     "The winter upgrade story now says what your team gained on the rest of the field, not the raw number before every team's winter work is counted.",
-    "Story pack: every free principal and technical director in the pool is listed with rating, age and asking salary (before, only the best six of each)."
+    "Story pack: every free principal and technical director in the pool is listed with rating, age and asking salary (before, only the best six of each).",
+    "Story pack: every race now describes the track (length, power or downforce, tyre wear, overtaking, rain chance, pit loss), its history in your series (recent winners, poles, most wins, lap record), your record and mastery there, and a new NEXT RACE section previews the coming round.",
+    "Circuit history keeps each series apart, so a win in F2 at a track no longer counts in its F1 history."
   ] },
   { v: '2.6.5', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",

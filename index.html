@@ -11030,12 +11030,15 @@ function thRecord(S, R, P) {
   if (!R || R.ci == null) return;
   var w = R.cls.filter(function (x) { return x.pos === 1 && !x.dnf; })[0], pl = R.cls.filter(function (x) { return x.car.grid === 1; })[0], fd = R.fl && R.fl.di >= 0 ? S.drivers[R.fl.di] : null;
   var pk = function (x) { var d = x.car.d, t = S.teams[d.team]; return { n: d.name, c: d.code, t: t ? t.short : '', tc: t ? t.color : '#888' }; };
-  var rec = { s: S.season, w: w ? pk(w) : null, pl: pl ? pk(pl) : null, fl: fd ? { n: fd.name, c: fd.code, tc: S.teams[fd.team] ? S.teams[fd.team].color : '#888', t: R.fl.t > 0 ? R.fl.t : 0 } : null, me: P ? { p: P.dnf ? 0 : P.pos, g: P.car.grid, d: P.dnf ? 1 : 0 } : null };
+  var rec = { s: S.season, lg: S.mode === 'pro' ? leagueOf(S) : undefined, w: w ? pk(w) : null, pl: pl ? pk(pl) : null, fl: fd ? { n: fd.name, c: fd.code, tc: S.teams[fd.team] ? S.teams[fd.team].color : '#888', t: R.fl.t > 0 ? R.fl.t : 0 } : null, me: P ? { p: P.dnf ? 0 : P.pos, g: P.car.grid, d: P.dnf ? 1 : 0 } : null };
   S.th = S.th || {}; var a = S.th[R.ci] = S.th[R.ci] || [];
-  a = a.filter(function (r) { return r.s !== S.season; }); a.push(rec); S.th[R.ci] = a.slice(-25);
+  a = a.filter(function (r) { return !(r.s === S.season && thLg(r) === thLg(rec)); }); a.push(rec); S.th[R.ci] = a.slice(-25);
 }
-function thStats(ci) {
-  var a = (S.th && S.th[ci]) || [], best = 0, wins = 0, pods = 0, tally = {}, lap = null;
+/* which league a circuit record belongs to: the record itself, else the player's league that season (older saves) */
+function thLg(r) { if (r.lg) return r.lg; if (S.mode !== 'pro') return leagueOf(S); var h = (S.hist || []).filter(function (x) { return x.season === r.s; })[0]; return h ? (h.league || 'f1') : leagueOf(S); }
+function thStats(ci, lg) {
+  lg = lg || leagueOf(S);
+  var a = ((S.th && S.th[ci]) || []).filter(function (r) { return thLg(r) === lg; }), best = 0, wins = 0, pods = 0, tally = {}, lap = null;
   a.forEach(function (r) {
     if (r.me && r.me.p) { if (!best || r.me.p < best) best = r.me.p; if (r.me.p === 1) wins++; if (r.me.p <= 3) pods++; }
     if (r.w) tally[r.w.n] = (tally[r.w.n] || 0) + 1;
@@ -11068,7 +11071,9 @@ var CHANGELOG = [
   { v: '2.6.6', d: 'Weekend hold and honest winter news', date: '25 Nov 2026', l: [
     "Leaving a race weekend during qualifying or on the strategy page still takes you Home, and Start weekend now continues exactly where you left it, even after closing the game. Before, qualifying started again with a new result, so a bad grid could be re-rolled. Leaving during the race still finishes the race for you, as before.",
     "The winter upgrade story now says what your team gained on the rest of the field, not the raw number before every team's winter work is counted.",
-    "Story pack: every free principal and technical director in the pool is listed with rating, age and asking salary (before, only the best six of each)."
+    "Story pack: every free principal and technical director in the pool is listed with rating, age and asking salary (before, only the best six of each).",
+    "Story pack: every race now describes the track (length, power or downforce, tyre wear, overtaking, rain chance, pit loss), its history in your series (recent winners, poles, most wins, lap record), your record and mastery there, and a new NEXT RACE section previews the coming round.",
+    "Circuit history keeps each series apart, so a win in F2 at a track no longer counts in its F1 history."
   ] },
   { v: '2.6.5', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
@@ -15251,6 +15256,22 @@ function spNews(S, minRound) {
   if (!items.length) return '(no stories recorded)';
   return items.map(function (n) { var st = n.story; return 'R' + n.r + ' [' + st.kick + '] ' + st.head + (st.sub ? ' - ' + st.sub : ''); }).join('\n');
 }
+/* the track: what kind of circuit it is, its history in this league, and the player's record and mastery there */
+function spTrack(S, ci, beforeSeason) {
+  var c = circuitFor(S, ci); if (!c) return '';
+  var wear = c.wear >= 1.5 ? 'high tyre wear' : c.wear <= 0.95 ? 'low tyre wear' : 'medium tyre wear', ot = c.ot >= 0.7 ? 'easy to overtake' : c.ot <= 0.45 ? 'hard to overtake' : 'overtaking possible', pw = c.pw >= 0.55 ? 'power track (engine matters most)' : c.pw <= 0.35 ? 'downforce track (aero and chassis matter most)' : 'balanced (engine and aero both matter)';
+  var L = ['Track: ' + c.name + ' (' + c.loc + ') · ' + (c.km ? c.km + ' km, ' : '') + laps2(c) + ' laps · ' + pw + ' · ' + wear + ' (' + c.wear + ') · ' + ot + ' · rain chance ' + Math.round(c.rain * 100) + '% · pit stop costs about ' + c.pit + 's'];
+  if (typeof thStats === 'function') {
+    var st = thStats(ci, leagueOf(S)), past = st.a.filter(function (r) { return beforeSeason == null || r.s < beforeSeason; }).slice(-3).reverse();
+    if (past.length) L.push('  History here (' + leagueOf(S).toUpperCase() + '): ' + past.map(function (r) { return 'S' + r.s + ' won by ' + (r.w ? r.w.n + ' (' + r.w.t + ')' : '?') + (r.pl ? ', pole ' + r.pl.n : ''); }).join('; ') + (st.top && st.top.n > 1 ? ' · most wins here: ' + st.top.name + ' x' + st.top.n : '') + (st.lap ? ' · lap record ' + fmtT(st.lap.t) + ' by ' + st.lap.n + ' (S' + st.lap.s + ')' : ''));
+    else L.push('  History here (' + leagueOf(S).toUpperCase() + '): ' + (beforeSeason != null ? 'first race here on record.' : 'first visit on record.') + '');
+    var mine = st.a.filter(function (r) { return r.me; });
+    if (mine.length) L.push('  Your record here: ' + mine.length + (mine.length === 1 ? ' race' : ' races') + ', best ' + (st.best ? 'P' + st.best : 'no finish') + ', ' + st.wins + (st.wins === 1 ? ' win' : ' wins') + ', ' + st.pods + (st.pods === 1 ? ' podium' : ' podiums') + ' · ' + mine.slice(-3).map(function (r) { return 'S' + r.s + ' ' + (r.me.d ? 'DNF' : 'P' + r.me.p) + ' from P' + r.me.g; }).join(', '));
+  }
+  var p = typeof progressionPlayer === 'function' ? progressionPlayer(S) : null, ms = p && p.abilities && p.abilities.mastery && c.key ? p.abilities.mastery[c.key] || 0 : null;
+  if (ms != null && typeof masteryLevel === 'function') L.push('  Your mastery here: level ' + masteryLevel(ms) + ' of ' + ABILITY_RULES.visits.length + ' (' + ms + (ms === 1 ? ' visit' : ' visits') + ')');
+  return L.join('\n');
+}
 function spRaces(S, scope) {
   var lg = leagueOf(S), all = (S.rr || []).filter(function (r) { return r.s === S.season && r.league === lg; }).sort(function (a, b) { return a.r - b.r; });
   var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SP.last) : all.slice(-1);
@@ -15259,6 +15280,7 @@ function spRaces(S, scope) {
   pick.forEach(function (rec) {
     var m = rec.m || {}, c = CIRCUITS[rec.ci], L = [];
     L.push('### Round ' + (rec.r + 1) + ': ' + (c ? c.name : 'circuit ' + rec.ci) + ' (' + rec.laps + ' laps)' + (m.w ? ' · weather ' + spEn(m.w) : '') + (m.sc != null ? ' · safety cars ' + m.sc + ', VSC ' + m.vsc + ', clean overtakes ' + m.ot : ''));
+    L.push(spSafe('track', function () { return spTrack(S, rec.ci, rec.s); }));
     if (rec.fl) L.push('Fastest lap: ' + rec.fl + (m.flt ? ' ' + fmtT(m.flt) : ''));
     if (rec.qs && rec.qs.length) {
       var teamOf = {}; (rec.q || []).forEach(function (q) { teamOf[q[0]] = spTeamLine(S, q[1]); });
@@ -15303,7 +15325,7 @@ function storyPackText(scope) {
   var sec = function (t, body) { return '## ' + t + '\n' + body + '\n'; };
   return head.join('\n') + '\n' + sec('MY DRIVER', spSafe('player', function () { return spPlayer(S); })) + '\n' + sec('STANDINGS', spSafe('standings', function () { return spStandings(S); })) + '\n' +
     sec('TEAMS, CARS, STAFF', spSafe('teams', function () { return spTeams(S); })) + '\n' + sec('PRINCIPALS AND DIRECTORS', spSafe('people', function () { return spPeople(S); })) + '\n' + sec('REGULATIONS', spSafe('regulations', function () { return typeof rgPackText === 'function' ? rgPackText(S) : ''; })) + '\n' + sec('DRIVERS', spSafe('drivers', function () { return spDrivers(S); })) + '\n' +
-    sec('NEWS', spSafe('news', function () { return spNews(S, scope === 'season' ? 0 : races.first || 0); })) + '\n' + sec('RACES', races.text);
+    sec('NEWS', spSafe('news', function () { return spNews(S, scope === 'season' ? 0 : races.first || 0); })) + '\n' + sec('RACES', races.text) + '\n' + sec('NEXT RACE', spSafe('next race', function () { return S.round < seasonRounds(S) ? 'Round ' + (S.round + 1) + ' of ' + seasonRounds(S) + '\n' + spTrack(S, S.cal[S.round]) : 'Season complete. The next calendar is set at the start of the new season.'; }));
 }
 
 /* ---------- UI ---------- */

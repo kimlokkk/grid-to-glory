@@ -5,6 +5,7 @@
 - `src/wkhold49.js`: qualifying and strategy state is kept in `S.wkHold` (key season:round:league) once a session has run; `wk-start` restores it; the race clears it. Found while checking: Exit in qualifying and Start weekend again re-rolled qualifying (6 tries gave P14, P16, P11, P18, P13, P10).
 - Winter news `g` is now the change against the league average after the winter (`rel`), with the raw gain kept as `raw`.
 - Story pack lists every free agent in the pool (was the best 6 of each kind).
+- Story pack: `spTrack` per race (character, history before that race in this league, player record and mastery) and a NEXT RACE section. Circuit history records `lg`; `thStats(ci, lg)` filters by league (`thLg` infers older records from the player's season record).
 - Test: `qa/wkhold.js`.
 
 ## 2.6.5 — 25 November 2026 (training XP clarity, dev branch only)
