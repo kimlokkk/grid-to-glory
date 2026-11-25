@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.0', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.1', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.1', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
+    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
+    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
+  ] },
   { v: '2.6.0', d: 'Leadership', date: '25 Nov 2026', l: [
     "Technical directors now keep their quality. Until now a team's director quality was redrawn at random every winter whoever the person was, so the name on the door meant nothing. A director is now a real person with a rating (0 to 100) that moves only a little each year, so a strong one stays strong and a weak one stays weak, on any team.",
     "The principal decides, the director advises. Every upgrade decision is right with a chance that depends on both ratings and on how well the drivers explain the car. A weak principal is wrong more often, but in a believable way: he mixes up two parts that are close, he never pours a package into a part that is already maxed. He also leans on the director more, and when he overrules a director who was right, the better part loses out. Look for \"Right calls\" on a team's profile (Performance tab) and for stories like \"X overrules Y\". A director who is overruled too often can walk out.",

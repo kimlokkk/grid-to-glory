@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.1 — 25 November 2026 (training XP clarity, dev branch only)
+
+- Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.
+
 ## 2.6.0 — 25 November 2026 (Leadership)
 
 - Principals and directors on screen: a dossier in the same Paddock frame as a driver (portrait in team colours, rating badge, Overview with upgrade odds or judgement, rating over time, Career table, Contract), a Staff tab in the Paddock browser with a card for every principal, director and free agent, and free-agent cards in the winter recap. Nationalities of the existing staff names now match the names. The story pack has a new PRINCIPALS AND DIRECTORS section (winter moves, firings, free agents, retirements) and each team line describes its principal and director as a person.
