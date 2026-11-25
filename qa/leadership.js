@@ -110,6 +110,8 @@ const path = require('node:path');
           const txt = rgPackText(S); ck('the story pack shows leadership in the Reg Report lines', /leadership [+−]?[0-9]/.test(txt) && /director .* principal /.test(txt));
           S.world.era.next = S.season + 1; S.world.era.announced = S.world.era.next; S.world.era.nextProfile = S.world.era.nextProfile || Object.assign({}, S.world.era.profile); const t2 = rgPackText(S);
           ck('when a change is announced the story pack lists every team\'s director, principal, preparation and expected head start', /Leadership going into the change/.test(t2) && S.teams.every(t => t2.indexOf('  ' + t.name + ': director ') >= 0)); }
+        { const t = S.teams[3], cur = leadRating('td', t.dev.td); t.dev.tdPrev = { s: S.season, r: Math.max(0, cur - 40), n: 'Old Director' }; const blend = regRatings(t).td; t.dev.tdPrev = { s: S.season - 1, r: 0, n: 'X' }; const stale = regRatings(t).td; delete t.dev.tdPrev;
+          ck('the concept takes half from the director who worked through the season and half from the new one', Math.abs(blend - (0.5 * Math.max(0, cur - 40) + 0.5 * cur)) < 0.01 && stale === cur, [blend, cur, stale]); }
         const k0 = S.lead.reg; S.lead.reg = 0; ck('with the flag off the old rules apply (major 60%, minor 30% of every part)', PARTS.every(k => regPartMix(S, 'minor', k) === 0.3 && regPartMix(S, 'major', k) === 0.6)); S.lead.reg = k0; }
       /* 7. overrule news is capped to one per team and season */
       const ev = Object.keys(S.lead.ev || {}); ck('at most one overrule story per team and season', ev.length === new Set(ev).size);

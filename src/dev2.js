@@ -234,9 +234,12 @@ function regPartMix(S, kind, k) {
    Execution = technical staff (reliability and the first packages). No forced drop for the champion; the slowest team gets a smaller lift. */
 var REGB = { td: 7, tp: 3, prep: 3, money: 2, staff: 2, luck: 3, sd: 4, minorK: 0.6, lift: 8, liftTD: 55 };
 function regMeritOn(S) { return regAOn(S) && S.lead.reg >= 2 && typeof leadOn === 'function' && leadOn(S, S.season + 1); }
+/* the director's share of a new concept is split: half for the one who worked through the season before the change, half for the one in charge now */
+function regSnapPrev(S) { if (!regMeritOn(S) || !S.teams) return; S.teams.forEach(function (t) { var dv = t.dev; if (dv && dv.tdp && typeof leadRating === 'function') dv.tdPrev = { s: S.season, r: leadRating('td', dv.td), n: dv.tdp.name }; }); }
+function regTD(t, S) { var dv = t.dev || {}, cur = dv.tdp && typeof leadRating === 'function' ? leadRating('td', dv.td) : 50, p = dv.tdPrev; return p && S && p.s === S.season ? 0.5 * p.r + 0.5 * cur : cur; }
 function regRatings(t) {
   var dv = t.dev || {};
-  return { td: dv.tdp && typeof leadRating === 'function' ? leadRating('td', dv.td) : 50, tp: dv.tp && typeof leadRating === 'function' ? leadRating('tp', dv.tp.skill) : 50,
+  return { td: regTD(t, typeof S !== 'undefined' ? S : null), tdNow: dv.tdp && typeof leadRating === 'function' ? leadRating('td', dv.td) : 50, tdPrev: dv.tdPrev && typeof S !== 'undefined' && dv.tdPrev.s === S.season ? dv.tdPrev : null, tp: dv.tp && typeof leadRating === 'function' ? leadRating('tp', dv.tp.skill) : 50,
     st: clamp((((dv.staff || 1) - 0.8) / 0.4) * 100, 0, 100), ready: !!dv.regReady };
 }
 /* expected offset (no luck) and the luck draw; `draw` false gives the expectation only (Regulation Watch) */
