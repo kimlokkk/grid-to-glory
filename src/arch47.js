@@ -5,6 +5,26 @@
 var AR = { keep: 30 };
 
 function arLg() { return leagueOf(S); }
+/* the league shown in the archive: the player's own by default; with the world ladder every league can be opened (never mixed) */
+function arLgSel() { var l = UI.arLg; return S.world && (l === 'f1' || l === 'f2' || l === 'f3') ? l : arLg(); }
+function arPeople(S) { var seen = {}, out = []; [S.drivers || [], S.reserves || [], S.retired || [], typeof worldPeople === 'function' ? worldPeople(S) : [], S.bench ? [S.bench] : []].forEach(function (L) { L.forEach(function (d) { var k = d.uid || d.name; if (!seen[k]) { seen[k] = 1; out.push(d); } }); }); return out; }
+function arTeamByKey(S) { var m = {}; (S.world ? ['f1', 'f2', 'f3'] : [arLg()]).forEach(function (l) { var v = S.world ? worldView(S, l) : S; if (v && v.teams) v.teams.forEach(function (t) { if (t.key) m[t.key] = t; else if (l === 'f1') m['f1:' + t.id] = t; }); }); return m; }
+/* a season of any league rebuilt from every driver's league history (the world keeps one line per driver, league and season) */
+function arFromWH(S, s, lg) {
+  var tk = arTeamByKey(S), d = [], tm = {};
+  arPeople(S).forEach(function (x) {
+    (x.worldHistory || []).forEach(function (r) {
+      if (r.season !== s || r.league !== lg || r.pos == null) return;
+      var t = tk[r.teamKey], sh = (x.sh || []).filter(function (h) { return h.s === s && (h.league === lg || !h.league); })[0];
+      d.push({ u: x.uid || null, n: x.name, nat: x.nat || '', tm: t ? t.short : '–', tc: t ? t.color : '#888', p: r.pos, pts: r.points || 0, w: r.wins || 0, pd: sh ? sh.pods || 0 : 0, pl: null, fl: null, o: null });
+      if (t) { var o = tm[r.teamKey] || (tm[r.teamKey] = { n: t.name, sh: t.short, c: t.color, pts: 0, w: 0 }); o.pts += r.points || 0; o.w += r.wins || 0; }
+    });
+  });
+  if (!d.length) return null;
+  d.sort(function (a, b) { return a.p - b.p; });
+  var tl = Object.keys(tm).map(function (k) { return tm[k]; }).sort(function (a, b) { return b.pts - a.pts || b.w - a.w; }).map(function (o, i) { return Object.assign(o, { p: i + 1 }); });
+  return { s: s, lg: lg, src: 'sh', ch: d[0].p === 1 ? d[0].n : '', cht: tl[0] ? tl[0].n : '', d: d, t: tl, rc: [] };
+}
 function arTeamOf(S, i) { return S.teams && S.teams[i] ? S.teams[i] : null; }
 
 /* ---------- building entries ---------- */
@@ -53,22 +73,25 @@ function arLive(S) {
 }
 function arRecord(S) {
   if (S.sit || !S.teams || !S.drivers) return;
-  var e = arLive(S), lg = e.lg;
+  var e = arLive(S), lg = e.lg;   /* the player's league, race by race; the other leagues are rebuilt from the world's season lines */
   S.arcv = (S.arcv || []).filter(function (x) { return !(x.s === e.s && x.lg === lg); }).concat([e]).sort(function (a, b) { return a.s - b.s; }).slice(-AR.keep);
 }
 
 /* every season of the current league, newest first: stored, rebuilt, and the one in progress */
-function arAll(S) {
-  var lg = arLg(), out = {}, stored = (S.arcv || []).filter(function (x) { return x.lg === lg; });
-  (S.hist || []).forEach(function (r) { if ((r.league || 'f1') !== lg || r.inactive || r.reserve) return; out[r.season] = arBack(S, r); });
+function arAll(S, lg) {
+  lg = lg || arLg(); var out = {}, stored = (S.arcv || []).filter(function (x) { return x.lg === lg; }), seasons = {};
+  /* every season the world kept for this league, whether the player raced in it or not */
+  arPeople(S).forEach(function (x) { (x.worldHistory || []).forEach(function (r) { if (r.league === lg) seasons[r.season] = 1; }); });
+  Object.keys(seasons).forEach(function (k) { var e = arFromWH(S, +k, lg); if (e) out[k] = e; });
+  (S.hist || []).forEach(function (r) { if ((r.league || 'f1') !== lg || r.inactive || r.reserve) return; var b = arBack(S, r); if (b.src === 'hist' && out[r.season]) { out[r.season].me = b.me; return; } out[r.season] = b; });
   stored.forEach(function (e) { var b = out[e.s]; out[e.s] = Object.assign({}, e, { me: b ? b.me : e.me }); });
-  if (!out[S.season] && S.round > 0 && !S.sit) out[S.season] = Object.assign(arLive(S), { src: 'live' });
+  if (lg === arLg() && !out[S.season] && S.round > 0 && !S.sit) out[S.season] = Object.assign(arLive(S), { src: 'live' });
   return Object.keys(out).map(function (k) { return out[k]; }).sort(function (a, b) { return b.s - a.s; });
 }
 
 /* ---------- records ---------- */
-function arRecords(S) {
-  var A0 = arAll(S), dr = {}, tr = {}, best = { pts: null, w: null }, covPl = 0, covAll = 0;
+function arRecords(S, lg) {
+  var A0 = arAll(S, lg), dr = {}, tr = {}, best = { pts: null, w: null }, covPl = 0, covAll = 0;
   A0.forEach(function (e) {
     var done = e.src !== 'live';
     covAll++; if (e.d.some(function (x) { return x.pl != null; })) covPl++;
@@ -98,9 +121,10 @@ function arRH(d) {
 function arTag(n, c) { return '<span class="ar-tag" style="--tc:' + c + '">' + esc(n) + '</span>'; }
 function arSrc(e) { return e.src === 'full' ? ['Full record', 'ok'] : e.src === 'live' ? ['In progress', 'live'] : e.src === 'rr' ? ['Race results', 'mid'] : e.src === 'sh' ? ['Standings only', 'mid'] : ['Champions only', 'low']; }
 function arHero(L) {
+  var bg = arLgSel() !== arLg() && !L.some(function (e) { return e.src === 'full' || e.src === 'rr'; });
   var races = L.reduce(function (a, e) { return a + e.rc.length; }, 0), full = L.filter(function (e) { return e.src === 'full'; }).map(function (e) { return e.s; }).sort(function (a, b) { return a - b; })[0];
-  return '<section class="ar-hero"><span class="ar-eyebrow">ARCHIVE · ' + String(arLg()).toUpperCase() + '</span><h2>Every season on file</h2><p>Champions, final standings, race winners and records. Seasons played before this archive existed are rebuilt from what the game kept.</p>' +
-    '<div class="ar-badges"><span>' + L.length + (L.length === 1 ? ' SEASON' : ' SEASONS') + '</span><span>' + races + ' RACES</span>' + (full ? '<span class="ok">FULL RECORD FROM S' + full + '</span>' : '<span>FULL RECORD STARTS THIS SEASON</span>') + '</div></section>';
+  return '<section class="ar-hero"><span class="ar-eyebrow">ARCHIVE · ' + String(arLgSel()).toUpperCase() + '</span><h2>Every season on file</h2><p>' + (bg ? 'You do not race in this series right now, so it runs in the background: champions and final standings are kept for every season, race-by-race results only while you race in it.' : 'Champions, final standings, race winners and records. Seasons played before this archive existed are rebuilt from what the game kept.') + '</p>' +
+    '<div class="ar-badges"><span>' + L.length + (L.length === 1 ? ' SEASON' : ' SEASONS') + '</span>' + (bg ? '<span>FINAL STANDINGS EVERY SEASON</span>' : '<span>' + races + ' RACES</span>' + (full ? '<span class="ok">FULL RECORD FROM S' + full + '</span>' : '<span>FULL RECORD STARTS THIS SEASON</span>')) + '</div></section>';
 }
 function arSeg(v) { return '<div class="ar-seg" role="tablist">' + [['champs', 'Champions'], ['seasons', 'Seasons'], ['records', 'Records']].map(function (x) { return '<button role="tab" aria-selected="' + (v === x[0]) + '" class="' + (v === x[0] ? 'on' : '') + '" data-act="ar-view" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>'; }
 function arChamps(L) {
@@ -140,7 +164,7 @@ function arBoard(t, list, k, unit, cls) {
   return '<section class="ar-board ' + (cls || '') + '"><h3>' + t + '</h3>' + (list.length ? '<ol>' + list.map(function (x, i) { return '<li style="--tc:' + (x.tc || x.c || '#888') + '"><span class="ar-p">' + (i + 1) + '</span><span class="ar-bn"><b>' + esc(x.n) + '</b><i style="width:' + Math.max(8, Math.round(x[k] / mx * 100)) + '%"></i></span><span class="ar-bv">' + x[k] + '</span></li>'; }).join('') + '</ol>' : '<p class="ar-note">None yet.</p>') + '</section>';
 }
 function arRecordsView(L) {
-  var R = arRecords(S);
+  var R = arRecords(S, arLgSel());
   if (!L.length) return '<p class="ar-note">Records appear once a season has been played.</p>';
   var bw = R.best.w, bp = R.best.pts;
   return '<div class="ar-boards">' + arBoard('Drivers’ titles', R.dTitles, 't') + arBoard('Most wins', R.dWins, 'w') + arBoard('Most podiums', R.dPods, 'pd') + arBoard('Most poles', R.dPoles, 'pl') + arBoard('Fastest laps', R.dFl, 'fl') +
@@ -149,11 +173,13 @@ function arRecordsView(L) {
     '<p class="ar-note">Counted over ' + R.n + (R.n === 1 ? ' season' : ' seasons') + ' on file. Poles and fastest laps come from recorded race results' + (R.covPl < R.n ? ', so seasons played before this archive may be missing from those two lists' : '') + '.</p>';
 }
 function arPage() {
-  var L = arAll(S), v = UI.arView || 'champs';
-  return '<div class="ar47">' + arHero(L) + arSeg(v) + (v === 'seasons' ? arSeasons(L) : v === 'records' ? arRecordsView(L) : (L.length ? arChamps(L) : '<p class="ar-note">No season has been completed yet. The first one is archived when the finale is over.</p>')) + '</div>';
+  var lg = arLgSel(), L = arAll(S, lg), v = UI.arView || 'champs';
+  var lgs = S.world ? '<div class="ar-seg ar-lg" role="tablist" aria-label="League">' + ['f1', 'f2', 'f3'].map(function (l) { return '<button role="tab" aria-selected="' + (l === lg) + '" class="' + (l === lg ? 'on' : '') + '" data-act="ar-lg" data-v="' + l + '">' + l.toUpperCase() + (l === arLg() ? ' · yours' : '') + '</button>'; }).join('') + '</div>' : '';
+  return '<div class="ar47">' + arHero(L) + lgs + arSeg(v) + (v === 'seasons' ? arSeasons(L) : v === 'records' ? arRecordsView(L) : (L.length ? arChamps(L) : '<p class="ar-note">No season has been completed yet. The first one is archived when the finale is over.</p>')) + '</div>';
 }
 if (typeof A !== 'undefined') {
   A['ar-view'] = function (d) { UI.arView = d.v; render(); };
+  A['ar-lg'] = function (d) { UI.arLg = d.v; UI.arSeason = null; render(); };
   A['ar-season'] = function (d) { UI.arSeason = +d.v; UI.arView = 'seasons'; if (UI.musimView !== 'archive') { UI.musimView = 'archive'; UI.tab = 'musim'; UI.screen = 'hub'; } render(); window.scrollTo(0, 0); };
   A['ar-open'] = function () { UI.musimView = 'archive'; UI.tab = 'musim'; UI.screen = 'hub'; closeModal(); render(); window.scrollTo(0, 0); };
 }

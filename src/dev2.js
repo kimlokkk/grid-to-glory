@@ -234,18 +234,21 @@ function regPartMix(S, kind, k) {
    Execution = technical staff (reliability and the first packages). No forced drop for the champion; the slowest team gets a smaller lift. */
 var REGB = { td: 7, tp: 3, prep: 3, money: 2, staff: 2, luck: 3, sd: 4, minorK: 0.6, lift: 8, liftTD: 55 };
 function regMeritOn(S) { return regAOn(S) && S.lead.reg >= 2 && typeof leadOn === 'function' && leadOn(S, S.season + 1); }
+/* the director's share of a new concept is split: half for the one who worked through the season before the change, half for the one in charge now */
+function regSnapPrev(S) { if (!regMeritOn(S) || !S.teams) return; S.teams.forEach(function (t) { var dv = t.dev; if (dv && dv.tdp && typeof leadRating === 'function') dv.tdPrev = { s: S.season, r: leadRating('td', dv.td), n: dv.tdp.name }; }); }
+function regTD(t, S) { var dv = t.dev || {}, cur = dv.tdp && typeof leadRating === 'function' ? leadRating('td', dv.td) : 50, p = dv.tdPrev; return p && S && p.s === S.season ? 0.5 * p.r + 0.5 * cur : cur; }
 function regRatings(t) {
   var dv = t.dev || {};
-  return { td: dv.tdp && typeof leadRating === 'function' ? leadRating('td', dv.td) : 50, tp: dv.tp && typeof leadRating === 'function' ? leadRating('tp', dv.tp.skill) : 50,
+  return { td: regTD(t, typeof S !== 'undefined' ? S : null), tdNow: dv.tdp && typeof leadRating === 'function' ? leadRating('td', dv.td) : 50, tdPrev: dv.tdPrev && typeof S !== 'undefined' && dv.tdPrev.s === S.season ? dv.tdPrev : null, tp: dv.tp && typeof leadRating === 'function' ? leadRating('tp', dv.tp.skill) : 50,
     st: clamp((((dv.staff || 1) - 0.8) / 0.4) * 100, 0, 100), ready: !!dv.regReady };
 }
 /* expected offset (no luck) and the luck draw; `draw` false gives the expectation only (Regulation Watch) */
 function regConcept(S, t, draw) {
   var r = regRatings(t), funds = S.teams.map(function (o) { return o.fin ? o.fin.fund : 0; }), mf = funds.reduce(function (a, x) { return a + x; }, 0) / funds.length || 1;
   var money = t.fin ? clamp((t.fin.fund - mf) / mf, -0.5, 0.5) * 2 : 0;
-  var c = REGB.td * (r.td - 50) / 50 + REGB.tp * (r.tp - 50) / 50 + (r.ready ? REGB.prep : 0) + REGB.money * money;
+  var parts = { td: REGB.td * (r.td - 50) / 50, tp: REGB.tp * (r.tp - 50) / 50, prep: r.ready ? REGB.prep : 0, money: REGB.money * money }, c = parts.td + parts.tp + parts.prep + parts.money;
   if (draw) c += gauss() * REGB.luck * (1.3 - 0.6 * r.td / 100);
-  return { c: c, s: REGB.staff * (r.st - 50) / 50 };
+  return { c: c, s: REGB.staff * (r.st - 50) / 50, parts: parts };
 }
 function regOffPart(o, k) { return !o ? 0 : k === 'aero' || k === 'chassis' ? o.c + 0.5 * o.s : k === 'engine' ? 0.3 * o.c : 0.3 * o.c + 1.5 * o.s; }
 function regAvgMix(S, kind) { var m = 0; PARTS.forEach(function (k) { m += regPartMix(S, kind, k); }); return m / PARTS.length; }

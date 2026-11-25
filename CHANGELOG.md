@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.6.3 — 25 November 2026 (archive for every series, records per league)
+
+- `arAll(S, lg)` builds every season of a league from the world's per-driver season lines (`arFromWH`), plus stored and rebuilt seasons of the player's own league; Archive has an F1 / F2 / F3 switch (`UI.arLg`), records per league (`arRecords(S, lg)`).
+- `d.sh` lines now carry `league`; `shLeague` infers it for old lines (world history, the player's season record, the last known league). `careerByLeague` and `careerLeagueText` keep F1, F2 and F3 apart; profile overview tiles, a per-league Career table, the Race record league column and the story pack use them. `worldDriverHistoryHTML` no longer adds duplicate "legacy" rows.
+- Regulations: `regSnapPrev` stores the director rating at the start of `startNewSeason` (before the winter market); `regTD` blends 50/50 with the director in charge at the change.
+- Calendar round strip: CSS grid, two even rows under 640px.
+- Test: `qa/records.js`.
+
+## 2.6.2 — 25 November 2026 (Reg Report and story pack for the new regulations)
+
+- Reg Report entries get `c.pe` (expected leadership head start, from `regConcept` without luck at the start of the change), `c.lu` is now luck only, and `pp` records director, principal, ratings, preparation and the parts of the head start; `rgLeadWhy` names the biggest sources. No champion-handicap reason under phase B. Story pack: leadership table when a change is announced, leadership and people in each Reg Report line.
+- Known design point (not changed): the concept uses the director in place after the winter staff market, so a director signed that winter counts in full.
+
 ## 2.6.1 — 25 November 2026 (regulations: the new car comes from the people)
 
 - Phase A: a major change rebuilds 70% of every part (was 60%); a minor change targets one or two areas (aero 50%, chassis 30%, engine 20% weights, chosen from a hash) and reworks 75% of those (was 30% of every part). Words in news, Regulation Watch, Reg Report and story pack come from `regWords`.

@@ -196,6 +196,7 @@ function usedCodes(S) { var u = {}; S.drivers.forEach(function (d) { u[d.code] =
 function startNewSeason(S, teamId, years, buyId, opts) {
   if (S.mode === 'pro') {
     if (S.playerRetired || S.round < seasonRounds(S) || opts && opts.sit && careerNextYears(S) <= 1) return false;
+    if (typeof regSnapPrev === 'function') regSnapPrev(S);   /* the director who worked on the new car this season, before the winter market */
     worldPrepareAnnual(S);
     var annual = applyAnnualChange(S);
     if (annual.retire) return false;
