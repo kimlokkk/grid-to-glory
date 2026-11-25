@@ -115,8 +115,8 @@ function spPeople(S) {
     });
   }
   [['td', 'Free technical directors'], ['tp', 'Free team principals']].forEach(function (k) {
-    var F = (P[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; }).slice(0, 6);
-    L.push(k[1] + ' (best ' + F.length + ' of ' + (P[k[0]] || []).length + ' in the pool):');
+    var F = (P[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; });
+    L.push(k[1] + ' (all ' + F.length + ' in the pool, best first):');
     F.forEach(function (p) { var last = p.hist && p.hist.length ? p.hist[p.hist.length - 1] : null; L.push('- ' + p.name + ' · ' + natName(p.nat) + ' · age ' + p.age + ' · rating ' + Math.round(leadRating(k[0], p.skill)) + ' (' + leadPhase(p).toLowerCase() + ') · asks $' + leadAsk(leadRating(k[0], p.skill)) + 'M' + (last && S.teams[last.t] ? ' · last job ' + S.teams[last.t].name + (p.fired ? ' (let go S' + p.fired + ')' : '') : ' · no F1 job yet')); });
   });
   var ret = (P.ret || []).filter(function (x) { return x.s >= S.season; });
