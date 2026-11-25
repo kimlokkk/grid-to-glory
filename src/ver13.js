@@ -1,6 +1,11 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.5', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.6', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.6', d: 'Fewer spins, and consistency matters', date: '25 Nov 2026', l: [
+    "Unforced spins were far too common and barely depended on the driver: in testing every driver spun about 9 times a season, a consistency-90 driver almost as often as a consistency-75 one. The base chance is now much lower and consistency counts for much more: about 1 spin a season at consistency 90, 2 to 3 at 75 and 4 to 5 at 60.",
+    "Pushing, overheated or worn tyres, rain and the first lap still raise the risk as before; they start from a lower base.",
+    "Knock-on effects measured over 132 races: crash retirements fall from 1.2 to 0.5 a race, safety cars from 1.2 to 1.0 and virtual safety cars from 1.6 to 0.7 a race; mechanical failures are unchanged."
+  ] },
   { v: '2.6.5', d: 'Weekend hold, track data and honest winter news', date: '25 Nov 2026', l: [
     "Leaving a race weekend during qualifying or on the strategy page still takes you Home, and Start weekend now continues exactly where you left it, even after closing the game. Before, qualifying started again with a new result, so a bad grid could be re-rolled. Leaving during the race still finishes the race for you, as before.",
     "The winter upgrade story now says what your team gained on the rest of the field, not the raw number before every team's winter work is counted.",

@@ -16,7 +16,7 @@ var P2 = {
   slip: { gap: 1.0, pace: 0.12 },
   warm: { S: [0.45, 0.7], M: [0.55, 1.0], H: [0.85, 1.6] },
   fuelPer: 0.032, fuel0: 1.035, cliffK: 0.26, cliffP: 1.4, wearE: 1.38, pitS: 0.557, lifeScale: 1,
-  minGap: 0.30, passK: 1.3, gridGap: 0.45, otK: 5.2, advK: 1.6, lap1: 0.35, stopTraffic: 3.0, planWear: 1.12, carK: 0.045, drvK: 0.018, qNoise: 0.14, v3: true, specK: 0.4, setupK: 0.15, tempK: 0.30, qSpread: 4, fcErrAI: 2.2, fcErrEng: 1.0, mechK: 0.00007, scMech: 0.2, scCrash: 0.5, vscSpin: 0.05, mistK: 0.0065, lapNz: 0.30, errK: 0.005, lapNzK: 250, crashPerSpin: 0.09, contactDNF: 0.12, scSpeed: 1.5, engNoise: 0.5, aiNoise: 1.8, ko: true, brain: 2, posVal: 1.5, ucGap: 2.5, ucH: 0.5, ucNeed: 1.0, ucWin: 3, scMargin: 4, wxMargin: 2.5, brNz: 1.2, brHyst: 0.3, aiV: { tyreSave: 1, chase: 0, chaseGap: 1.2, defend: 0, save: 0, finish: 1 }
+  minGap: 0.30, passK: 1.3, gridGap: 0.45, otK: 5.2, advK: 1.6, lap1: 0.35, stopTraffic: 3.0, planWear: 1.12, carK: 0.045, drvK: 0.018, qNoise: 0.14, v3: true, specK: 0.4, setupK: 0.15, tempK: 0.30, qSpread: 4, fcErrAI: 2.2, fcErrEng: 1.0, mechK: 0.00007, scMech: 0.2, scCrash: 0.5, vscSpin: 0.05, mistK: 0.0065, mistV: 2, mistK2: 0.0016, mistF: 0.3, mistC: 20, mistP: 1.6, lapNz: 0.30, errK: 0.005, lapNzK: 250, crashPerSpin: 0.09, contactDNF: 0.12, scSpeed: 1.5, engNoise: 0.5, aiNoise: 1.8, ko: true, brain: 2, posVal: 1.5, ucGap: 2.5, ucH: 0.5, ucNeed: 1.0, ucWin: 3, scMargin: 4, wxMargin: 2.5, brNz: 1.2, brHyst: 0.3, aiV: { tyreSave: 1, chase: 0, chaseGap: 1.2, defend: 0, save: 0, finish: 1 }
 };
 
 /* angka tayar v2 (dilaras untuk race 15 hingga 25 lap) */
@@ -454,7 +454,7 @@ function incidents(R, trk) {
   trk.forEach(function (f) {
     if (f.fin || f.hold > 0) return;
     var d = f.d, pm = (100 - f.t.car.rel) * P2.mechK * (1 + f.eff * 0.003) / T;
-    var pe = P2.mistK * (1 + (100 - (0.7 * d.cons + 0.3 * f.a.restart)) / 30) * (R.sc ? 1 : [0.7, 1, 1.5][f.push]) * (1 + Math.max(0, tyreHeat(f) - 0.78) * 3 + Math.max(0, 0.2 - tyreHealth(f, R)) * 2) * (1 + wet * 2.5 * (1 + (100 - (0.6 * d.wet + 0.4 * f.a.adapt)) / 40)) * (1 + (f.a.risk - 50) / 170) * (f.lap <= 1 ? 3 : 1) * (f.gA < 0.8 ? 1.3 : 1) * (R.sc ? 0.1 : 1) / T;
+    var cv = 0.7 * d.cons + 0.3 * f.a.restart, pe = (P2.mistV === 2 ? P2.mistK2 * (P2.mistF + Math.pow(Math.max(0, 100 - cv) / P2.mistC, P2.mistP)) : P2.mistK * (1 + (100 - cv) / 30)) * (R.sc ? 1 : [0.7, 1, 1.5][f.push]) * (1 + Math.max(0, tyreHeat(f) - 0.78) * 3 + Math.max(0, 0.2 - tyreHealth(f, R)) * 2) * (1 + wet * 2.5 * (1 + (100 - (0.6 * d.wet + 0.4 * f.a.adapt)) / 40)) * (1 + (f.a.risk - 50) / 170) * (f.lap <= 1 ? 3 : 1) * (f.gA < 0.8 ? 1.3 : 1) * (R.sc ? 0.1 : 1) / T;
     pe *= combinedRisk(R, f);
     var r = rnd();
     if (r < pm) retire(R, f, 'Mechanical failure', P2.scMech, P2.scMech);

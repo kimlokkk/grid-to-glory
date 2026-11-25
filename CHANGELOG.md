@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.6 — 25 November 2026 (fewer spins, consistency matters)
+
+- `incidents()` mistake chance: `P2.mistK2 * (mistF + ((100 - cv) / mistC) ^ mistP)` with cv = 0.7 consistency + 0.3 restart (0.0016, 0.3, 20, 1.6), was `mistK * (1 + (100 - cv) / 30)` (0.0065); other multipliers unchanged; `P2.mistV` 1 restores the old curve. Measured (3 seeds x 2 seasons, 132 races): spins per season by consistency 88+ 8.9 -> 1.0, 80-87 8.5 -> 1.8, 70-79 10.4 -> 2.5, under 70 9.1 -> 3.6; per race crash DNF 1.23 -> 0.49, SC 1.23 -> 0.96, VSC 1.56 -> 0.73, mechanical 0.95 -> 0.90, passes 75 -> 80.
+- Every race result changes from this version (same random draws, different outcomes), so the gate-off identity check against older builds no longer applies to race results.
+
 ## 2.6.5 — 25 November 2026 (weekend hold, track data in the story pack, winter news against the field)
 
 - `src/wkhold49.js`: qualifying and strategy state is kept in `S.wkHold` (key season:round:league) once a session has run; `wk-start` restores it; the race clears it. Found while checking: Exit in qualifying and Start weekend again re-rolled qualifying (6 tries gave P14, P16, P11, P18, P13, P10).
