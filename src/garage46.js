@@ -120,7 +120,9 @@ function rgExposure(S, kind) {
   var champ = rgChampId(S), low = pows.indexOf(Math.min.apply(null, pows)), mine = S.drivers[S.pi] ? S.drivers[S.pi].team : -1, n = ts.length;
   var rows = ts.map(function (t, i) {
     var st = PARTS.reduce(function (a, k) { return a + (pro ? regPartMix(S, kind, k) : mix) * ((S.target && S.target[k] != null ? S.target[k] : pows[i]) - t.car[k]); }, 0) / 4;
-    var ind = st + (t.id === champ ? RG.tgt.champ * sc : 0) + (i === low ? RG.tgt.last * sc : 0);
+    var mer = pro && typeof regMeritOn === 'function' && regMeritOn(S), eo = mer ? regConcept(S, t, false) : null;
+    var ind = mer ? st + PARTS.reduce(function (a, k) { return a + regPartMix(S, kind, k) * regOffPart(eo, k) * (kind === 'minor' ? REGB.minorK : 1); }, 0) / 4 + (i === low && kind === 'major' ? RG.tgt.last * sc * 0.5 : 0)
+      : st + (t.id === champ ? RG.tgt.champ * sc : 0) + (i === low ? RG.tgt.last * sc : 0);
     var band = ind <= -5 * sc ? 'exposed' : ind <= -2 * sc ? 'watch' : ind < 2 * sc ? 'steady' : ind < 5 * sc ? 'upside' : 'clean';
     return { id: t.id, n: t.name, sh: t.short, col: t.color, rank: pr[i], band: band, ind: ind, champ: t.id === champ, last: i === low, ready: prep[i] <= 3, stretched: prep[i] >= n - 2, mine: t.id === mine };
   });

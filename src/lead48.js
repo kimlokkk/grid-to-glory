@@ -49,9 +49,9 @@ function leadOn(S, year) { return !!(S && S.lead && S.lead.v >= 1 && (year == nu
 
 /* Existing saves: nothing played yet this season -> use it from now; otherwise from the next new season. */
 function leadMigrate(S) {
-  if (S && S.lead && S.lead.reg == null) S.lead.reg = 1;   /* regulations phase A: applies from the next change (2.6.1) */
+  if (S && S.lead && !(S.lead.reg >= 2)) S.lead.reg = 2;   /* regulations: phase A (minor targets areas) and phase B (the new car comes from the people), from the next change */
   if (!S || S.lead || !S.teams || !S.drivers) return;
-  S.lead = { v: LEAD.v, from: (S.round || 0) === 0 ? S.season : S.season + 1, ev: {}, reg: 1 };
+  S.lead = { v: LEAD.v, from: (S.round || 0) === 0 ? S.season : S.season + 1, ev: {}, reg: 2 };
   /* the director's rating becomes the person's, equal to what the team has right now: nobody changes strength on the day */
   S.teams.forEach(function (t) { var dv = t.dev; if (!dv) return; if (dv.tdp) { dv.tdp.skill = dv.td; if (dv.tdp.loy == null) dv.tdp.loy = hash01(t.id + 3, 11); } if (dv.tp && dv.tp.loy == null) dv.tp.loy = hash01(t.id + 5, 13); });
 }
