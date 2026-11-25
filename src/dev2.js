@@ -243,9 +243,9 @@ function regRatings(t) {
 function regConcept(S, t, draw) {
   var r = regRatings(t), funds = S.teams.map(function (o) { return o.fin ? o.fin.fund : 0; }), mf = funds.reduce(function (a, x) { return a + x; }, 0) / funds.length || 1;
   var money = t.fin ? clamp((t.fin.fund - mf) / mf, -0.5, 0.5) * 2 : 0;
-  var c = REGB.td * (r.td - 50) / 50 + REGB.tp * (r.tp - 50) / 50 + (r.ready ? REGB.prep : 0) + REGB.money * money;
+  var parts = { td: REGB.td * (r.td - 50) / 50, tp: REGB.tp * (r.tp - 50) / 50, prep: r.ready ? REGB.prep : 0, money: REGB.money * money }, c = parts.td + parts.tp + parts.prep + parts.money;
   if (draw) c += gauss() * REGB.luck * (1.3 - 0.6 * r.td / 100);
-  return { c: c, s: REGB.staff * (r.st - 50) / 50 };
+  return { c: c, s: REGB.staff * (r.st - 50) / 50, parts: parts };
 }
 function regOffPart(o, k) { return !o ? 0 : k === 'aero' || k === 'chassis' ? o.c + 0.5 * o.s : k === 'engine' ? 0.3 * o.c : 0.3 * o.c + 1.5 * o.s; }
 function regAvgMix(S, kind) { var m = 0; PARTS.forEach(function (k) { m += regPartMix(S, kind, k); }); return m / PARTS.length; }

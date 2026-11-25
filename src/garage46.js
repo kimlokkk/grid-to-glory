@@ -22,7 +22,9 @@ function rgBegin(S, kind, mix, champId, lastId) {
   var mixes = PARTS.map(function (k) { return S.mode === 'pro' && typeof regPartMix === 'function' ? regPartMix(S, kind, k) : mix; }), parts = kind === 'minor' && typeof regAOn === 'function' && regAOn(S) ? regMinorParts(S).slice() : null;
   var merit = typeof regMeritOn === 'function' && regMeritOn(S);
   return { S: S, merit: merit, kind: kind, mix: mixes.reduce(function (a, x) { return a + x; }, 0) / mixes.length, mixes: mixes, parts: parts, season: S.season + 1, champId: champId, lastId: lastId, s0: rgSnap(S), s1: null, s2: null, s3: null,
-    prep: S.teams.map(function (t) { return regPrep(t); }) };
+    prep: S.teams.map(function (t) { return regPrep(t); }),
+    pe: merit ? S.teams.map(function (t) { var eo = regConcept(S, t, false); return PARTS.reduce(function (a, k) { return a + regPartMix(S, kind, k) * regOffPart(eo, k) * (kind === 'minor' ? REGB.minorK : 1); }, 0) / 4; }) : null,
+    pp: merit ? S.teams.map(function (t) { var r = regRatings(t), d = t.dev || {}; var cp = regConcept(S, t, false), q = cp.parts, rnd1 = function (v) { return Math.round(v * 10) / 10; }; return { td: d.tdp ? d.tdp.name : '', tdr: Math.round(r.td), tp: d.tp ? d.tp.name : '', tpr: Math.round(r.tp), st: Math.round(r.st), ready: r.ready ? 1 : 0, k: { td: rnd1(q.td), tp: rnd1(q.tp), prep: rnd1(q.prep), money: rnd1(q.money), st: rnd1(cp.s) } }; }) : null };
 }
 function rgMid(ctx, stage) { if (ctx) ctx['s' + stage] = rgSnap(ctx.S); }
 function rgBuild(S, ctx) {
@@ -31,7 +33,7 @@ function rgBuild(S, ctx) {
   var teams = S.teams.map(function (t, i) {
     var st = PARTS.reduce(function (a, k, j) { return a + (ctx.mixes ? ctx.mixes[j] : ctx.mix) * (tgt[j] - ctx.s0[i][j]); }, 0) / 4, re = rgPow(ctx.s1[i]) - p0[i], ru = rgPow(ctx.s2[i]) - rgPow(ctx.s1[i]), pk = p3[i] - rgPow(ctx.s2[i]);
     return { id: t.id, n: t.name, sh: t.short, col: t.color, p0: rgR1(p0[i]), p1: rgR1(p3[i]), r0: r0[i], r1: r3[i],
-      c: { st: rgR1(st), lu: rgR1(re - st), ru: rgR1(ru), pk: rgR1(pk) }, f: { champ: t.id === ctx.champId ? 1 : 0, last: t.id === ctx.lastId ? 1 : 0 }, pr: prr[i] };
+      c: ctx.pe ? { st: rgR1(st), pe: rgR1(ctx.pe[i]), lu: rgR1(re - st - ctx.pe[i]), ru: rgR1(ru), pk: rgR1(pk) } : { st: rgR1(st), lu: rgR1(re - st), ru: rgR1(ru), pk: rgR1(pk) }, f: { champ: t.id === ctx.champId ? 1 : 0, last: t.id === ctx.lastId ? 1 : 0 }, pr: prr[i], pp: ctx.pp ? ctx.pp[i] : undefined };
   });
   return { season: ctx.season, kind: ctx.kind, mix: ctx.mix, parts: ctx.parts || undefined, merit: ctx.merit || undefined, teams: teams, era: null };
 }
@@ -53,13 +55,22 @@ function rgEraApplied(S, N, from, to) {
 }
 
 /* ---------- explanations: why a team moved ---------- */
+/* which people or decisions gave (or cost) the head start, biggest first */
+function rgLeadWhy(e, pe) {
+  var k = e.pp && e.pp.k, names = { td: 'the director\'s concept', tp: 'the principal', prep: 'starting the new car in time', money: 'R&D money', st: 'the technical staff' }, neg = { td: 'a weak director\'s concept', tp: 'a weak principal', prep: 'starting the new car late', money: 'a small R&D budget', st: 'a stretched technical staff' };
+  if (!k) return pe < 0 ? 'Weaker leadership: the new concept started behind' : 'Leadership gave the new concept a head start';
+  var L = Object.keys(names).map(function (x) { return [x, k[x] || 0]; }).filter(function (x) { return pe > 0 ? x[1] > 0.4 : x[1] < -0.4; }).sort(function (a, b) { return Math.abs(b[1]) - Math.abs(a[1]); }).slice(0, 2);
+  if (!L.length) return pe < 0 ? 'The new concept started behind' : 'The new concept started ahead';
+  return (pe < 0 ? 'Started behind: ' : 'Head start from ') + L.map(function (x) { return (pe < 0 ? neg : names)[x[0]]; }).join(' and ');
+}
 function rgWhy(e, rp) {
   var c = e.c, n = rp.teams.length, R = [], add = function (k, tone, t, m) { R.push({ k: k, tone: tone, t: t, m: Math.abs(m) }); };
   if (Math.abs(c.st) >= 1.2) add('st', c.st < 0 ? 'bad' : 'good', c.st < 0 ? 'Built for the old rules: a lot of lead to lose' : 'Clean sheet: little to lose, plenty to gain', c.st);
-  if (e.f.champ) add('ru', 'bad', 'Champion handicap: advantage locked into the old concept', Math.max(Math.abs(c.ru), 2));
-  else if (e.f.last && c.ru >= 1) add('ru', 'good', 'Catch-up allowance for the slowest team', c.ru);
+  if (rp.merit && c.pe != null && Math.abs(c.pe) >= 1) add('pe', c.pe < 0 ? 'bad' : 'good', rgLeadWhy(e, c.pe), c.pe);
+  if (e.f.champ && !rp.merit) add('ru', 'bad', 'Champion handicap: advantage locked into the old concept', Math.max(Math.abs(c.ru), 2));
+  else if (e.f.last && c.ru >= 1) add('ru', 'good', rp.merit && e.pp && (e.pp.tdr >= 55 || e.pp.ready) ? 'Catch-up help for the slowest team, more because it had a good director or prepared in time' : 'Catch-up allowance for the slowest team', c.ru);
   else if (Math.abs(c.ru) >= 1.5) add('ru', c.ru < 0 ? 'bad' : 'good', c.ru < 0 ? 'The rules adjustment cost ground' : 'The rules adjustment helped', c.ru);
-  if (Math.abs(c.lu) >= 1.5) add('lu', c.lu < 0 ? 'bad' : 'good', c.lu < 0 ? 'New concept missed expectations' : 'New concept beat expectations', c.lu);
+  if (Math.abs(c.lu) >= 1.5) add('lu', c.lu < 0 ? 'bad' : 'good', c.lu < 0 ? (rp.merit ? 'Concept luck went against them' : 'New concept missed expectations') : (rp.merit ? 'Concept luck went their way' : 'New concept beat expectations'), c.lu);
   if (Math.abs(c.pk) >= 1.5) add('pk', c.pk < 0 ? 'bad' : 'good', c.pk < 0 ? 'Winter development and engine deal held the car back' : 'Winter development added to the step', c.pk);
   if (e.pr <= 3) add('pr', 'good', 'Technical department ready for the change', 0.5);
   else if (e.pr >= n - 2) add('pr', 'bad', 'Stretched technical department', 0.5);
@@ -251,7 +262,7 @@ function rgSlope(rp, mineId) {
   return '<svg class="rg-slope" viewBox="0 0 ' + W + ' ' + h + '" role="img" aria-label="Team order before and after the regulation change">' + o + '</svg>';
 }
 var RG_COMP = [['st', 'Old-rules exposure'], ['ru', 'Title and catch-up rules'], ['lu', 'Concept luck'], ['pk', 'Winter development and engines']];
-var RG_COMP0 = RG_COMP.slice(), RG_COMPB = [['st', 'Old-rules exposure'], ['ru', 'Catch-up for the slowest'], ['lu', 'New-car concept (people and luck)'], ['pk', 'Winter development and engines']];
+var RG_COMP0 = RG_COMP.slice(), RG_COMPB = [['st', 'Old-rules exposure'], ['pe', 'Leadership (director, principal, staff, money)'], ['ru', 'Catch-up for the slowest'], ['lu', 'Concept luck'], ['pk', 'Winter development and engines']];
 function rgComp(rp) { RG_COMP = rp && rp.merit ? RG_COMPB : RG_COMP0; return RG_COMP; }
 function rgDbar(e, max) {
   var seg = function (neg) { return RG_COMP.map(function (c) { var v = e.c[c[0]]; if (neg ? v >= 0 : v <= 0) return ''; return '<u class="c-' + c[0] + '" style="width:' + Math.max(2, Math.abs(v) / max * 100).toFixed(1) + '%" title="' + c[1] + ' ' + rgSgn(v) + '"></u>'; }).join(''); };
@@ -347,13 +358,21 @@ function rgPackText(S) {
   if (w.state === 'warn') {
     L.push('Announced: ' + w.kind.toUpperCase() + ' change for Season ' + w.eff + (w.kind === 'major' ? ' (about ' + regWords(S, 'major').pct + ' of every car rebuilt)' : regAOn(S) ? ' (' + regWords(S, 'minor').parts + ' rules: about 75% of those areas reworked, the rest carries over)' : ' (about 30% of every car reworked)') + '. Teams have one season to prepare.');
     if (w.kind === 'major' && w.prof) L.push('New era weights: ' + rgProfileLines(w.prof).map(function (x) { return x.n + ' ' + x.v.s; }).join(', ') + '; driver skill that counts for more: ' + rgAttr(w.prof.driver) + '.');
+    if (regMeritOn(S)) {
+      L.push('How the new car is decided: no handicap for the title leader. Each team\'s new ' + (w.kind === 'minor' ? regWords(S, 'minor').parts + ' package' : 'car') + ' comes from its technical director (concept), team principal (rating and whether the new car was started in time), technical staff (reliability, first packages) and R&D money, plus some luck (more with a weak director). The slowest team gets some help, more if it has a director rated 55+ or prepared in time.');
+      var fm = S.teams.reduce(function (a, t) { return a + (t.fin ? t.fin.fund : 0); }, 0) / S.teams.length || 1;
+      L.push('Leadership going into the change (expected head start, best first):');
+      S.teams.map(function (t) { var r = regRatings(t), eo = regConcept(S, t, false), d = t.dev || {}; return { t: t, r: r, e: PARTS.reduce(function (a, k) { return a + regPartMix(S, w.kind, k) * regOffPart(eo, k) * (w.kind === 'minor' ? REGB.minorK : 1); }, 0) / 4, d: d }; })
+        .sort(function (a, b) { return b.e - a.e; })
+        .forEach(function (x) { L.push('  ' + x.t.name + ': director ' + (x.d.tdp ? x.d.tdp.name : '?') + ' ' + Math.round(x.r.td) + '/100, principal ' + (x.d.tp ? x.d.tp.name : '?') + ' ' + Math.round(x.r.tp) + '/100, ' + (x.r.ready ? 'started the new car in time' : 'not yet committed to the new car') + ', staff ' + Math.round(x.r.st) + '/100, R&D fund ' + (x.t.fin ? Math.round((x.t.fin.fund / fm - 1) * 100) + '% vs average' : 'n/a') + ' | expected head start ' + rgSgn(Math.round(x.e * 10) / 10) + (S.drivers[S.pi] && S.drivers[S.pi].team === x.t.id ? ' (PLAYER TEAM)' : '')); });
+    }
     L.push('Exposure (rough, most exposed first):');
     w.rows.forEach(function (r) { L.push('  ' + r.n + ': ' + RG_BANDS[r.band].l + ' (' + RG_BANDS[r.band].t + ')' + (r.champ ? ', title leader' : '') + (r.last ? ', slowest car' : '') + (r.ready ? ', well prepared' : '') + (r.stretched ? ', stretched' : '') + (r.mine ? ', PLAYER TEAM' : '')); });
   } else L.push('No regulation change announced. Majors every 5 to 6 seasons, minors every 2 to 3, always announced one season ahead.');
   (S.regReports || []).slice(-2).forEach(function (rp) {
     L.push('', 'Reg Report, Season ' + rp.season + ' (' + rp.kind + ', ' + (rp.parts ? regPartsText(rp.parts) + ' rules, about 75% of those areas redesigned' : Math.round(rp.mix * 100) + '% of every car redesigned') + '). Change in car power = old-rules exposure + ' + (rp.merit ? 'catch-up for the slowest + new-car concept (director, principal, preparation, staff, money and luck)' : 'title/catch-up rules + concept luck') + ' + winter development:');
     if (rp.era && rp.era.to) L.push('  New era weights: ' + rgProfileLines(rp.era.to).map(function (x) { return x.n + ' ' + x.v.s; }).join(', ') + '; driver skill: ' + rgAttr(rp.era.to.driver));
-    rp.teams.slice().sort(function (a, b) { return a.r1 - b.r1; }).forEach(function (e) { L.push('  ' + e.n + ': P' + e.r0 + ' -> P' + e.r1 + ' | exposure ' + rgSgn(e.c.st) + ', rules ' + rgSgn(e.c.ru) + ', luck ' + rgSgn(e.c.lu) + ', development ' + rgSgn(e.c.pk) + ' | ' + rgWhy(e, rp).map(function (x) { return x.t; }).join('; ')); });
+    rp.teams.slice().sort(function (a, b) { return a.r1 - b.r1; }).forEach(function (e) { L.push('  ' + e.n + ': P' + e.r0 + ' -> P' + e.r1 + ' | exposure ' + rgSgn(e.c.st) + (e.c.pe != null ? ', leadership ' + rgSgn(e.c.pe) + ', catch-up ' + rgSgn(e.c.ru) : ', rules ' + rgSgn(e.c.ru)) + ', luck ' + rgSgn(e.c.lu) + ', development ' + rgSgn(e.c.pk) + (e.pp ? ' | director ' + e.pp.td + ' ' + e.pp.tdr + ', principal ' + e.pp.tp + ' ' + e.pp.tpr + (e.pp.ready ? ', prepared' : ', not prepared') : '') + ' | ' + rgWhy(e, rp).map(function (x) { return x.t; }).join('; ')); });
   });
   return L.join('\n');
 }

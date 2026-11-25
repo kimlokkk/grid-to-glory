@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.3 — 25 November 2026 (Reg Report and story pack for the new regulations)
+
+- Reg Report entries get `c.pe` (expected leadership head start, from `regConcept` without luck at the start of the change), `c.lu` is now luck only, and `pp` records director, principal, ratings, preparation and the parts of the head start; `rgLeadWhy` names the biggest sources. No champion-handicap reason under phase B. Story pack: leadership table when a change is announced, leadership and people in each Reg Report line.
+- Known design point (not changed): the concept uses the director in place after the winter staff market, so a director signed that winter counts in full.
+
 ## 2.6.2 — 25 November 2026 (training XP clarity, dev branch only)
 
 - Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.

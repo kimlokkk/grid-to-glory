@@ -106,6 +106,10 @@ const path = require('node:path');
           ck('a strong director gives a better expected concept than a weak one', cA > cB + 5, [cA, cB]); }
         { const keep = S.teams.map(t => Object.assign({}, t.car)), champ = S.teams[0]; PARTS.forEach(k => champ.car[k] = 99); const before = powerRank(S), p0 = teamPower(champ); regBalance(S, 'major', champ.id, S.teams[9].id, before, true);
           ck('no forced drop for the champion under phase B', teamPower(champ) === p0); S.teams.forEach((t, i) => t.car = keep[i]); }
+        { const rp = S.regReports.slice(-1)[0]; ck('the Reg Report keeps who led each team and splits leadership from luck', rp.merit && rp.teams.every(e => e.pp && e.pp.td !== undefined && e.c.pe != null) && rp.teams.every(e => rgWhy(e, rp).every(x => !/Champion handicap/.test(x.t))));
+          const txt = rgPackText(S); ck('the story pack shows leadership in the Reg Report lines', /leadership [+−]?[0-9]/.test(txt) && /director .* principal /.test(txt));
+          S.world.era.next = S.season + 1; S.world.era.announced = S.world.era.next; S.world.era.nextProfile = S.world.era.nextProfile || Object.assign({}, S.world.era.profile); const t2 = rgPackText(S);
+          ck('when a change is announced the story pack lists every team\'s director, principal, preparation and expected head start', /Leadership going into the change/.test(t2) && S.teams.every(t => t2.indexOf('  ' + t.name + ': director ') >= 0)); }
         const k0 = S.lead.reg; S.lead.reg = 0; ck('with the flag off the old rules apply (major 60%, minor 30% of every part)', PARTS.every(k => regPartMix(S, 'minor', k) === 0.3 && regPartMix(S, 'major', k) === 0.6)); S.lead.reg = k0; }
       /* 7. overrule news is capped to one per team and season */
       const ev = Object.keys(S.lead.ev || {}); ck('at most one overrule story per team and season', ev.length === new Set(ev).size);

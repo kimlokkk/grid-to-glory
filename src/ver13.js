@@ -1,6 +1,11 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.2', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.3', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.3', d: 'Reg Report and story pack: who built the new car', date: '25 Nov 2026', l: [
+    "The Reg Report now splits each team's move into old-rules exposure, leadership (director, principal, preparation, staff and money), catch-up for the slowest, concept luck and winter development, and records who led each team at the change.",
+    "Reasons name the real source: for example \"Head start from starting the new car in time and the director's concept\" or \"Started behind: a weak director's concept\". The old \"Champion handicap\" reason no longer appears, because there is no handicap any more.",
+    "Story pack: when a change is announced it lists every team's director, principal, whether the new car was started in time, staff, R&D money and the expected head start; after the change each team line shows its leadership and luck."
+  ] },
   { v: '2.6.2', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
     "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
