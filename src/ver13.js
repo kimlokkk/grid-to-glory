@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.4', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.5', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.5', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
+    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
+    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
+  ] },
   { v: '2.6.4', d: 'Shorter export code', date: '25 Nov 2026', l: [
     "Export save codes are now compressed: about 7 times shorter (a career of 8 seasons goes from about 1.7 million characters to about 230 thousand), with nothing left out. The Export screen says how much shorter the code is.",
     "Old codes still import, and line breaks or spaces picked up while copying are ignored. A browser too old to compress keeps the old format."

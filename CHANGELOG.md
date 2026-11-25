@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.5 — 25 November 2026 (training XP clarity, dev branch only)
+
+- Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.
+
 ## 2.6.4 — 25 November 2026 (shorter export code)
 
 - Export: `GTG2.` + base64 of deflate-raw (`CompressionStream`) of the save JSON; import reads both formats (`expUnzip`), strips whitespace. Measured on an 8-season career: 1,704k -> 231k characters (7.4x), lossless. Not done: 50x (would need dropping the F2/F3 world, race results and news; a lighter export without the event log and old news would reach about 10x).
