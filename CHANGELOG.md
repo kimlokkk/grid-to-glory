@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.2 — 25 November 2026 (training XP clarity, dev branch only)
+
+- Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.
+
 ## 2.6.1 — 25 November 2026 (regulations: the new car comes from the people)
 
 - Phase A: a major change rebuilds 70% of every part (was 60%); a minor change targets one or two areas (aero 50%, chassis 30%, engine 20% weights, chosen from a hash) and reworks 75% of those (was 30% of every part). Words in news, Regulation Watch, Reg Report and story pack come from `regWords`.
