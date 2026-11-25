@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.7 — 25 November 2026 (training XP clarity, dev branch only)
+
+- Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.
+
 ## 2.6.6 — 25 November 2026 (fewer spins, consistency matters)
 
 - `incidents()` mistake chance: `P2.mistK2 * (mistF + ((100 - cv) / mistC) ^ mistP)` with cv = 0.7 consistency + 0.3 restart (0.0016, 0.3, 20, 1.6), was `mistK * (1 + (100 - cv) / 30)` (0.0065); other multipliers unchanged; `P2.mistV` 1 restores the old curve. Measured (3 seeds x 2 seasons, 132 races): spins per season by consistency 88+ 8.9 -> 1.0, 80-87 8.5 -> 1.8, 70-79 10.4 -> 2.5, under 70 9.1 -> 3.6; per race crash DNF 1.23 -> 0.49, SC 1.23 -> 0.96, VSC 1.56 -> 0.73, mechanical 0.95 -> 0.90, passes 75 -> 80.

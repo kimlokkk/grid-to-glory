@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.6', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.7', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.7', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
+    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
+    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
+  ] },
   { v: '2.6.6', d: 'Fewer spins, and consistency matters', date: '25 Nov 2026', l: [
     "Unforced spins were far too common and barely depended on the driver: in testing every driver spun about 9 times a season, a consistency-90 driver almost as often as a consistency-75 one. The base chance is now much lower and consistency counts for much more: about 1 spin a season at consistency 90, 2 to 3 at 75 and 4 to 5 at 60.",
     "Pushing, overheated or worn tyres, rain and the first lap still raise the risk as before; they start from a lower base.",
