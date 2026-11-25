@@ -173,12 +173,22 @@ function leadFill(S, N, kind, pool, open, rankP) {
 var LEADP = { peak: { td: 48, tp: 50 }, decline: 58, retire: { td: 62, tp: 66 }, pool: { td: 10, tp: 8 }, fireGap: 18, fireShare: 0.5, maxFire: 2, idleQuit: 4, young: { td: [34, 41], tp: [38, 45] }, mixed: [36, 60] };
 /* lives in S.lead (S.mkt is rebuilt every winter) */
 function leadPool(S) { var m = S.lead; if (!m.pool) m.pool = { td: [], tp: [], ret: [], fresh: true, n: 0 }; return m.pool; }
+var LEAD_NAT = {"Adrian Whitlock": "GB", "Matteo Brandolini": "IT", "Kaito Fujimoto": "JP", "Henrik Solberg": "DK", "Lucas Beaumont": "FR", "Arjun Mehta": "IN", "Tobias Kreuz": "DE", "Elena Marchetti": "IT", "Dominic Hargreave": "GB", "Yusuf Demir": "DE", "Camille Roussel": "FR", "Niklas Bergström": "SE", "Ravi Subramaniam": "IN", "Oliver Dunmore": "GB", "Isabelle Fournier": "FR", "Marco Zanetti": "IT", "Pieter van Dijk": "NL", "Graham Ashworth": "GB", "Sven Lindgren": "SE", "Daniel Okafor": "GB", "Julien Marchand": "FR", "Takumi Hayashi": "JP", "Rhys Pemberton": "GB", "Anders Kjellberg": "SE", "Rafael Ostrowski": "PL", "Mei Lin Teoh": "MY", "Gunnar Holm": "DK", "Aziz Rahman": "MY", "Claire Dubois": "FR", "Paolo Ferretti": "IT", "Hana Kobayashi": "JP", "Marcus Webb": "GB", "Sofia Lindqvist": "SE", "Tomas Novak": "AT", "Farah Ismail": "MY", "Diego Arrieta": "ES", "Ingrid Vos": "NL", "Kenji Mori": "JP", "Leila Haddad": "FR", "Owen Pryde": "GB", "Rosa Câmara": "PT", "Stefan Brauer": "DE", "Konrad Seidel": "DE", "Andrew Calloway": "GB", "Stefan Gruber": "AT", "James Hartley": "GB", "Mike Rennick": "GB", "Céline Garnier": "FR", "Hiroshi Kanda": "JP", "Beat Zellweger": "CH", "Dale Mercer": "US"};
+/* nationality for a name: the known staff names first, then the surname in the name lists the drivers use, then a stable guess */
+function leadGuessNat(name) {
+  if (LEAD_NAT[name]) return LEAD_NAT[name];
+  var w = String(name).split(' '), first = w[0], last = w.slice(1).join(' '), hit = null, tabs = [typeof NAMEGEN !== 'undefined' ? NAMEGEN : {}, typeof WORLD_NAMES !== 'undefined' ? WORLD_NAMES : {}];
+  [1].forEach(function (k) { if (hit) return; tabs.forEach(function (T) { if (hit) return; Object.keys(T).some(function (nat) { var g = T[nat]; if (g && g[k] && g[k].indexOf(k ? last : first) >= 0 && NATS.some(function (x) { return x[0] === nat; })) { hit = nat; return true; } return false; }); }); });
+  return hit || NATS[Math.floor(hashS(name + '|nat') * NATS.length) % NATS.length][0];
+}
 function leadPersonOf(t, kind) { return kind === 'td' ? t.dev.tdp : t.dev.tp; }
 /* fill in what an older record lacks (nationality, potential, history): the person keeps today's rating */
 function leadPerson(S, p, kind, t) {
-  if (!p || p.pid) return p;
+  if (!p) return p;
+  if (p.pid) { if (!p.nv) { if (!p.gen) p.nat = leadGuessNat(p.name); p.nv = 1; } return p; }   /* records from the first 2.6.0 dev build: nationality guessed again from the name */
+  p.nv = 1;
   var pool = leadPool(S); pool.n = (pool.n || 0) + 1; p.pid = pool.n; p.kind = kind;
-  if (!p.nat) p.nat = NATS[Math.floor(hashS(p.name + '|nat') * NATS.length) % NATS.length][0];
+  if (!p.nat) p.nat = leadGuessNat(p.name);
   if (p.age == null) p.age = Math.round(rr(40, 60));
   var pk = LEADP.peak[kind] + Math.round((hashS(p.name + '|pk') - 0.5) * 6), r = leadRating(kind, p.skill);
   p.peak = pk; p.pot = p.pot || clamp(Math.round(r + Math.max(0, pk - p.age) * 1.0 + hgauss(p.name + '|pot') * 3), r, 96);
@@ -195,49 +205,102 @@ function leadNewPerson(S, kind, used, mixed) {
   do { nm = genName(S, nat); } while (used[nm] && k++ < 12); used[nm] = 1;
   var pot = clamp(Math.round(50 + gauss() * LEAD.poolSd), LEAD.poolMin, LEAD.poolMax), pk = LEADP.peak[kind] + Math.round(gauss() * 2);
   var r = clamp(Math.round(pot - Math.max(0, pk - age) * 1.8 - (age > LEADP.decline ? (age - LEADP.decline) * 1.2 : 0) + gauss() * 2), 8, pot);
-  var p = { name: nm, nat: nat, age: age, skill: leadMul(kind, r), loy: rnd(), pot: pot, peak: pk, status: 'free', hist: [], idle: 0 };
+  var p = { gen: 1, name: nm, nat: nat, age: age, skill: leadMul(kind, r), loy: rnd(), pot: pot, peak: pk, status: 'free', hist: [], idle: 0 };
   if (kind === 'tp') p.amb = Math.round(clamp(gauss() * 1.2 + 0.4, -1, 3));
   leadPerson(S, p, kind, null); return p;
 }
 /* one winter of ageing: grow towards the potential until the peak age, then slowly lose it */
-function leadAgeP(p, kind) {
+function leadAgeP(p, kind, N) {
   var r = leadRating(kind, p.skill), nz = gauss() * LEAD.drift * 0.6;
   if (p.age < p.peak) r += (p.pot - r) * 0.35 + nz; else if (p.age > LEADP.decline) r -= 0.9 + (p.age - LEADP.decline) * 0.25 - nz; else r += nz;
-  r = clamp(r, 4, 96); p.skill = leadMul(kind, r); return r;
+  r = clamp(r, 4, 96); p.skill = leadMul(kind, r);
+  if (N != null) { p.rh = p.rh || []; p.rh.push({ s: N, r: Math.round(r) }); if (p.rh.length > 30) p.rh = p.rh.slice(-30); }
+  return r;
 }
 function leadHire(S, p, t, N, kind) {
   p.status = 'employed'; p.idle = 0; p.team = t.id; p.hist = p.hist || [];
+  var h = p.hist[p.hist.length - 1]; if (h && h.t === t.id && h.e === N - 1) { delete h.e; h.pay = p.con ? p.con.pay : h.pay; return; }   /* re-signed by the same team: one unbroken spell */
   p.hist.push({ s: N, t: t.id, r: leadRating(kind, p.skill), pay: p.con ? p.con.pay : null });
 }
 function leadRelease(S, p, N, fired) { p.status = 'free'; p.team = null; p.idle = 0; if (fired) p.fired = N; var h = p.hist && p.hist[p.hist.length - 1]; if (h && h.e == null) h.e = N - 1; p.con = null; }
 
-/* ===== profile of a principal or director (opened from Team HQ and from the free-agent list) ===== */
+/* ===== the people on screen: portrait, dossier (same Paddock frame as a driver), Paddock cards, free-agent rows ===== */
 function leadFind(S, kind, tid, pid) {
   if (pid) { var L = leadPool(S)[kind] || [], i; for (i = 0; i < L.length; i++) if (L[i].pid === pid) return { p: L[i], t: null }; return null; }
   var t = S.teams[tid]; return t && t.dev && leadPersonOf(t, kind) ? { p: leadPersonOf(t, kind), t: t } : null;
 }
-function leadProfileHTML(kind, tid, pid) {
-  var f = leadFind(S, kind, tid, pid); if (!f) return '<p class="dim">No longer available.</p>';
-  var p = leadPerson(S, f.p, kind, f.t), r = Math.round(leadRating(kind, p.skill)), role = kind === 'td' ? 'Technical director' : 'Team principal';
-  var ini = p.name.split(' ').map(function (w) { return w.charAt(0); }).join('').slice(0, 2);
-  var tn = function (id) { return S.teams[id] ? S.teams[id].name : 'Team ' + id; };
-  var st = f.t ? 'Employed by ' + esc(f.t.name) : p.fired ? 'Free agent (let go in S' + p.fired + ')' : 'Free agent';
-  var tiles = [['Rating', r], ['Age', p.age], ['Nationality', (typeof natName === 'function' ? esc(natName(p.nat)) : p.nat)]];
-  if (p.con && f.t) tiles.push(['Contract', 'Until S' + p.con.end + ' · ' + payTxt(p.con.pay)]); else tiles.push(['Asking', payTxt(leadAsk(r))]);
-  tiles.push([kind === 'tp' ? 'Style' : 'Overruled', kind === 'tp' ? tpStyle(p.amb) : (p.over || 0) + ' times']);
-  tiles.push(['Loyalty', p.loy >= 0.66 ? 'High' : p.loy <= 0.33 ? 'Low' : 'Normal']);
-  var phase = p.age < p.peak - 3 ? 'Still growing' : p.age > LEADP.decline ? 'Past his peak' : 'In his prime';
-  var hist = (p.hist || []).slice().reverse().map(function (h) { return '<li><b>S' + h.s + (h.e != null && h.e !== h.s ? '–S' + h.e : h.e == null ? '–now' : '') + '</b><span>' + esc(tn(h.t)) + '</span><em>' + Math.round(h.r) + (h.pay != null ? ' · ' + payTxt(h.pay) : '') + '</em></li>'; }).join('');
-  return '<div class="lp"><div class="lp-id"><span class="lp-av">' + esc(ini) + '</span><div><h3>' + esc(role) + '</h3><h2>' + (typeof flagE === 'function' ? flagE(p.nat) + ' ' : '') + esc(p.name) + '</h2><span class="dim">' + st + ' · ' + phase + '</span></div></div>' +
-    pfTiles(tiles) + '<h4>Career</h4>' + (hist ? '<ul class="lp-hist">' + hist + '</ul>' : '<p class="dim">No career record yet.</p>') + '<button class="btn wide" data-act="mclose">Close</button></div>';
+function leadR(kind, p) { return Math.round(leadRating(kind, p.skill)); }
+function leadPick5(p, key, list) { return list[Math.floor(hashS(p.name + '|' + key) * list.length) % list.length]; }
+/* a portrait badge in the team colours: a technical director wears a headset, a principal a jacket and tie */
+function leadAvatarSVG(p, kind, col, size) {
+  var id = 'la' + (p.pid || 0) + kind + size, skin = leadPick5(p, 'skin', ['#f1c7a5', '#e0ac85', '#c48a63', '#9a6544', '#6f4630']);
+  var hair = p.age >= 56 ? '#c9c4bb' : leadPick5(p, 'hair', ['#2b2118', '#5a3b23', '#8a6a45', '#1a1a1a', '#3d2c1e']);
+  var long = hashS(p.name + '|hl') > 0.72, dark = '#151b2c';
+  var hairPath = long ? 'M39 54 C36 28 50 24 60 24 C72 24 84 30 81 54 L83 74 C78 70 77 60 78 50 C74 40 68 37 60 37 C52 37 46 40 42 50 C43 60 42 70 37 74 Z' : 'M41 50 C40 30 52 25 60 25 C71 25 81 31 79 50 C76 40 68 36 60 36 C52 36 45 40 41 50 Z';
+  var body = kind === 'tp'
+    ? '<path d="M12 124 C15 92 36 81 60 81 C84 81 105 92 108 124 Z" fill="' + dark + '"/><path d="M49 82 L60 106 L71 82 Z" fill="#eef0f4"/><path d="M58 85 L62 85 L64 101 L60 108 L56 101 Z" fill="' + col + '"/><path d="M47 82 L60 106 L42 92 Z M73 82 L60 106 L78 92 Z" fill="#0d1220"/>'
+    : '<path d="M12 124 C15 92 36 81 60 81 C84 81 105 92 108 124 Z" fill="' + col + '"/><path d="M12 124 C15 96 30 86 44 83 L52 124 Z M108 124 C105 96 90 86 76 83 L68 124 Z" fill="#0004"/><path d="M46 82 L60 95 L74 82 L70 80 L60 89 L50 80 Z" fill="#fff9"/>';
+  var gear = kind === 'td' ? '<path d="M37 54 C36 24 84 24 83 54" fill="none" stroke="#1d2233" stroke-width="5" stroke-linecap="round"/><rect x="32" y="46" width="10" height="17" rx="4" fill="#1d2233"/><rect x="78" y="46" width="10" height="17" rx="4" fill="#1d2233"/><path d="M38 61 C39 71 47 74 55 72" stroke="#1d2233" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="56" cy="72" r="2.6" fill="#1d2233"/>' : '';
+  return '<svg class="lp-av" viewBox="0 0 120 120" width="' + size + '" height="' + size + '" role="img" aria-label="Portrait of ' + esc(p.name) + '"><defs><radialGradient id="' + id + 'g" cx="50%" cy="30%" r="75%"><stop offset="0" stop-color="' + col + '"/><stop offset="1" stop-color="#0b1020"/></radialGradient><clipPath id="' + id + 'c"><circle cx="60" cy="60" r="55"/></clipPath></defs>' +
+    '<circle cx="60" cy="60" r="58" fill="#0b1020" stroke="' + col + '" stroke-width="4"/><g clip-path="url(#' + id + 'c)"><rect width="120" height="120" fill="url(#' + id + 'g)"/><path d="M0 120 L120 40 L120 54 L0 134 Z" fill="#ffffff10"/>' + body +
+    '<rect x="53" y="66" width="14" height="18" rx="6" fill="' + skin + '"/><ellipse cx="60" cy="51" rx="19" ry="22" fill="' + skin + '"/><path d="' + hairPath + '" fill="' + hair + '"/>' + gear + '</g></svg>';
 }
-if (typeof A !== 'undefined') A['sprof'] = function (x) { var v = String(x.v).split(':'); showModal(leadProfileHTML(v[0], v[1] === 'p' ? null : +v[1], v[1] === 'p' ? +v[2] : null)); };
+function leadSeasons(p) { var n = 0; (p.hist || []).forEach(function (h) { n += (h.e != null ? h.e : S.season) - h.s + 1; }); return Math.max(0, n); }
+function leadTeams(p) { var u = {}; (p.hist || []).forEach(function (h) { u[h.t] = 1; }); return Object.keys(u).length; }
+function leadPhase(p) { return p.age < p.peak - 3 ? 'Rising talent' : p.age > LEADP.decline ? 'Veteran' : 'In prime'; }
+function leadStars(p) { var n = clamp(Math.round(p.pot / 20), 1, 5); return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
+function leadRoute(kind, tid, pid) { return { kind: 'staff', k: kind, team: tid, pid: pid }; }
+function leadLink(kind, t, p) { return 'data-act="pd-staff" data-v="' + kind + ':' + (t ? 't:' + t.id : 'p:' + p.pid) + '"'; }
+function leadStaffHTML(r) {
+  var f = leadFind(S, r.k, r.team, r.pid); if (!f) return '';
+  var kind = r.k, p = leadPerson(S, f.p, kind, f.t), t = f.t, col = t ? t.color : '#7d8799', rt = leadR(kind, p), first = p.name.split(' ')[0];
+  var role = kind === 'td' ? 'Technical director' : 'Team principal', status = t ? 'F1 ' + role.toLowerCase() : 'Free agent' + (p.fired ? ' · let go in S' + p.fired : '');
+  var hero = '<section class="pd-driver-hero"><div class="pd-helmet lp-hero-av">' + leadAvatarSVG(p, kind, col, 138) + '</div><div class="pd-identity"><small class="pd-eyebrow">' + esc(status) + '</small><h2>' + esc(p.name) + '</h2><p>' + flagE(p.nat) + ' ' + esc(natName(p.nat)) + ' <span>· Age ' + p.age + '</span></p>' + (t ? '<button class="pd-team-link" ' + pdTeamLink(t, leagueOf(S)) + '>' + esc(t.name) + ' ↗</button>' : '<span class="lp-free">Available to hire</span>') + '</div><div class="pd-rating"><b>' + rt + '</b><small>RATING</small></div></section>';
+  var phase = leadPhase(p), bio = first + ' is a ' + p.age + '-year-old ' + role.toLowerCase() + ' from ' + natName(p.nat) + '. ' +
+    (phase === 'Rising talent' ? 'Still improving; the best years should come around age ' + p.peak + '. ' : phase === 'Veteran' ? 'Past the peak years now: experience counts for more than new ideas. ' : 'At the height of a career. ') +
+    (kind === 'tp' ? (p.amb >= 2 ? 'Bold: sets high targets and pushes development hard.' : p.amb <= 0 ? 'Cautious: protects the budget and the team’s position.' : 'Balanced: steady targets and steady spending.') : ((p.over || 0) >= 2 ? 'Has been overruled ' + p.over + ' times recently and may not stay quiet.' : 'Leads the factory and advises the principal on each upgrade.'));
+  var tags = '<div class="pd-tags"><span>' + phase + '</span>' + (kind === 'tp' ? '<span>' + tpStyle(p.amb) + ' approach</span>' : '<span>Factory leader</span>') + '<span>Loyalty ' + (p.loy >= 0.66 ? 'high' : p.loy <= 0.33 ? 'low' : 'normal') + '</span>' + (phase === 'Rising talent' ? '<span>Potential ' + leadStars(p) + '</span>' : '') + '</div>';
+  var overview = pdPanel(role, 'Meet ' + first, '<p>' + esc(bio) + '</p>' + tags + pdStats([['Seasons', leadSeasons(p)], ['Teams', leadTeams(p)], ['Rating', rt]]));
+  if (kind === 'td') overview += pdPanel('In the factory', 'Upgrade odds', pdStats([['Big hit', Math.round(leadLerp(LEAD.hit, rt) * 100) + '%'], ['Miss', Math.round(leadLerp(LEAD.miss, rt) * 100) + '%'], ['Failures', 'x' + leadLerp(LEAD.failTD, rt).toFixed(2)]]) + '<p class="pd-note">Chances for each package, never a certainty. A big hit adds about ' + Math.round((LEAD.hitMul - 1) * 100) + '% to the gain; a miss keeps only ' + Math.round(LEAD.missMul * 100) + '%.</p>');
+  else overview += pdPanel('On the pit wall', 'Judgement', pdStats([['Right calls', t && t.dev.tdp ? Math.round(leadOdds(S, t).right * 100) + '%' : '—'], ['Driver eye', '±' + leadLerp(LEAD.eyeOvr, rt).toFixed(1) + ' OVR'], ['Budget', '±' + Math.round(leadLerp(LEAD.budErr, rt) * 100) + '%']]) + '<p class="pd-note">How often the principal picks the right part, how far off a driver’s real level the principal can be, and how far the budget can miss.</p>');
+  var rh = (p.rh || []).slice(-8), vals = rh.map(function (x) { return x.r; }).concat([rt]);
+  if (vals.length > 1) overview += pdPanel('Development', 'Rating over time', '<div style="--tc:' + col + '">' + rateSpark(vals, rh) + '</div>', 'pd-span');
+  var hist = (p.hist || []).reduce(function (a, h) { var l = a[a.length - 1]; if (l && l.t === h.t && l.e != null && l.e === h.s - 1) { a[a.length - 1] = Object.assign({}, l, { e: h.e, pay: h.pay }); if (h.e == null) delete a[a.length - 1].e; } else a.push(h); return a; }, []).reverse(), career = pdPanel('Career record', 'Every move', pdStats([['Seasons', leadSeasons(p)], ['Teams', leadTeams(p)], ['Peak rating', Math.max.apply(null, vals)]]), 'pd-span');
+  career += pdPanel('Season archive', 'Where ' + esc(first) + ' worked', hist.length ? '<div class="pd-scroll"><table class="t"><thead><tr><th>Seasons</th><th>Team</th><th>Rating</th><th>Pay</th></tr></thead><tbody>' + hist.map(function (h) { var tt = S.teams[h.t]; return '<tr><td>S' + h.s + (h.e == null ? '–now' : h.e !== h.s ? '–S' + h.e : '') + '</td><td><span class="lp-dot" style="background:' + (tt ? tt.color : '#999') + '"></span>' + esc(tt ? tt.name : 'Team') + '</td><td>' + Math.round(h.r) + '</td><td>' + (h.pay != null ? payTxt(h.pay) : '—') + '</td></tr>'; }).join('') + '</tbody></table></div>' : pdEmpty('No F1 job yet. A new name in the paddock.'), 'pd-span');
+  var contract = t && p.con ? pdPanel('Contract', 'With ' + esc(t.name), pdStats([['Until', 'S' + p.con.end], ['Per year', payTxt(p.con.pay)], ['Years left', Math.max(0, p.con.end - S.season + 1)]]) + '<p class="pd-note">' + (kind === 'td' ? 'The principal can let a director go early; the team pays half of what is left on the contract.' : 'The team can sack a principal who misses the board target by four places or more; half of the rest of the contract is paid.') + '</p>', 'pd-span')
+    : pdPanel('Contract', 'Free to sign', pdStats([['Asking', payTxt(leadAsk(rt))], ['Status', 'Available'], ['Winters out', p.idle || 0]]) + '<p class="pd-note">Teams look at the pool every winter. Those who stay out too long, or reach retirement age, leave the sport.</p>', 'pd-span');
+  var tabs = [['overview', 'Overview'], ['career', 'Career'], ['contract', 'Contract']], body = PD42.tab === 'career' ? career : PD42.tab === 'contract' ? contract : overview;
+  return pdFrame(r, tabs, hero, '<div class="pd-grid">' + body + '</div>', col);
+}
+if (typeof A !== 'undefined') {
+  A['pd-staff'] = function (x) { var v = String(x.v).split(':'); pdOpen(v[1] === 't' ? leadRoute(v[0], +v[2], null) : leadRoute(v[0], null, +v[2]), true); };
+  A['sprof'] = function (x) { var v = String(x.v).split(':'); A['pd-staff']({ v: v[1] === 'p' ? x.v : v[0] + ':t:' + v[1] }); };
+}
+/* every principal and director, employed and free, as Paddock cards */
+function leadStaffList(S) {
+  var L = [];
+  S.teams.forEach(function (t) { if (t.dev.tp) L.push({ k: 'tp', p: leadPerson(S, t.dev.tp, 'tp', t), t: t }); if (t.dev.tdp) L.push({ k: 'td', p: leadPerson(S, t.dev.tdp, 'td', t), t: t }); });
+  if (S.lead && S.lead.pool) ['td', 'tp'].forEach(function (k) { S.lead.pool[k].forEach(function (p) { L.push({ k: k, p: leadPerson(S, p, k, null), t: null }); }); });
+  return L;
+}
+function leadStaffCards(o) {
+  var q = o.query.trim().toLowerCase(), ts = teamStandings(S);
+  var list = leadStaffList(S).filter(function (x) { return [x.p.name, x.t ? x.t.name + ' ' + x.t.short : 'free agent', natName(x.p.nat), x.k === 'td' ? 'technical director' : 'team principal'].join(' ').toLowerCase().indexOf(q) >= 0; });
+  list.sort(function (a, b) { if (o.sort === 'name') return a.p.name.localeCompare(b.p.name); if (o.sort === 'age') return a.p.age - b.p.age; if (o.sort === 'rating') return b.p.skill - a.p.skill || 0; var ra = a.t ? ts.indexOf(a.t) : 99, rb = b.t ? ts.indexOf(b.t) : 99; return ra - rb || (a.k === 'tp' ? -1 : 1) || leadR(b.k, b.p) - leadR(a.k, a.p); });
+  var free = list.filter(function (x) { return !x.t; }).length;
+  return '<p class="pw-count" role="status">' + list.length + ' people · ' + free + ' free agent' + (free === 1 ? '' : 's') + (q ? ' matching “' + esc(o.query) + '”' : '') + '</p><div class="pw-grid">' + (list.length ? list.map(function (x) {
+    var col = x.t ? x.t.color : '#7d8799', rt = leadR(x.k, x.p);
+    return '<button class="pw-driver lp-card' + (x.t ? '' : ' is-free') + '" ' + leadLink(x.k, x.t, x.p) + ' style="--tc:' + col + '"><span class="pw-card-top"><span>' + esc(x.t ? x.t.short : 'FREE AGENT') + '</span><b>' + (x.k === 'td' ? 'TECH DIRECTOR' : 'PRINCIPAL') + '</b></span><span class="pw-driver-art">' + leadAvatarSVG(x.p, x.k, col, 104) + '<span class="pw-ovr"><b>' + rt + '</b><small>RTG</small></span></span><span class="pw-name">' + esc(x.p.name) + '</span><span class="pw-sub">' + flagE(x.p.nat) + ' ' + esc(natName(x.p.nat)) + ' · Age ' + x.p.age + ' · ' + leadPhase(x.p) + '</span><span class="pw-card-stats"><span><b>' + leadSeasons(x.p) + '</b> SEASONS</span><span>' + (x.t && x.p.con ? '<b>S' + x.p.con.end + '</b> CONTRACT' : '<b>' + payTxt(leadAsk(rt)) + '</b> ASKING') + '</span><span>PROFILE ↗</span></span></button>';
+  }).join('') : pdEmpty('No matches. Try another name, nationality or team.')) + '</div>';
+}
+function leadStaffTab(o) { return typeof leadOn === 'function' && leadOn(S) && o.league === leagueOf(S) && S.teams[0] && !S.teams[0].spec; }
+/* winter recap: the best free agents as small cards */
 function leadFreeAgentsHTML(S) {
   if (!leadOn(S, S.season + 1) || !S.lead || !S.lead.pool) return '';
   var out = '';
   [['td', 'Free technical directors'], ['tp', 'Free principals']].forEach(function (k) {
-    var L = (S.lead.pool[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; }).slice(0, 6); if (!L.length) return;
-    out += '<h5>' + k[1] + '</h5>' + L.map(function (p) { return '<button class="mk-r" data-act="sprof" data-v="' + k[0] + ':p:' + p.pid + '"><b>' + esc(p.name) + '</b><span>' + (typeof flagE === 'function' ? flagE(p.nat) : '') + ' age ' + p.age + ' · rating ' + Math.round(leadRating(k[0], p.skill)) + '</span><em>' + payTxt(leadAsk(leadRating(k[0], p.skill))) + '</em></button>'; }).join('');
+    var L = (S.lead.pool[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; }).slice(0, 5); if (!L.length) return;
+    out += '<h5>' + k[1] + '</h5><div class="lp-fa-list">' + L.map(function (p) { var rt = leadR(k[0], p); return '<button class="lp-fa" ' + leadLink(k[0], null, p) + '>' + leadAvatarSVG(p, k[0], '#7d8799', 44) + '<span><b>' + esc(p.name) + '</b><em>' + flagE(p.nat) + ' Age ' + p.age + ' · ' + leadPhase(p) + ' · asks ' + payTxt(leadAsk(rt)) + '</em></span><strong>' + rt + '<small>RTG</small></strong></button>'; }).join('') + '</div>';
   });
   return out;
 }
@@ -251,7 +314,7 @@ function leadMarket(S, N, ord) {
   S.teams.forEach(function (t) { leadPerson(S, t.dev.tdp, 'td', t); leadPerson(S, t.dev.tp, 'tp', t); });
   ['td', 'tp'].forEach(function (kind) {
     pool[kind] = pool[kind].filter(function (q) {
-      q.age++; q.idle = (q.idle || 0) + 1; var r = leadAgeP(q, kind);
+      q.age++; q.idle = (q.idle || 0) + 1; var r = leadAgeP(q, kind, N);
       var out = (q.age >= LEADP.retire[kind] && rnd() < 0.5) || (q.idle >= LEADP.idleQuit && r < 45);
       if (out) { q.status = 'retired'; pool.ret.push({ n: q.name, k: kind, nat: q.nat, age: q.age, s: N, r: Math.round(r) }); }
       return !out;
@@ -265,7 +328,7 @@ function leadMarket(S, N, ord) {
   var tdPool = pool.td.map(function (q) { return { p: q, from: -1 }; }), tdOpen = {}; pool.td = [];
   S.teams.forEach(function (t) {
     var p = t.dev.tdp; if (!p) return;
-    p.skill = t.dev.td; var r = leadAgeP(p, 'td'); t.dev.td = p.skill;
+    p.skill = t.dev.td; var r = leadAgeP(p, 'td', N); t.dev.td = p.skill;
     if (p.loy == null) p.loy = rnd();
     var quits = (p.over || 0) >= LEAD.quitOver && r >= 55 && rnd() < 0.5, retires = p.age >= LEADP.retire.td && rnd() < 0.5;
     if (retires) { leave(p, 'td', t, 'retires'); p.con = Object.assign({}, p.con || {}, { end: N - 1 }); tdOpen[t.id] = 1; st.push({ k: 'tdout', n: p.name, t: t.id, why: 'retires' }); return; }
@@ -313,7 +376,7 @@ function leadMarket(S, N, ord) {
   /* principals: most are re-signed, some are released, newcomers join the pool; everyone chooses the best offer */
   var tpPool = pool.tp.map(function (q) { return { p: q, from: -1 }; }), tpOpen = {}; pool.tp = [];
   S.teams.forEach(function (t) {
-    var p = t.dev.tp; if (!p || !p.con) return; p.team = t.id; leadAgeP(p, 'tp');
+    var p = t.dev.tp; if (!p || !p.con) return; p.team = t.id; leadAgeP(p, 'tp', N);
     if (p.age >= LEADP.retire.tp && rnd() < 0.5) { leave(p, 'tp', t, 'retires'); p.con = Object.assign({}, p.con, { end: N - 1 }); tpOpen[t.id] = 1; st.push({ k: 'tpout', n: p.name, t: t.id, why: 'retires' }); return; }
     if (p._fire) {
       var fee = t.fin ? Math.round(LEADP.fireShare * p.con.pay * Math.max(0, p.con.end - N + 1) * 10) / 10 : 0; delete p._fire; if (t.fin) t.fin.cash -= fee;
