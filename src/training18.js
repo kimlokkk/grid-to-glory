@@ -70,7 +70,7 @@ function trainingPrepare(game) {
       } else {
         prep += intensity.prep * quality;
         var keys = trainingSkills(focus);
-        for (var i = 0; i < (t.spendXp === false ? 0 : intensity.points); i++) {
+        for (var i = 0; i < intensity.points; i++) {
           var k = keys.filter(function (k) { return p[k] < statCap(game, k); }).sort(function (a, b) { return p[a] - p[b]; })[0];
           if (!k) break;
           var oldXP = game.xp;
@@ -118,7 +118,7 @@ function focusHTML() {
   if (S.mode !== 'pro' || S.sit) return '';
   var m = progressionPlayer(S).mind, v = m.locked;
   if (!v || v.key !== trainingKey(S)) return '';
-  return '<div class="card"><b>Weekend Focus ' + v.focus + '/100</b>' + (v.spent > 0 ? '<p class="dim">Training bought <b>' + v.gains.filter(function (g) { return !/^Fitness/.test(g); }).join(', ') + '</b> for ' + v.spent + ' XP. Change it under Driver, Training.</p>' : '') + '<p class="dim">' + v.reasons.join(' · ') + '</p><p class="' + (v.focus < 40 ? 'warn' : 'dim') + '">' + (v.focus < 40 ? 'Low readiness: slower pace and more mistake risk. Recovery helps before your next weekend.' : 'Focus affects qualifying, race pace and mistakes. Tyre Push and Boost amplify the risk difference.') + '</p><small>Training: ' + (v.slots || []).map(function (k) { return TRAINING.focuses[k]; }).join(' + ') + ' · ' + v.spent + ' XP spent' + (v.gains && v.gains.length ? ' · ' + v.gains.join(', ') : '') + '</small></div>';
+  return '<div class="card"><b>Weekend Focus ' + v.focus + '/100</b><p class="dim">' + v.reasons.join(' · ') + '</p><p class="' + (v.focus < 40 ? 'warn' : 'dim') + '">' + (v.focus < 40 ? 'Low readiness: slower pace and more mistake risk. Recovery helps before your next weekend.' : 'Focus affects qualifying, race pace and mistakes. Tyre Push and Boost amplify the risk difference.') + '</p><small>Training: ' + (v.slots || []).map(function (k) { return TRAINING.focuses[k]; }).join(' + ') + ' · ' + v.spent + ' XP spent' + (v.gains && v.gains.length ? ' · ' + v.gains.join(', ') : '') + '</small></div>';
 }
 function trainingCardHTML() {
   if (S.mode !== 'pro' || S.sit) return '';
@@ -142,6 +142,5 @@ document.addEventListener('change', function (e) {
   else if (field === 'mode' && ['manual', 'auto'].indexOf(value) >= 0) t.mode = value;
   else if (field === 'intensity' && TRAINING.intensity[value]) t.intensity = value;
   else if (field === 'goal' && TRAINING.goals[value]) t.goal = value;
-  else if (field === 'spend' && (value === 'on' || value === 'off')) t.spendXp = value === 'on';
   save(); render();
 });
