@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.7', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.8', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.8', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
+    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
+    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
+  ] },
   { v: '2.6.7', d: 'Story pack track fix', date: '25 Nov 2026', l: [
     "Fixed the Story pack describing overtaking the wrong way round: a track that is hard to pass on (such as the Monte Albrecht street circuit) was called easy. Overtaking, tyre wear and engine importance now use exactly the same bands as the circuit chips in the game, and the overtaking difficulty value is shown."
   ] },
