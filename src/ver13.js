@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.3', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.4', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.4', d: 'Shorter export code', date: '25 Nov 2026', l: [
+    "Export save codes are now compressed: about 7 times shorter (a career of 8 seasons goes from about 1.7 million characters to about 230 thousand), with nothing left out. The Export screen says how much shorter the code is.",
+    "Old codes still import, and line breaks or spaces picked up while copying are ignored. A browser too old to compress keeps the old format."
+  ] },
   { v: '2.6.3', d: 'Archive for every series, records per league', date: '25 Nov 2026', l: [
     "The Archive now has F1, F2 and F3 side by side. Every finished season of every series is on file, with champions and final standings, whether you raced in it or not. Race-by-race results are kept for the series you race in.",
     "Your records are kept per league and never added together: the profile shows a table for F1, F2 and F3 (seasons, titles, wins, podiums, best finish), and the overview counts only the series you race in now. The Story pack gives the career per league too.",

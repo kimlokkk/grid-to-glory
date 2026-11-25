@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.4 — 25 November 2026 (shorter export code)
+
+- Export: `GTG2.` + base64 of deflate-raw (`CompressionStream`) of the save JSON; import reads both formats (`expUnzip`), strips whitespace. Measured on an 8-season career: 1,704k -> 231k characters (7.4x), lossless. Not done: 50x (would need dropping the F2/F3 world, race results and news; a lighter export without the event log and old news would reach about 10x).
+- Tests: `qa/exportzip.js`; `qa/navigation.js` decodes the new format (that test needs save fixtures not in this container).
+
 ## 2.6.3 — 25 November 2026 (archive for every series, records per league)
 
 - `arAll(S, lg)` builds every season of a league from the world's per-driver season lines (`arFromWH`), plus stored and rebuilt seasons of the player's own league; Archive has an F1 / F2 / F3 switch (`UI.arLg`), records per league (`arRecords(S, lg)`).
