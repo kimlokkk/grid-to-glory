@@ -4423,7 +4423,7 @@ function trainingPrepare(game) {
       } else {
         prep += intensity.prep * quality;
         var keys = trainingSkills(focus);
-        for (var i = 0; i < (t.spendXp === false ? 0 : intensity.points); i++) {
+        for (var i = 0; i < intensity.points; i++) {
           var k = keys.filter(function (k) { return p[k] < statCap(game, k); }).sort(function (a, b) { return p[a] - p[b]; })[0];
           if (!k) break;
           var oldXP = game.xp;
@@ -4471,7 +4471,7 @@ function focusHTML() {
   if (S.mode !== 'pro' || S.sit) return '';
   var m = progressionPlayer(S).mind, v = m.locked;
   if (!v || v.key !== trainingKey(S)) return '';
-  return '<div class="card"><b>Weekend Focus ' + v.focus + '/100</b>' + (v.spent > 0 ? '<p class="dim">Training bought <b>' + v.gains.filter(function (g) { return !/^Fitness/.test(g); }).join(', ') + '</b> for ' + v.spent + ' XP. Change it under Driver, Training.</p>' : '') + '<p class="dim">' + v.reasons.join(' · ') + '</p><p class="' + (v.focus < 40 ? 'warn' : 'dim') + '">' + (v.focus < 40 ? 'Low readiness: slower pace and more mistake risk. Recovery helps before your next weekend.' : 'Focus affects qualifying, race pace and mistakes. Tyre Push and Boost amplify the risk difference.') + '</p><small>Training: ' + (v.slots || []).map(function (k) { return TRAINING.focuses[k]; }).join(' + ') + ' · ' + v.spent + ' XP spent' + (v.gains && v.gains.length ? ' · ' + v.gains.join(', ') : '') + '</small></div>';
+  return '<div class="card"><b>Weekend Focus ' + v.focus + '/100</b><p class="dim">' + v.reasons.join(' · ') + '</p><p class="' + (v.focus < 40 ? 'warn' : 'dim') + '">' + (v.focus < 40 ? 'Low readiness: slower pace and more mistake risk. Recovery helps before your next weekend.' : 'Focus affects qualifying, race pace and mistakes. Tyre Push and Boost amplify the risk difference.') + '</p><small>Training: ' + (v.slots || []).map(function (k) { return TRAINING.focuses[k]; }).join(' + ') + ' · ' + v.spent + ' XP spent' + (v.gains && v.gains.length ? ' · ' + v.gains.join(', ') : '') + '</small></div>';
 }
 function trainingCardHTML() {
   if (S.mode !== 'pro' || S.sit) return '';
@@ -4495,7 +4495,6 @@ document.addEventListener('change', function (e) {
   else if (field === 'mode' && ['manual', 'auto'].indexOf(value) >= 0) t.mode = value;
   else if (field === 'intensity' && TRAINING.intensity[value]) t.intensity = value;
   else if (field === 'goal' && TRAINING.goals[value]) t.goal = value;
-  else if (field === 'spend' && (value === 'on' || value === 'off')) t.spendXp = value === 'on';
   save(); render();
 });
 'use strict';
@@ -11008,17 +11007,13 @@ function thStrip(ci) {
 }
 if (typeof A !== 'undefined') A['th'] = function (d) { showModal(thHTML(+d.v)); };
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.2', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.1', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
-  { v: '2.6.2', d: 'Regulations: the new car comes from the people', date: '25 Nov 2026', l: [
+  { v: '2.6.1', d: 'Regulations: the new car comes from the people', date: '25 Nov 2026', l: [
     "A major change no longer drags the champion down by rule. The new car now comes from the team: a strong technical director builds a better concept, a principal who started the new car in time gains, technical staff make it reliable and money pays for the programme. Luck still plays a part, more so with a weak director. In testing, a champion with a strong principal and director stayed in the top three about half the time, and almost never before.",
     "A minor change is now different in kind: it targets one or two areas (aero most often, then chassis, then engine) and reworks about 75% of those, the rest of the car carries over. A major change rebuilds about 70% of every car. Regulation Watch, the news and the Reg Report name the areas.",
     "The slowest team still gets some help on a major change, and more of it when it already has a good director or prepared in time, so a well-run underdog can jump up the order. In testing the slowest team reached the top half about a third of the time.",
     "Applies from the next regulation change in careers with Leadership. Classic and junior series are unchanged."
-  ] },
-  { v: '2.6.1', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
-    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
-    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
   ] },
   { v: '2.6.0', d: 'Leadership', date: '25 Nov 2026', l: [
     "Technical directors now keep their quality. Until now a team's director quality was redrawn at random every winter whoever the person was, so the name on the door meant nothing. A director is now a real person with a rating (0 to 100) that moves only a little each year, so a strong one stays strong and a weak one stays weak, on any team.",
@@ -13380,8 +13375,8 @@ function dgTraining() {
   var inten = {}; Object.keys(TRAINING.intensity).forEach(function (k) { inten[k] = TRAINING.intensity[k].n; });
   var h = '<section class="card driver-panel dg-train" id="training-plan"><header class="dg-head"><div><h3>Training &amp; mind</h3><h2>Prepare for race day</h2></div><span class="home-tag">' + (prepared ? 'Weekend prepared' : 'Repeating plan') + '</span></header>' +
     '<div class="dg-rings">' + dgRing('Confidence', m.confidence, 100, m.confidence >= 60 ? 'good' : m.confidence >= 40 ? 'mid' : 'bad', Math.round(m.confidence)) + dgRing('Form', Math.abs(m.momentum), 20, m.momentum > 0.5 ? 'good' : m.momentum < -0.5 ? 'bad' : 'mid', (m.momentum > 0 ? '+' : '') + m.momentum.toFixed(1)) + dgRing('Fatigue', m.fatigue, 100, m.fatigue >= 55 ? 'bad' : m.fatigue >= 30 ? 'mid' : 'good', m.fatigue.toFixed(0)) + '</div>' +
-    '<p class="dg-focus ' + (m.fatigue >= 55 ? 'warn' : '') + '">' + (m.locked ? 'Last race-day Focus: <b>' + m.locked.focus + '</b> / 100. ' : '') + (m.locked && m.locked.spent > 0 ? 'Training bought <b>' + m.locked.gains.filter(function (g) { return !/^Fitness/.test(g); }).join(', ') + '</b> for ' + m.locked.spent + ' XP. ' : '') + (t.spendXp === false ? '' : 'Skill sessions spend your XP automatically. Choose Keep my XP to save it. ') + (m.fatigue >= 55 ? 'You are tired. Pick Recovery before the next race.' : 'Lower fatigue and good form raise your Focus.') + '</p>' +
-    '<div class="training-controls dg-ctl"><label>Who plans?' + select('mode', { manual: 'I choose', auto: 'Auto training' }, t.mode) + '</label><label>Workload' + select('intensity', inten, t.intensity) + '</label><label>XP use' + select('spend', { on: 'Buy skills with XP', off: 'Keep my XP' }, t.spendXp === false ? 'off' : 'on') + '</label>' + (t.mode === 'auto' ? '<label class="training-goal">Auto priority' + select('goal', TRAINING.goals, t.goal) + '</label>' : '') + '</div>' +
+    '<p class="dg-focus ' + (m.fatigue >= 55 ? 'warn' : '') + '">' + (m.locked ? 'Last race-day Focus: <b>' + m.locked.focus + '</b> / 100. ' : '') + (m.fatigue >= 55 ? 'You are tired. Pick Recovery before the next race.' : 'Lower fatigue and good form raise your Focus.') + '</p>' +
+    '<div class="training-controls dg-ctl"><label>Who plans?' + select('mode', { manual: 'I choose', auto: 'Auto training' }, t.mode) + '</label><label>Workload' + select('intensity', inten, t.intensity) + '</label>' + (t.mode === 'auto' ? '<label class="training-goal">Auto priority' + select('goal', TRAINING.goals, t.goal) + '</label>' : '') + '</div>' +
     '<div class="training-sessions dg-sessions">' + plan.slots.map(function (k, i) { return '<div class="training-session dg-session' + (t.mode === 'manual' ? ' pick' : '') + '"><span class="dg-ico" aria-hidden="true">' + DG_TRN[k] + '</span><div><small>Session ' + (i + 1) + '</small><b>' + TRAINING.focuses[k] + (t.mode === 'manual' ? ' <i>▾</i>' : '') + '</b><p>' + hints[k] + '</p></div>' + (t.mode === 'manual' ? select('slot', TRAINING.focuses, t.slots[i], i) : '') + '</div>'; }).join('') + '</div>' +
     '<p class="driver-caption">' + (prepared ? 'This weekend is already prepared. Changes apply before the following qualifying.' : 'The plan runs before qualifying each weekend. Sessions never give extra XP; a skill point you cannot afford is skipped.') + '</p>' +
     dgHelp('How training and Focus work', '<p>Light and Normal can buy up to one skill point per session; Hard can buy up to two. Sessions choose the weaker eligible skill. Existing XP and growth caps still apply.</p><p>Hard adds more fatigue and preparation. Auto selects Recovery at high fatigue and reduces Hard workload before overload. Fitness gains are capped at 18 per season. Recovery reduces fatigue; these loads scale with season length.</p><p>Focus combines confidence, recent form, preparation, fatigue and pressure. It affects qualifying and race pace and mistakes; it does not change base Overall or XP rewards.</p>') + '</section>';
