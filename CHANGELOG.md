@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.6.0 — 23 November 2026 (Leadership)
+## 2.6.0 — 25 November 2026 (Leadership)
 
 - Principals and directors on screen: a dossier in the same Paddock frame as a driver (portrait in team colours, rating badge, Overview with upgrade odds or judgement, rating over time, Career table, Contract), a Staff tab in the Paddock browser with a card for every principal, director and free agent, and free-agent cards in the winter recap. Nationalities of the existing staff names now match the names. The story pack has a new PRINCIPALS AND DIRECTORS section (winter moves, firings, free agents, retirements) and each team line describes its principal and director as a person.
 - Principals and directors are people (design B14): nationality, age, potential, career list, a profile card (Team HQ and the winter recap), ageing and retirement, young new generations each winter, and a lasting pool of free agents. A principal can let a director go for a clearly better free agent (half the rest of the contract is paid), and a sacked principal goes into the pool and the team hires another from it. The player stays a driver; the team holds all hiring and firing.
@@ -17,14 +17,9 @@
 - Team feedback (both drivers) replaces the player-only driver feedback multiplier; applies to every team; also lowers upgrade failure slightly.
 - `qa/leadership.js`.
 
-## 2.5.7 — 23 November 2026 (technical director rating)
+## 2.5.6 — 23 November 2026 (technical director rating)
 
 - Technical director rating display uses `pct100(td, 0.8, 1.2)` (was 0.9 to 1.1) on the team profile, Paddock panel and Story pack. Display only: the director multiplier (clamped 0.8 to 1.2, new candidates 0.9 to 1.1) and the development formula are unchanged.
-
-## 2.5.6 — 22 November 2026 (training XP clarity)
-
-- Pro training sessions that use XP buy a skill automatically at the weekend lock; the spend is now shown on the weekend Focus card and in Driver > Training.
-- New per-player setting `training.spendXp` ("XP use": Buy skills with XP / Keep my XP). Default unchanged. Keep my XP skips the purchase only; preparation and Focus are unaffected.
 
 ## 2.5.5 — 22 November 2026 (story pack tyre fix)
 
