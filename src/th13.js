@@ -3,12 +3,15 @@ function thRecord(S, R, P) {
   if (!R || R.ci == null) return;
   var w = R.cls.filter(function (x) { return x.pos === 1 && !x.dnf; })[0], pl = R.cls.filter(function (x) { return x.car.grid === 1; })[0], fd = R.fl && R.fl.di >= 0 ? S.drivers[R.fl.di] : null;
   var pk = function (x) { var d = x.car.d, t = S.teams[d.team]; return { n: d.name, c: d.code, t: t ? t.short : '', tc: t ? t.color : '#888' }; };
-  var rec = { s: S.season, w: w ? pk(w) : null, pl: pl ? pk(pl) : null, fl: fd ? { n: fd.name, c: fd.code, tc: S.teams[fd.team] ? S.teams[fd.team].color : '#888', t: R.fl.t > 0 ? R.fl.t : 0 } : null, me: P ? { p: P.dnf ? 0 : P.pos, g: P.car.grid, d: P.dnf ? 1 : 0 } : null };
+  var rec = { s: S.season, lg: S.mode === 'pro' ? leagueOf(S) : undefined, w: w ? pk(w) : null, pl: pl ? pk(pl) : null, fl: fd ? { n: fd.name, c: fd.code, tc: S.teams[fd.team] ? S.teams[fd.team].color : '#888', t: R.fl.t > 0 ? R.fl.t : 0 } : null, me: P ? { p: P.dnf ? 0 : P.pos, g: P.car.grid, d: P.dnf ? 1 : 0 } : null };
   S.th = S.th || {}; var a = S.th[R.ci] = S.th[R.ci] || [];
-  a = a.filter(function (r) { return r.s !== S.season; }); a.push(rec); S.th[R.ci] = a.slice(-25);
+  a = a.filter(function (r) { return !(r.s === S.season && thLg(r) === thLg(rec)); }); a.push(rec); S.th[R.ci] = a.slice(-25);
 }
-function thStats(ci) {
-  var a = (S.th && S.th[ci]) || [], best = 0, wins = 0, pods = 0, tally = {}, lap = null;
+/* which league a circuit record belongs to: the record itself, else the player's league that season (older saves) */
+function thLg(r) { if (r.lg) return r.lg; if (S.mode !== 'pro') return leagueOf(S); var h = (S.hist || []).filter(function (x) { return x.season === r.s; })[0]; return h ? (h.league || 'f1') : leagueOf(S); }
+function thStats(ci, lg) {
+  lg = lg || leagueOf(S);
+  var a = ((S.th && S.th[ci]) || []).filter(function (r) { return thLg(r) === lg; }), best = 0, wins = 0, pods = 0, tally = {}, lap = null;
   a.forEach(function (r) {
     if (r.me && r.me.p) { if (!best || r.me.p < best) best = r.me.p; if (r.me.p === 1) wins++; if (r.me.p <= 3) pods++; }
     if (r.w) tally[r.w.n] = (tally[r.w.n] || 0) + 1;

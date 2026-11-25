@@ -115,8 +115,8 @@ function spPeople(S) {
     });
   }
   [['td', 'Free technical directors'], ['tp', 'Free team principals']].forEach(function (k) {
-    var F = (P[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; }).slice(0, 6);
-    L.push(k[1] + ' (best ' + F.length + ' of ' + (P[k[0]] || []).length + ' in the pool):');
+    var F = (P[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; });
+    L.push(k[1] + ' (all ' + F.length + ' in the pool, best first):');
     F.forEach(function (p) { var last = p.hist && p.hist.length ? p.hist[p.hist.length - 1] : null; L.push('- ' + p.name + ' · ' + natName(p.nat) + ' · age ' + p.age + ' · rating ' + Math.round(leadRating(k[0], p.skill)) + ' (' + leadPhase(p).toLowerCase() + ') · asks $' + leadAsk(leadRating(k[0], p.skill)) + 'M' + (last && S.teams[last.t] ? ' · last job ' + S.teams[last.t].name + (p.fired ? ' (let go S' + p.fired + ')' : '') : ' · no F1 job yet')); });
   });
   var ret = (P.ret || []).filter(function (x) { return x.s >= S.season; });
@@ -139,6 +139,22 @@ function spNews(S, minRound) {
   if (!items.length) return '(no stories recorded)';
   return items.map(function (n) { var st = n.story; return 'R' + n.r + ' [' + st.kick + '] ' + st.head + (st.sub ? ' - ' + st.sub : ''); }).join('\n');
 }
+/* the track: what kind of circuit it is, its history in this league, and the player's record and mastery there */
+function spTrack(S, ci, beforeSeason) {
+  var c = circuitFor(S, ci); if (!c) return '';
+  var wear = c.wear >= 1.5 ? 'high tyre wear' : c.wear <= 0.95 ? 'low tyre wear' : 'medium tyre wear', ot = c.ot >= 0.7 ? 'easy to overtake' : c.ot <= 0.45 ? 'hard to overtake' : 'overtaking possible', pw = c.pw >= 0.55 ? 'power track (engine matters most)' : c.pw <= 0.35 ? 'downforce track (aero and chassis matter most)' : 'balanced (engine and aero both matter)';
+  var L = ['Track: ' + c.name + ' (' + c.loc + ') · ' + (c.km ? c.km + ' km, ' : '') + laps2(c) + ' laps · ' + pw + ' · ' + wear + ' (' + c.wear + ') · ' + ot + ' · rain chance ' + Math.round(c.rain * 100) + '% · pit stop costs about ' + c.pit + 's'];
+  if (typeof thStats === 'function') {
+    var st = thStats(ci, leagueOf(S)), past = st.a.filter(function (r) { return beforeSeason == null || r.s < beforeSeason; }).slice(-3).reverse();
+    if (past.length) L.push('  History here (' + leagueOf(S).toUpperCase() + '): ' + past.map(function (r) { return 'S' + r.s + ' won by ' + (r.w ? r.w.n + ' (' + r.w.t + ')' : '?') + (r.pl ? ', pole ' + r.pl.n : ''); }).join('; ') + (st.top && st.top.n > 1 ? ' · most wins here: ' + st.top.name + ' x' + st.top.n : '') + (st.lap ? ' · lap record ' + fmtT(st.lap.t) + ' by ' + st.lap.n + ' (S' + st.lap.s + ')' : ''));
+    else L.push('  History here (' + leagueOf(S).toUpperCase() + '): ' + (beforeSeason != null ? 'first race here on record.' : 'first visit on record.') + '');
+    var mine = st.a.filter(function (r) { return r.me; });
+    if (mine.length) L.push('  Your record here: ' + mine.length + (mine.length === 1 ? ' race' : ' races') + ', best ' + (st.best ? 'P' + st.best : 'no finish') + ', ' + st.wins + (st.wins === 1 ? ' win' : ' wins') + ', ' + st.pods + (st.pods === 1 ? ' podium' : ' podiums') + ' · ' + mine.slice(-3).map(function (r) { return 'S' + r.s + ' ' + (r.me.d ? 'DNF' : 'P' + r.me.p) + ' from P' + r.me.g; }).join(', '));
+  }
+  var p = typeof progressionPlayer === 'function' ? progressionPlayer(S) : null, ms = p && p.abilities && p.abilities.mastery && c.key ? p.abilities.mastery[c.key] || 0 : null;
+  if (ms != null && typeof masteryLevel === 'function') L.push('  Your mastery here: level ' + masteryLevel(ms) + ' of ' + ABILITY_RULES.visits.length + ' (' + ms + (ms === 1 ? ' visit' : ' visits') + ')');
+  return L.join('\n');
+}
 function spRaces(S, scope) {
   var lg = leagueOf(S), all = (S.rr || []).filter(function (r) { return r.s === S.season && r.league === lg; }).sort(function (a, b) { return a.r - b.r; });
   var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SP.last) : all.slice(-1);
@@ -147,6 +163,7 @@ function spRaces(S, scope) {
   pick.forEach(function (rec) {
     var m = rec.m || {}, c = CIRCUITS[rec.ci], L = [];
     L.push('### Round ' + (rec.r + 1) + ': ' + (c ? c.name : 'circuit ' + rec.ci) + ' (' + rec.laps + ' laps)' + (m.w ? ' · weather ' + spEn(m.w) : '') + (m.sc != null ? ' · safety cars ' + m.sc + ', VSC ' + m.vsc + ', clean overtakes ' + m.ot : ''));
+    L.push(spSafe('track', function () { return spTrack(S, rec.ci, rec.s); }));
     if (rec.fl) L.push('Fastest lap: ' + rec.fl + (m.flt ? ' ' + fmtT(m.flt) : ''));
     if (rec.qs && rec.qs.length) {
       var teamOf = {}; (rec.q || []).forEach(function (q) { teamOf[q[0]] = spTeamLine(S, q[1]); });
@@ -191,7 +208,7 @@ function storyPackText(scope) {
   var sec = function (t, body) { return '## ' + t + '\n' + body + '\n'; };
   return head.join('\n') + '\n' + sec('MY DRIVER', spSafe('player', function () { return spPlayer(S); })) + '\n' + sec('STANDINGS', spSafe('standings', function () { return spStandings(S); })) + '\n' +
     sec('TEAMS, CARS, STAFF', spSafe('teams', function () { return spTeams(S); })) + '\n' + sec('PRINCIPALS AND DIRECTORS', spSafe('people', function () { return spPeople(S); })) + '\n' + sec('REGULATIONS', spSafe('regulations', function () { return typeof rgPackText === 'function' ? rgPackText(S) : ''; })) + '\n' + sec('DRIVERS', spSafe('drivers', function () { return spDrivers(S); })) + '\n' +
-    sec('NEWS', spSafe('news', function () { return spNews(S, scope === 'season' ? 0 : races.first || 0); })) + '\n' + sec('RACES', races.text);
+    sec('NEWS', spSafe('news', function () { return spNews(S, scope === 'season' ? 0 : races.first || 0); })) + '\n' + sec('RACES', races.text) + '\n' + sec('NEXT RACE', spSafe('next race', function () { return S.round < seasonRounds(S) ? 'Round ' + (S.round + 1) + ' of ' + seasonRounds(S) + '\n' + spTrack(S, S.cal[S.round]) : 'Season complete. The next calendar is set at the start of the new season.'; }));
 }
 
 /* ---------- UI ---------- */

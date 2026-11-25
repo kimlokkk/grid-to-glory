@@ -227,6 +227,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
   p.pts = 0; p.wins = 0; p.pods = 0; p.fp = [];
   if (typeof devWinter === 'function') {
     ensureDev(S);
+    var wb0 = S.teams.map(function (t) { return Object.assign({}, t.car); });   /* cars before the winter, so the news can say what was gained against the field */
     var wl = [], reg = S.mode === 'pro' && leagueOf(S) !== 'f1' ? worldJuniorWinter(S, wl) : devWinter(S, wl), mineT = S.drivers[S.pi].team;
     S.news = S.news || [];
     if (reg) { var rgK = (wl.filter(function (e) { return e.reg; })[0] || {}).kind || 'major', rgN = { k: 'reg', kind: rgK, s: S.season + 1, r: 0 }; if (typeof regAOn === 'function' && regAOn(S)) { if (rgK === 'minor') rgN.parts = regPartsText((wl.filter(function (e) { return e.reg; })[0] || {}).parts || []); else rgN.pct = '70%'; } pushNews(S, rgN); }
@@ -241,7 +242,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
       else if (e.sack) pushNews(S, { k: 'sack', t: e.t, o: e.old, n: e.nw, s: S.season + 1, r: 0 });
       else if (e.eng) pushNews(S, { k: 'eng', t: e.t, f: e.f, to: e.to, s: S.season + 1, r: 0 });
       else if (e.fac) pushNews(S, { k: 'fac', t: e.t, up: e.up, lv: e.lv, s: S.season + 1, r: 0 });
-      else if (e.g != null && e.t === mineT) pushNews(S, { k: 'winter', t: e.t, p: e.k, g: +e.g.toFixed(1), s: S.season + 1, r: 0 });
+      else if (e.g != null && e.t === mineT) { var wk0 = e.k, mean = function (cars) { return cars.reduce(function (a, c) { return a + (c[wk0] || 0); }, 0) / cars.length; }, rel = wb0[e.t] && S.teams[e.t] && S.teams[e.t].car[wk0] != null ? (S.teams[e.t].car[wk0] - wb0[e.t][wk0]) - (mean(S.teams.map(function (t) { return t.car; })) - mean(wb0)) : e.g; pushNews(S, { k: 'winter', t: e.t, p: e.k, g: +rel.toFixed(1), raw: +e.g.toFixed(1), rel: 1, s: S.season + 1, r: 0 }); }
     });
     S.teams.forEach(function (t) { var tp = t.dev && t.dev.tp; if (tp && tp.amb >= 2 && rnd() < 0.5) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, am: tp.amb, s: S.season + 1, r: 0 }); });
     if (S.mode === 'pro' && leagueOf(S) === 'f1') S.regYear = S.world.era.next;

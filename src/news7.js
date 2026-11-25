@@ -77,7 +77,7 @@ function newsStory(n, game) {
       sub: n.n ? n.n + ' takes charge with immediate effect.' : 'The team will search for a successor in the winter market.' };
     case 'winter': return { kick: 'TECHNICAL', kc: 'k-tech', col: t.color, team: t,
       head: n.g >= 0 ? t.name + '’s winter upgrade delivers' : t.name + '’s winter upgrade falls short',
-      sub: n.g >= 0 ? '+' + n.g + ' ' + part + ' found over the off-season.' : 'The ' + part + ' went backwards (' + n.g + '). Not the start the team wanted.' };
+      sub: n.rel ? (n.g >= 0 ? '+' + n.g + ' ' + part + ' gained on the rest of the field over the off-season.' : 'The ' + part + ' lost ground on the rest of the field (' + n.g + '). Not the start the team wanted.') : n.g >= 0 ? '+' + n.g + ' ' + part + ' found over the off-season.' : 'The ' + part + ' went backwards (' + n.g + '). Not the start the team wanted.' };
     case 'tp': return { kick: 'INTERVIEW', kc: 'k-int', col: t.color, team: t,
       head: '“We’re targeting P' + n.x + ' this year”',
       sub: n.n + ' (' + t.name + ') ' + (n.am == null || n.am >= 2 ? 'sets a bold goal. Journalists exchange knowing looks.' : n.am <= 0 ? 'plays it safe and asks for patience as the new season begins.' : 'lays out the plan for the new season.') };
