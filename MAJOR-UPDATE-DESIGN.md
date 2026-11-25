@@ -536,3 +536,19 @@ Patch 1, then Patch 2, then the major update in the order of E1 (phase 2 mechani
 - Measured (randomised, 24 seeds x 8 years, n=1920): +1 OVR on both drivers = +12.7 constructor points; +$10M R&D = +10 pts; +10 feedback on both drivers = about +0.2 to +0.35 car power (+4 to +8 pts). Feedback is a small lever per step but the real range is wide (55 to 90), so a 35 point gap is about 2 OVR of value. Money cannot raise a driver's OVR, so feedback is the one driver stat a team gets back through development.
 - Locked benefits of feedback (final tuning, target: +10 team feedback worth 30 to 40% of +10 pace; +10 pace both drivers = 4.0 car power equivalent because drvK 0.018 / carK 0.045): team gain 1+(fb-70)/55, failure x(1-(fb-70)/200), in-season progress x(1+(fb-70)/125), a bad weekend setup costs less (`leadSetup`, 5% per point, clamp 0.5 to 1.5; good setups unchanged), good principals prefer it in the draft (`fitFb` 0.10) and the market pays a little more (`payFb` 0.003). Measured per +10 feedback: development +0.60 power a year (+/-0.08), setup about +0.67 by calculation (too small to see in constructor points, which are +/-2), total about 1.3 power = 32% of +10 pace. Constructor points are too noisy to tune feedback; use car power. League health with this tuning: in-season 2+ places 26%, winter 23%, champions 3.1 per 8 years.
 - Gate off = unchanged. QA: same 16 UI-flow failures with and without this change (browser flow timeouts in this container); leadership suite passes.
+
+## B14. Principals and directors as people, with a pool (plan, not built yet)
+
+Goal: a team principal (TP) and a technical director (TD) are people like drivers: profile, a pool of free agents, hire and fire, and new generations.
+
+What exists (checked in code, 2.6.0): name, age, rating (`skill`), loyalty, contract (len, end, pay), TD `over`, TP `amb`. TDs retire from 62, TPs never retire. The winter market (`leadMarket`) builds a temporary list: expiring contracts plus (vacancies + 1) new names; whoever is not hired disappears. A TP sacked in `devWinter` is replaced at once by a random new one. There is no board actor ("board target" is only a number).
+
+Plan:
+1. Person record: id, kind, name, nat, age, rating, pot (peak rating), peak age, loyalty, career history [{season, team, rating, pay}], status (employed, free, retired). Existing saves get a record built from what they have.
+2. Ageing like drivers: rating rises to the peak age (TD about 48, TP about 50), flat, then declines after about 58; retirement for both kinds.
+3. Persistent pool `S.mkt.pool`: people without a job stay, age, and can be hired in any winter; retired people leave. New generation every winter: young people (TD 34 to 40, TP 38 to 44) with low rating and high pot, number set to keep the pool at about 10 TDs and 8 TPs.
+4. Hire and fire: the TP hires and fires the TD (a buy-out of half the remaining contract when fired); the team (stand-in for the board, with a board target) hires and fires the TP, and a sacked TP goes into the pool and the replacement comes from the pool through the same matching (`leadFill`), not at random.
+5. Profile: tap a name in Team HQ for a card like a driver profile (rating, age, nationality, contract, history, a short note on style).
+6. Tuning: the market now has more candidates, so re-check league health (in-season and winter movement, champions, cash) with 24+ seeds, and the gate-off, old-save and full suite checks.
+
+Open choices: (a) a board as a real actor, later; (b) whether the player can hire and fire (the player's own team has no such menu yet).
