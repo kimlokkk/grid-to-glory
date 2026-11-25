@@ -11008,8 +11008,14 @@ function thStrip(ci) {
 }
 if (typeof A !== 'undefined') A['th'] = function (d) { showModal(thHTML(+d.v)); };
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.1', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.2', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.2', d: 'Regulations: the new car comes from the people', date: '25 Nov 2026', l: [
+    "A major change no longer drags the champion down by rule. The new car now comes from the team: a strong technical director builds a better concept, a principal who started the new car in time gains, technical staff make it reliable and money pays for the programme. Luck still plays a part, more so with a weak director. In testing, a champion with a strong principal and director stayed in the top three about half the time, and almost never before.",
+    "A minor change is now different in kind: it targets one or two areas (aero most often, then chassis, then engine) and reworks about 75% of those, the rest of the car carries over. A major change rebuilds about 70% of every car. Regulation Watch, the news and the Reg Report name the areas.",
+    "The slowest team still gets some help on a major change, and more of it when it already has a good director or prepared in time, so a well-run underdog can jump up the order. In testing the slowest team reached the top half about a third of the time.",
+    "Applies from the next regulation change in careers with Leadership. Classic and junior series are unchanged."
+  ] },
   { v: '2.6.1', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
     "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
@@ -15274,7 +15280,8 @@ function rgPct(v, lo, hi) { return clamp(Math.round((v - lo) / (hi - lo) * 100),
 /* ---------- recording (called from devWinter) ---------- */
 function rgBegin(S, kind, mix, champId, lastId) {
   var mixes = PARTS.map(function (k) { return S.mode === 'pro' && typeof regPartMix === 'function' ? regPartMix(S, kind, k) : mix; }), parts = kind === 'minor' && typeof regAOn === 'function' && regAOn(S) ? regMinorParts(S).slice() : null;
-  return { S: S, kind: kind, mix: mixes.reduce(function (a, x) { return a + x; }, 0) / mixes.length, mixes: mixes, parts: parts, season: S.season + 1, champId: champId, lastId: lastId, s0: rgSnap(S), s1: null, s2: null, s3: null,
+  var merit = typeof regMeritOn === 'function' && regMeritOn(S);
+  return { S: S, merit: merit, kind: kind, mix: mixes.reduce(function (a, x) { return a + x; }, 0) / mixes.length, mixes: mixes, parts: parts, season: S.season + 1, champId: champId, lastId: lastId, s0: rgSnap(S), s1: null, s2: null, s3: null,
     prep: S.teams.map(function (t) { return regPrep(t); }) };
 }
 function rgMid(ctx, stage) { if (ctx) ctx['s' + stage] = rgSnap(ctx.S); }
@@ -15286,7 +15293,7 @@ function rgBuild(S, ctx) {
     return { id: t.id, n: t.name, sh: t.short, col: t.color, p0: rgR1(p0[i]), p1: rgR1(p3[i]), r0: r0[i], r1: r3[i],
       c: { st: rgR1(st), lu: rgR1(re - st), ru: rgR1(ru), pk: rgR1(pk) }, f: { champ: t.id === ctx.champId ? 1 : 0, last: t.id === ctx.lastId ? 1 : 0 }, pr: prr[i] };
   });
-  return { season: ctx.season, kind: ctx.kind, mix: ctx.mix, parts: ctx.parts || undefined, teams: teams, era: null };
+  return { season: ctx.season, kind: ctx.kind, mix: ctx.mix, parts: ctx.parts || undefined, merit: ctx.merit || undefined, teams: teams, era: null };
 }
 function rgFinish(S, ctx, reg, log) {
   try {
@@ -15457,7 +15464,7 @@ function rgTiles(p) {
   return '<div class="rg-tiles">' + rgProfileLines(p).map(function (x) { return '<div class="' + x.v.c + '"><small>' + x.n + '</small><b>' + x.v.s + '</b><span>' + (x.v.c === 'up' ? 'counts for more' : x.v.c === 'dn' ? 'counts for less' : 'unchanged') + '</span></div>'; }).join('') + '</div>';
 }
 function rgSteps(w) {
-  var cur = S.season, E = w.eff, steps = [['Announced', 'Done'], ['Season ' + cur, 'Last year of the current rules'], ['Winter', 'Cars rebuilt'], ['Season ' + E, 'New rules']];
+  var cur = S.season, E = w.eff, steps = [['Announced', 'Done'], ['Season ' + cur, 'Last year of the current rules'], ['Winter', w.kind === 'minor' && typeof regAOn === 'function' && regAOn(S) ? regPartsText(regMinorParts(S)).replace(/^./, function (c) { return c.toUpperCase(); }) + ' reworked' : 'Cars rebuilt'], ['Season ' + E, 'New rules']];
   return '<ol class="rg-steps" aria-label="Timeline">' + steps.map(function (x, i) { return '<li class="' + (i < 2 ? 'done' : '') + (i === 1 ? ' now' : '') + '"><i></i><b>' + x[0] + '</b><span>' + x[1] + '</span></li>'; }).join('') + '</ol>';
 }
 function rgHeroHTML(w) {
@@ -15476,7 +15483,7 @@ function rgHeroHTML(w) {
 function rgBoardHTML(w) {
   var rows = w.rows, sc = w.kind === 'major' ? '' : ' (minor: about half as strong)';
   return '<section class="pd-panel rg-board"><small class="pd-eyebrow">EXPOSURE BOARD</small><h3>Who has the most to lose</h3>' +
-    '<p class="rg-lead">A rough read of how each car is likely to move' + sc + '. Teams far above the league average have the most to lose, the title leader is handicapped and the slowest team gets a catch-up allowance. Luck still plays a part.</p>' +
+    '<p class="rg-lead">A rough read of how each car is likely to move' + sc + '. ' + (typeof regMeritOn === 'function' && regMeritOn(S) ? 'Teams far above the league average have the most to lose; a strong technical director, a principal who prepared in time, good staff and money push the other way. Nobody is handicapped for winning; the slowest team gets some help. Luck still plays a part.' : 'Teams far above the league average have the most to lose, the title leader is handicapped and the slowest team gets a catch-up allowance. Luck still plays a part.') + '</p>' +
     '<ul class="rg-rows">' + rows.map(function (r) {
       var b = RG_BANDS[r.band];
       return '<li class="rg-row ' + r.band + (r.mine ? ' mine' : '') + '" style="--tc:' + r.col + '"><i class="rg-tab"></i><div class="rg-who"><b>' + esc(r.n) + (r.mine ? ' <em>YOU</em>' : '') + '</b><span class="rg-tags"><u>P' + r.rank + ' on car pace</u>' +
@@ -15486,7 +15493,7 @@ function rgBoardHTML(w) {
 }
 function rgHelpHTML() {
   return dgHelp('How a regulation change works', (regAOn(S) ? (typeof regMeritOn === 'function' && regMeritOn(S) ? '<p>The new car comes from the people. The <b>technical director</b> sets how good the concept is, the <b>team principal</b> decides whether the team started the new car in time, <b>technical staff</b> make it reliable and money pays for the programme. Luck still plays a part, more so with a weak director. Nobody is handicapped for winning; only the slowest team gets some help.</p>' : '') + '<p>On the winter a change arrives, a <b>major</b> change rebuilds <b>about 70% of every car</b>; a <b>minor</b> change targets one or two areas (aero, chassis or engine) and reworks <b>about 75% of those</b>, the rest carries over. Parts are redesigned toward the league average: a car far above average has the most to lose, a weak one has the most to gain.</p>' : '<p>On the winter a change arrives, <b>about 60% of every car</b> (major) or <b>30%</b> (minor) is redesigned toward the league average. A car far above average has the most to lose, a weak one has the most to gain.</p>') +
-    '<p>The <b>title leader is handicapped</b> because its advantage is locked into the old concept, and the <b>slowest team gets a catch-up allowance</b>. Preparation (prestige, technical director and staff) softens the blow.</p>' +
+    (typeof regMeritOn === 'function' && regMeritOn(S) ? '' : '<p>The <b>title leader is handicapped</b> because its advantage is locked into the old concept, and the <b>slowest team gets a catch-up allowance</b>. Preparation (prestige, technical director and staff) softens the blow.</p>') +
     '<p>On a major change the era also shifts how much engine, aero and chassis matter on every lap, and which driver skill counts for more. Concept luck and winter development decide the rest.</p>');
 }
 /* ---------- UI: report ---------- */
@@ -15504,11 +15511,14 @@ function rgSlope(rp, mineId) {
   return '<svg class="rg-slope" viewBox="0 0 ' + W + ' ' + h + '" role="img" aria-label="Team order before and after the regulation change">' + o + '</svg>';
 }
 var RG_COMP = [['st', 'Old-rules exposure'], ['ru', 'Title and catch-up rules'], ['lu', 'Concept luck'], ['pk', 'Winter development and engines']];
+var RG_COMP0 = RG_COMP.slice(), RG_COMPB = [['st', 'Old-rules exposure'], ['ru', 'Catch-up for the slowest'], ['lu', 'New-car concept (people and luck)'], ['pk', 'Winter development and engines']];
+function rgComp(rp) { RG_COMP = rp && rp.merit ? RG_COMPB : RG_COMP0; return RG_COMP; }
 function rgDbar(e, max) {
   var seg = function (neg) { return RG_COMP.map(function (c) { var v = e.c[c[0]]; if (neg ? v >= 0 : v <= 0) return ''; return '<u class="c-' + c[0] + '" style="width:' + Math.max(2, Math.abs(v) / max * 100).toFixed(1) + '%" title="' + c[1] + ' ' + rgSgn(v) + '"></u>'; }).join(''); };
   return '<div class="rg-dbar" role="img" aria-label="' + RG_COMP.map(function (c) { return c[1] + ' ' + rgSgn(e.c[c[0]]); }).join(', ') + '"><div class="neg">' + seg(true) + '</div><i></i><div class="pos">' + seg(false) + '</div></div>';
 }
 function rgReportBody(rp) {
+  rgComp(rp);
   var mine = S.drivers[S.pi] ? S.drivers[S.pi].team : -1, max = 1; rp.teams.forEach(function (e) { RG_COMP.forEach(function (c) { max = Math.max(max, Math.abs(e.c[c[0]])); }); });
   var me0 = rp.teams.filter(function (e) { return e.id === mine; })[0], why = me0 ? rgWhy(me0, rp) : [];
   var yours = me0 ? '<section class="rg-yours ' + (me0.r1 < me0.r0 ? 'up' : me0.r1 > me0.r0 ? 'dn' : '') + '" style="--tc:' + me0.col + '"><small class="pd-eyebrow">YOUR TEAM</small><b>' + esc(me0.n) + ': P' + me0.r0 + ' → P' + me0.r1 + '</b><span>' +
@@ -15601,7 +15611,7 @@ function rgPackText(S) {
     w.rows.forEach(function (r) { L.push('  ' + r.n + ': ' + RG_BANDS[r.band].l + ' (' + RG_BANDS[r.band].t + ')' + (r.champ ? ', title leader' : '') + (r.last ? ', slowest car' : '') + (r.ready ? ', well prepared' : '') + (r.stretched ? ', stretched' : '') + (r.mine ? ', PLAYER TEAM' : '')); });
   } else L.push('No regulation change announced. Majors every 5 to 6 seasons, minors every 2 to 3, always announced one season ahead.');
   (S.regReports || []).slice(-2).forEach(function (rp) {
-    L.push('', 'Reg Report, Season ' + rp.season + ' (' + rp.kind + ', ' + (rp.parts ? regPartsText(rp.parts) + ' rules, about 75% of those areas redesigned' : Math.round(rp.mix * 100) + '% of every car redesigned') + '). Change in car power = old-rules exposure + title/catch-up rules + concept luck + winter development:');
+    L.push('', 'Reg Report, Season ' + rp.season + ' (' + rp.kind + ', ' + (rp.parts ? regPartsText(rp.parts) + ' rules, about 75% of those areas redesigned' : Math.round(rp.mix * 100) + '% of every car redesigned') + '). Change in car power = old-rules exposure + ' + (rp.merit ? 'catch-up for the slowest + new-car concept (director, principal, preparation, staff, money and luck)' : 'title/catch-up rules + concept luck') + ' + winter development:');
     if (rp.era && rp.era.to) L.push('  New era weights: ' + rgProfileLines(rp.era.to).map(function (x) { return x.n + ' ' + x.v.s; }).join(', ') + '; driver skill: ' + rgAttr(rp.era.to.driver));
     rp.teams.slice().sort(function (a, b) { return a.r1 - b.r1; }).forEach(function (e) { L.push('  ' + e.n + ': P' + e.r0 + ' -> P' + e.r1 + ' | exposure ' + rgSgn(e.c.st) + ', rules ' + rgSgn(e.c.ru) + ', luck ' + rgSgn(e.c.lu) + ', development ' + rgSgn(e.c.pk) + ' | ' + rgWhy(e, rp).map(function (x) { return x.t; }).join('; ')); });
   });

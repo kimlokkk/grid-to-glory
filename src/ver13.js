@@ -1,6 +1,12 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.1', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.2', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.2', d: 'Regulations: the new car comes from the people', date: '25 Nov 2026', l: [
+    "A major change no longer drags the champion down by rule. The new car now comes from the team: a strong technical director builds a better concept, a principal who started the new car in time gains, technical staff make it reliable and money pays for the programme. Luck still plays a part, more so with a weak director. In testing, a champion with a strong principal and director stayed in the top three about half the time, and almost never before.",
+    "A minor change is now different in kind: it targets one or two areas (aero most often, then chassis, then engine) and reworks about 75% of those, the rest of the car carries over. A major change rebuilds about 70% of every car. Regulation Watch, the news and the Reg Report name the areas.",
+    "The slowest team still gets some help on a major change, and more of it when it already has a good director or prepared in time, so a well-run underdog can jump up the order. In testing the slowest team reached the top half about a third of the time.",
+    "Applies from the next regulation change in careers with Leadership. Classic and junior series are unchanged."
+  ] },
   { v: '2.6.1', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
     "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
