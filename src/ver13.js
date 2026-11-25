@@ -1,16 +1,12 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.6', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.5', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
-  { v: '2.6.6', d: 'Weekend hold and honest winter news', date: '25 Nov 2026', l: [
+  { v: '2.6.5', d: 'Weekend hold, track data and honest winter news', date: '25 Nov 2026', l: [
     "Leaving a race weekend during qualifying or on the strategy page still takes you Home, and Start weekend now continues exactly where you left it, even after closing the game. Before, qualifying started again with a new result, so a bad grid could be re-rolled. Leaving during the race still finishes the race for you, as before.",
     "The winter upgrade story now says what your team gained on the rest of the field, not the raw number before every team's winter work is counted.",
     "Story pack: every free principal and technical director in the pool is listed with rating, age and asking salary (before, only the best six of each).",
     "Story pack: every race now describes the track (length, power or downforce, tyre wear, overtaking, rain chance, pit loss), its history in your series (recent winners, poles, most wins, lap record), your record and mastery there, and a new NEXT RACE section previews the coming round.",
     "Circuit history keeps each series apart, so a win in F2 at a track no longer counts in its F1 history."
-  ] },
-  { v: '2.6.5', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
-    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
-    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
   ] },
   { v: '2.6.4', d: 'Shorter export code', date: '25 Nov 2026', l: [
     "Export save codes are now compressed: about 7 times shorter (a career of 8 seasons goes from about 1.7 million characters to about 230 thousand), with nothing left out. The Export screen says how much shorter the code is.",
