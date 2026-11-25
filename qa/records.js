@@ -25,6 +25,7 @@ const path = require('node:path');
       const hist = worldDriverHistoryHTML(p); ck('league history has no "legacy" rows and one row per season', !/legacy/i.test(hist) && (hist.match(/<tr>/g) || []).length === 3);
       ck('the story pack gives the career per league', /Career by league .*F1: .*F2: /.test(storyPackText('latest')));
       const sp = storyPackText('latest'); ck('the story pack describes the track, its history in this league and the next race', /\nTrack: .* km, .* laps · .* · rain chance \d+% · pit stop/.test(sp) && /## NEXT RACE\nRound /.test(sp) && /History here \(F1\)/.test(sp));
+      ck('story pack track bands match the circuit chips on screen (overtaking: higher value is harder)', S.cal.every(ci => { const c = circuitFor(S, ci), t = spTrack(S, ci); return t.indexOf(c.ot < 0.5 ? 'easy to overtake' : c.ot < 0.7 ? 'medium to overtake' : 'hard to overtake') >= 0 && t.indexOf((c.wear < 0.95 ? 'low' : c.wear < 1.15 ? 'medium' : 'high') + ' tyre wear') >= 0 && (c.pw >= 0.55 ? /power track/ : c.pw <= 0.4 ? /downforce track/ : /balanced/).test(t); }) && /Monte Albrecht[^\n]*hard to overtake/.test(S.cal.map(ci => spTrack(S, ci)).join('\n')));
       const ci0 = S.cal[0], th0 = (S.th[ci0] || []).length; S.th[ci0].push({ s: 2, lg: 'f2', w: { n: 'Junior Winner', t: 'X' }, me: { p: 1, g: 1, d: 0 } });
       ck('circuit history keeps leagues apart', thStats(ci0, 'f1').a.length === th0 && thStats(ci0, 'f2').a.length === 1 && thStats(ci0, 'f1').wins === thStats(ci0, 'f1').a.filter(r => r.me && r.me.p === 1).length);
       play(); return rows;

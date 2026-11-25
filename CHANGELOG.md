@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.7 — 25 November 2026 (story pack track fix)
+
+- `spTrack` read `c.ot` as ease; it is difficulty (the engine subtracts it from the pass score, fewer zones above 0.85). Bands now copy `circuitChips`: overtaking < 0.5 easy, < 0.7 medium, else hard; tyre wear < 0.95 low, < 1.15 medium, else high; engine >= 0.55 power, <= 0.4 downforce. Test in `qa/records.js`.
+
 ## 2.6.6 — 25 November 2026 (fewer spins, consistency matters)
 
 - `incidents()` mistake chance: `P2.mistK2 * (mistF + ((100 - cv) / mistC) ^ mistP)` with cv = 0.7 consistency + 0.3 restart (0.0016, 0.3, 20, 1.6), was `mistK * (1 + (100 - cv) / 30)` (0.0065); other multipliers unchanged; `P2.mistV` 1 restores the old curve. Measured (3 seeds x 2 seasons, 132 races): spins per season by consistency 88+ 8.9 -> 1.0, 80-87 8.5 -> 1.8, 70-79 10.4 -> 2.5, under 70 9.1 -> 3.6; per race crash DNF 1.23 -> 0.49, SC 1.23 -> 0.96, VSC 1.56 -> 0.73, mechanical 0.95 -> 0.90, passes 75 -> 80.

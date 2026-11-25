@@ -1,6 +1,9 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.6', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.7', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.7', d: 'Story pack track fix', date: '25 Nov 2026', l: [
+    "Fixed the Story pack describing overtaking the wrong way round: a track that is hard to pass on (such as the Monte Albrecht street circuit) was called easy. Overtaking, tyre wear and engine importance now use exactly the same bands as the circuit chips in the game, and the overtaking difficulty value is shown."
+  ] },
   { v: '2.6.6', d: 'Fewer spins, and consistency matters', date: '25 Nov 2026', l: [
     "Unforced spins were far too common and barely depended on the driver: in testing every driver spun about 9 times a season, a consistency-90 driver almost as often as a consistency-75 one. The base chance is now much lower and consistency counts for much more: about 1 spin a season at consistency 90, 2 to 3 at 75 and 4 to 5 at 60.",
     "Pushing, overheated or worn tyres, rain and the first lap still raise the risk as before; they start from a lower base.",
