@@ -6457,7 +6457,7 @@ function regPartMix(S, kind, k) {
 /* Regulations phase B (S.lead.reg >= 2): the new car comes from the people, not from a fixed handicap.
    Concept = director rating + principal rating + preparation (the principal started the new car in time) + money + luck (wider for a weak director).
    Execution = technical staff (reliability and the first packages). No forced drop for the champion; the slowest team gets a smaller lift. */
-var REGB = { td: 7, tp: 3, prep: 3, money: 2, staff: 2, luck: 3, sd: 4, minorK: 0.6, lift: 8 };
+var REGB = { td: 7, tp: 3, prep: 3, money: 2, staff: 2, luck: 3, sd: 4, minorK: 0.6, lift: 8, liftTD: 55 };
 function regMeritOn(S) { return regAOn(S) && S.lead.reg >= 2 && typeof leadOn === 'function' && leadOn(S, S.season + 1); }
 function regRatings(t) {
   var dv = t.dev || {};
@@ -6489,7 +6489,7 @@ function regBalance(S, kind, champId, lastId, before, merit) {
   function strength(t) { return teamPower(t) + (kind === 'major' ? 0.8 : 0.5) * crew(t); }
   function rankOf(t) { var st = strength(t); return 1 + S.teams.filter(function (o) { return o !== t && strength(o) > st; }).length; }
   if (merit) {   /* phase B: no handicap for the champion; only the slowest team gets a smaller lift on a major change */
-    if (kind === 'major' && last.id !== champId) { var g0 = 0, lift0 = REGB.lift - Math.round(regPrep(last) * 2); while (rankOf(last) > lift0 && g0++ < 40) PARTS.forEach(function (k) { last.car[k] = clamp(last.car[k] + 1, 45, 99); }); }
+    if (kind === 'major' && last.id !== champId) { var lr = regRatings(last), g0 = 0, lift0 = (lr.td >= REGB.liftTD || lr.ready ? REGB.lift - 1 : REGB.lift) - Math.round(regPrep(last) * 2);   /* a slow team that already has a good director, or prepared in time, gets more help */ while (rankOf(last) > lift0 && g0++ < 40) PARTS.forEach(function (k) { last.car[k] = clamp(last.car[k] + 1, 45, 99); }); }
     return;
   }
   var drop = kind === 'major' ? (rnd() < 0.5 ? 5 : 6) : before[champId] + 1 + Math.floor(rnd() * 3);
