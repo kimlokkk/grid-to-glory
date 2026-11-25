@@ -3868,3 +3868,22 @@ button.hp-stat { cursor: pointer; } button.hp-stat:focus-visible { outline: 2px 
 .ar-note { margin: 0; font-size: 12px; line-height: 1.5; color: #75808c; }
 @media (min-width: 720px) { .ar-boards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .ar-hero { padding: 20px 16px 16px; } .ar-champ { grid-template-columns: auto minmax(0, 1fr); } .ar-side { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; } }
+
+/* ===== Leadership people: portrait, dossier, Paddock cards, free agents ===== */
+svg.lp-av { display: block; }
+.lp-hero-av { transform: none; flex: 0 0 138px; filter: drop-shadow(0 14px 18px #000a); }
+.pw-driver-art > svg.lp-av { transform: none; filter: drop-shadow(0 8px 10px #0004); }
+.lp-card.is-free .pw-card-top > b { background: #e7e9ef; color: #5b6475; }
+.lp-card.is-free .pw-driver-art { background: repeating-linear-gradient(135deg, #f1f2f4 0 10px, #e9ebef 10px 20px); }
+.lp-free { display: inline-block; font: 600 10px var(--mono); letter-spacing: 1px; text-transform: uppercase; color: #ffd24a; border: 1px solid #ffd24a66; padding: 5px 9px; border-radius: 6px; }
+.lp-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.lp-link { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; border-bottom: 1px dotted currentColor; }
+.lp-fa-list { display: grid; gap: 8px; margin: 4px 0 14px; }
+.lp-fa { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: #151b2c; color: #fff; border: 1px solid #ffffff14; border-radius: 12px; padding: 8px 12px 8px 8px; font: inherit; cursor: pointer; }
+.lp-fa > span { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.lp-fa b { font: italic 700 15px/1.2 var(--disp); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-fa em { font-style: normal; font-size: 11px; color: #aab4c8; }
+.lp-fa strong { display: grid; justify-items: center; font: 700 22px/1 var(--disp); color: #ffd24a; background: #0b1020; border-radius: 8px; padding: 6px 8px; transform: skew(-5deg); }
+.lp-fa strong small { font: 7px var(--mono); letter-spacing: 1px; color: #c4cce0; margin-top: 3px; }
+.lp-fa .country-flag { width: 14px; height: auto; vertical-align: -1px; }
+@media (max-width: 520px) { .lp-hero-av { flex-basis: 96px; } .lp-hero-av svg { width: 96px; height: 96px; } }

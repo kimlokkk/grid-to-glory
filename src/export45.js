@@ -79,11 +79,49 @@ function spTeams(S) {
     L.push('  Car: aero ' + Math.round(c.aero) + ' (#' + ranks.aero[t.id] + '), engine ' + Math.round(c.engine) + ' (#' + ranks.engine[t.id] + '), chassis ' + Math.round(c.chassis) + ' (#' + ranks.chassis[t.id] + '), reliability ' + Math.round(c.rel) + ' (#' + ranks.rel[t.id] + ')');
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
-    if (tp) L.push('  Team principal: ' + tp.name + (tp.age ? ' (' + tp.age + ')' : '') + ' · ' + (tp.amb >= 2 ? 'Aggressive' : tp.amb <= 0 ? 'Cautious' : 'Balanced') + ' · rating ' + spPct(tp.skill, 0.75, 1.25));
-    if (d.tdp) L.push('  Technical director: ' + d.tdp.name + ' · rating ' + spPct(d.td, 0.9, 1.1));
+    var LP = typeof leadOn === 'function' && leadOn(S) && typeof leadPerson === 'function' && !t.spec;
+    if (tp && LP) L.push('  Team principal: ' + spPerson(S, leadPerson(S, tp, 'tp', t), 'tp', t));
+    else if (tp) L.push('  Team principal: ' + tp.name + (tp.age ? ' (' + tp.age + ')' : '') + ' · ' + (tp.amb >= 2 ? 'Aggressive' : tp.amb <= 0 ? 'Cautious' : 'Balanced') + ' · rating ' + spPct(tp.skill, 0.75, 1.25));
+    if (d.tdp && LP) L.push('  Technical director: ' + spPerson(S, leadPerson(S, d.tdp, 'td', t), 'td', t));
+    else if (d.tdp) L.push('  Technical director: ' + d.tdp.name + (d.tdp.age ? ' (' + d.tdp.age + ')' : '') + ' · rating ' + spPct(d.td, 0.8, 1.2) + (d.tdp.con ? ' · until S' + d.tdp.con.end + ', $' + d.tdp.con.pay + 'M' : ''));
+    if (typeof leadOn === 'function' && leadOn(S) && d.tp && d.td) { var lo = leadOdds(S, t); L.push('  Leadership: team feedback ' + Math.round(lo.fb) + ' (upgrade gain x' + leadFbGain(S, t).toFixed(2) + '); about ' + Math.round(lo.right * 100) + '% of upgrade decisions are right (principal alone ' + Math.round(lo.pick * 100) + '%, director advice ' + Math.round(lo.adv * 100) + '%, principal follows advice ' + Math.round(lo.cons * 100) + '% of the time)'); }
     if (d.staff != null) L.push('  Technical staff ' + spPct(d.staff, 0.8, 1.2) + '/100 · board target P' + (d.target || '?') + (ch ? ' · team trait: ' + ch : ''));
     L.push('  Drivers: ' + S.drivers.filter(function (x) { return x.team === t.id; }).map(function (x) { return x.name + ' (OVR ' + ovr(x) + ')'; }).join(', '));
   });
+  return L.join('\n');
+}
+/* principals and directors as people (Leadership B14): one line each, then the winter's moves and the free-agent pool */
+function spPerson(S, p, kind, t) {
+  var r = Math.round(leadRating(kind, p.skill)), h = (p.hist || []).filter(function (x) { return !t || x.t !== t.id; }), prev = h.length ? h[h.length - 1] : null, since = null;
+  (p.hist || []).forEach(function (x) { if (t && x.t === t.id && (since == null || x.s < since)) since = x.s; });
+  return p.name + ' · ' + (typeof natName === 'function' ? natName(p.nat) : p.nat) + ' · age ' + p.age + ' · rating ' + r + '/100 (' + leadPhase(p).toLowerCase() + ')' +
+    (kind === 'tp' ? ' · ' + tpStyle(p.amb).toLowerCase() + ' style' : (p.over ? ' · overruled ' + p.over + 'x recently' : '')) +
+    (p.con ? ' · contract until S' + p.con.end + ', $' + p.con.pay + 'M a year' : '') + (since != null ? ' · with the team since S' + since : '') +
+    (prev && S.teams[prev.t] ? ' · previously ' + S.teams[prev.t].name : '');
+}
+function spPeople(S) {
+  if (!(typeof leadOn === 'function' && leadOn(S) && S.lead && S.lead.pool)) return '(principals and directors are not tracked as people in this save)';
+  var L = [], P = S.lead.pool, tn = function (id) { return id != null && id >= 0 && S.teams[id] ? S.teams[id].name : 'free agent'; };
+  var role = function (k) { return /^td/.test(k) ? 'technical director' : 'team principal'; };
+  var m = S.mkt && S.mkt.staff ? S.mkt.staff : [];
+  if (S.mkt && m.length) {
+    L.push('Winter moves before season ' + S.mkt.s + ':');
+    m.forEach(function (x) {
+      if (x.k === 'td' || x.k === 'tp') L.push('- ' + x.n + ' joins ' + tn(x.t) + ' as ' + role(x.k) + (x.f != null && x.f >= 0 ? ' (from ' + tn(x.f) + ')' : ' (from the free-agent pool)') + (x.old ? ', replacing ' + x.old : ''));
+      else if (x.k === 'tdre' || x.k === 'tpre') L.push('- ' + x.n + ' re-signs with ' + tn(x.t) + ' (' + role(x.k) + ')');
+      else if (x.k === 'tdfire' || x.k === 'tpfire') L.push('- ' + tn(x.t) + ' let ' + role(x.k) + ' ' + x.n + ' go (contract paid off, about $' + x.fee + 'M)');
+      else if (x.k === 'tdout' || x.k === 'tpout') L.push('- ' + x.n + ' leaves ' + tn(x.t) + ' (' + (x.why === 'retires' ? 'retires' : 'walked out after being overruled') + ')');
+      else if (x.k === 'tdpoach') L.push('- ' + tn(x.t) + ' buy out ' + x.n + ' from ' + tn(x.f) + ' (fee about $' + x.fee + 'M)');
+    });
+  }
+  [['td', 'Free technical directors'], ['tp', 'Free team principals']].forEach(function (k) {
+    var F = (P[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; }).slice(0, 6);
+    L.push(k[1] + ' (best ' + F.length + ' of ' + (P[k[0]] || []).length + ' in the pool):');
+    F.forEach(function (p) { var last = p.hist && p.hist.length ? p.hist[p.hist.length - 1] : null; L.push('- ' + p.name + ' · ' + natName(p.nat) + ' · age ' + p.age + ' · rating ' + Math.round(leadRating(k[0], p.skill)) + ' (' + leadPhase(p).toLowerCase() + ') · asks $' + leadAsk(leadRating(k[0], p.skill)) + 'M' + (last && S.teams[last.t] ? ' · last job ' + S.teams[last.t].name + (p.fired ? ' (let go S' + p.fired + ')' : '') : ' · no F1 job yet')); });
+  });
+  var ret = (P.ret || []).filter(function (x) { return x.s >= S.season; });
+  if (ret.length) { L.push('Left the sport this winter:'); ret.forEach(function (x) { L.push('- ' + x.n + ' (' + role(x.k) + ', age ' + x.age + (x.t != null && S.teams[x.t] ? ', last at ' + S.teams[x.t].name : '') + ')'); }); }
+  L.push('Note: the player is a driver only. Teams hire and fire principals and directors; the player gives feedback and drives.');
   return L.join('\n');
 }
 function spDrivers(S) {
@@ -152,7 +190,7 @@ function storyPackText(scope) {
     'HOW TO USE: Everything below is fact from the game. Write the story in English from it: keep names, numbers, results and continuity exact; invent only dialogue, personalities and small scene details, and say which parts are invented.', ''];
   var sec = function (t, body) { return '## ' + t + '\n' + body + '\n'; };
   return head.join('\n') + '\n' + sec('MY DRIVER', spSafe('player', function () { return spPlayer(S); })) + '\n' + sec('STANDINGS', spSafe('standings', function () { return spStandings(S); })) + '\n' +
-    sec('TEAMS, CARS, STAFF', spSafe('teams', function () { return spTeams(S); })) + '\n' + sec('REGULATIONS', spSafe('regulations', function () { return typeof rgPackText === 'function' ? rgPackText(S) : ''; })) + '\n' + sec('DRIVERS', spSafe('drivers', function () { return spDrivers(S); })) + '\n' +
+    sec('TEAMS, CARS, STAFF', spSafe('teams', function () { return spTeams(S); })) + '\n' + sec('PRINCIPALS AND DIRECTORS', spSafe('people', function () { return spPeople(S); })) + '\n' + sec('REGULATIONS', spSafe('regulations', function () { return typeof rgPackText === 'function' ? rgPackText(S) : ''; })) + '\n' + sec('DRIVERS', spSafe('drivers', function () { return spDrivers(S); })) + '\n' +
     sec('NEWS', spSafe('news', function () { return spNews(S, scope === 'season' ? 0 : races.first || 0); })) + '\n' + sec('RACES', races.text);
 }
 

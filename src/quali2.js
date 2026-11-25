@@ -17,7 +17,7 @@ function qkInit(S, ci, wq) {
   trainingPrepare(S);
   evaluationPrepare(S, ci);
   var c = circuitFor(S, ci), setup = {}, temp = P2.v3 ? rnd() : 0.5, base = {};
-  S.teams.forEach(function (t) { setup[t.id] = (P2.v3 ? gauss() * P2.setupK : 0) + worldSetup(t); });
+  S.teams.forEach(function (t) { setup[t.id] = (P2.v3 ? (typeof leadSetup === 'function' ? leadSetup(t, gauss() * P2.setupK) : gauss() * P2.setupK) : 0) + worldSetup(t); });
   S.drivers.forEach(function (d) {
     var team = S.teams[d.team], cp = carPerf3(team, c, P2.v3), a = worldAttributes(S, d);
     var t = (100 - cp.q) * P2.carK + (100 - a.qpace) * P2.drvK + setup[team.id];

@@ -69,6 +69,7 @@ function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requ
   if (o.news) o.news = o.news.filter(function (n) { return n && typeof n === 'object'; });
   if (o.rdLog) o.rdLog = o.rdLog.filter(function (l) { return !/^Musim |gagal|Pakej/.test(l); });
   if (typeof verMigrate === 'function') o = verMigrate(o);
+  if (typeof leadMigrate === 'function') { try { leadMigrate(o); } catch (e) { } }
   return o; }
 function me() { return S.drivers[S.pi]; }
 function myTeam() { return S.teams[me().team]; }

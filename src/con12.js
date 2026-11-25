@@ -19,6 +19,7 @@ function conMake(S, d, opt) {
   opt = opt || {};
   var L = opt.len || conLen(d), rk = d.cs && d.cs.starts < 20 ? 0.35 : 1, pay = payFor(ovr(d), (opt.k || (1 + gauss() * 0.07)) * rk);
   var rem = opt.stagger ? 1 + Math.floor(rnd() * L) : L;
+  if (typeof leadPayMul === 'function' && d.id !== S.pi && S.teams && S.teams[d.team]) { var pm = leadPayMul(S, S.teams[d.team]); if (pm !== 1) pay = Math.round(pay * pm * 10) / 10; }   /* Leadership: a good principal negotiates, a weak one overpays (untouched when it is off) */
   var c = { len: L, end: (opt.from || S.season) + rem - 1, pay: pay }, o = ovr(d);
   /* klausa: bonus kemenangan untuk pemandu bagus; opsyen tahun tambahan (team untuk bakat muda, pemandu untuk bintang) */
   if (o >= 78 && rnd() < 0.55) c.wb = Math.max(0.1, Math.round(pay * 0.05 * 10) / 10);
@@ -59,7 +60,7 @@ function conInit(S) {
       if (dv.tp.age == null) dv.tp.age = Math.round(rr(41, 63));
       if (!dv.tp.con || dv.tp.con.end < S.season) dv.tp.con = staffCon(S, dv.tp.skill, true);
     }
-    if (!dv.tdp) dv.tdp = { name: pool.pop() || pick(TDNAMES), age: Math.round(rr(38, 60)) };
+    if (!dv.tdp) dv.tdp = { name: pool.pop() || pick(TDNAMES), age: Math.round(rr(38, 60)), skill: dv.td, loy: hash01(t.id + 7, 17) };
     if (!dv.tdp.con || dv.tdp.con.end < S.season) dv.tdp.con = staffCon(S, dv.td, true);
   });
 }

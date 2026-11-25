@@ -44,6 +44,7 @@ function initDev(S) {
   setTargets(S);
   S.target = S.target || {}; PARTS.forEach(function (k) { S.target[k] = leagueMean(S, k); });
   S.regYear = S.mode === 'pro' && S.world ? S.world.era.next : S.season + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
+  if (typeof leadMigrate === 'function') leadMigrate(S);
 }
 
 /* kedudukan semasa ikut mata (jika belum ada mata, ikut kekuatan kereta) */
@@ -63,21 +64,29 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var bud = DEV.budA + DEV.budB * t.prestige;
   var eff = 1 + DEV.catchUp * back;
   /* pilih bahagian: lemah berbanding terbaik liga + falsafah */
-  var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
-  var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
-  while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
-  var k = PARTS[ki];
+  var lead = typeof leadOn === 'function' && leadOn(S), k;
+  if (lead) k = leadPickPart(S, t, tops);                                        /* principal decides, director advises (Leadership, B3) */
+  else {
+    var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
+    var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
+    while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
+    k = PARTS[ki];
+  }
   var mine = S.drivers && S.pi != null && S.drivers[S.pi] && S.drivers[S.pi].team === t.id;
-  if (mine && S.rd && rnd() < 0.75) k = S.rd;                                    /* pasukan pemain ikut fokus R&D pilihan */
+  if (!lead && mine && S.rd && rnd() < 0.75) k = S.rd;                          /* pasukan pemain ikut fokus R&D pilihan (Leadership: the principal and director decide, not the driver) */
   if (opt && opt.k) k = opt.k;
-  var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * DEV.staffK);
+  var fail = (DEV.failLead + (DEV.failBack - DEV.failLead) * back) * (1 + (1 - t.dev.staff) * (lead ? LEAD.staffK : DEV.staffK));
+  if (lead) fail *= 1 - (leadFeedback(S, t) - 70) / LEAD.fbFail;                           /* a driver who explains the car well: fewer failed upgrades */
   var mode = rk - t.dev.target >= 2 ? 'judi' : t.dev.target - rk >= 2 ? 'selamat' : 'biasa';
   if (mode === 'judi') { size *= DEV.gambleSize; fail *= DEV.gambleFail; } else if (mode === 'selamat') { size *= DEV.safeSize; fail *= DEV.safeFail; }
   if (opt && opt.fm) fail *= opt.fm;
+  var lp = lead ? leadPackage(S, t) : null; if (lp) fail *= lp.fail;
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
-  else gain = size * bud * t.dev.td * Math.pow(t.dev.staff, DEV.staffG) * Math.pow(t.dev.tp.skill, DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
-  if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
+  else gain = size * bud * (lp ? lp.q : t.dev.td) * Math.pow(t.dev.staff, lp ? LEAD.staffG : DEV.staffG) * Math.pow(t.dev.tp.skill, lp ? LEAD.tpG : DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
+  if (lead && gain > 0) gain *= (opt && opt.k ? LEAD.gainIn : LEAD.gainWin);
+  if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
+  else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
   if (k === 'engine' && typeof engShare === 'function') engShare(S, t, gain);
   if (log) log.push({ t: t.id, k: k, g: gain, mode: mode, rush: !!(opt && opt.rush), big: !!(opt && opt.big) });
@@ -93,6 +102,7 @@ DEV.rate = 0.45;     /* kemajuan purata / pusingan (1.5 = satu pakej biasa) */
 DEV.std = 1.5;
 function suitPart(c, k) { if (!c) return false; return k === 'engine' ? c.pw >= 0.55 : (k === 'aero' || k === 'chassis') ? c.pw <= 0.42 : false; }
 function pickPart(S, t, tops) {
+  if (typeof leadOn === 'function' && leadOn(S)) return leadPickPart(S, t, tops);
   var tp = t.dev.tp, w = PARTS.map(function (k) { return Math.pow(t.dev.phil[k] * (3 + Math.max(0, tops[k] - t.car[k])) * (k === 'rel' ? DEV.relW : 1), tp.skill * 1.4); });
   var tot = w.reduce(function (a, b) { return a + b; }, 0), x = rnd() * tot, ki = 0;
   while (ki < 3 && x > w[ki]) { x -= w[ki]; ki++; }
@@ -107,27 +117,37 @@ function devThreshold(S, t, rk, nextC) {
   if (suitPart(nextC, t.dev.next)) th -= 0.4;                                  /* litar depan sesuai */
   return clamp(th + (t.dev.thN || 0), 0.8, 2.6);
 }
+/* Leadership: the principal's sense of timing. A good one notices a suiting circuit and rarely mistimes the package. */
+function devThresholdLead(S, t, rk, nextC) {
+  var tp = t.dev.tp, th = DEV.std, tr = leadTPRating(t);
+  if (tp.amb >= 2) th -= 0.3; else if (tp.amb <= 0) th += 0.35;
+  if (rk - t.dev.target >= 2) th -= 0.4; else if (t.dev.target - rk >= 2) th += 0.3;
+  if (suitPart(nextC, t.dev.next) && rnd() < leadLerp(LEAD.suitSee, tr)) th -= 0.4;
+  return clamp(th + (t.dev.thN || 0), 0.8, 2.6);
+}
 function devInSeason(S, round, log) {            /* panggil selepas pusingan ke-'round' (1..) siap */
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
-  var nextC = S.cal && round < S.cal.length ? circuitFor(S, S.cal[round]) : null, last = round >= seasonRounds(S);
+  var nextC = S.cal && round < S.cal.length ? circuitFor(S, S.cal[round]) : null, last = round >= seasonRounds(S), lead = typeof leadOn === 'function' && leadOn(S);
+  if (lead) leadIncome(S, round);
   S.teams.forEach(function (t) {
     var d = t.dev;
-    if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * 0.2; }
+    if (d.next == null) { d.next = pickPart(S, t, tops); d.prog = 0; d.thN = gauss() * (lead ? leadLerp(LEAD.timeSd, leadTPRating(t)) : 0.2); }
     if (d.banked) return;
-    d.prog = (d.prog || 0) + DEV.rate * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
+    d.prog = (d.prog || 0) + (lead ? LEAD.rate * leadFbRate(S, t) : DEV.rate) * rr(0.75, 1.25) * (0.85 + 0.15 * d.staff / 1.0);
     /* TP bijak tutup projek musim ni bila jauh dari sasaran, simpan untuk kereta tahun depan */
-    if (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
+    var shelve = lead ? leadShelve(S, t, ranks, round, last) : (round >= seasonMilestone(S, 7) && !last && ranks[t.id] - d.target >= 3 && d.tp.skill > 1.0);
+    if (shelve) { d.bank = (d.bank || 0) + DEV.bankK + d.prog * 0.3; d.prog = 0; d.banked = true; if (log) log.push({ t: t.id, bank: true }); return; }
     if (last) return;                                                          /* pusingan akhir: baki dibawa ke musim sejuk */
-    var th = devThreshold(S, t, ranks[t.id], nextC);
+    var th = lead ? devThresholdLead(S, t, ranks[t.id], nextC) : devThreshold(S, t, ranks[t.id], nextC);
     if (d.prog >= th) {
       var p = d.prog, rush = p < 1.2, big = p >= 2.0, sz = DEV.pkg * p / DEV.std;
       if (typeof finAvail === 'function' && t.fin) {
-        var cost0 = finCostOf(sz, rush, big), av = finAvail(t);
+        var cost0 = finCostOf(sz, rush, big) * (lead ? LEAD.costMul : 1), av = finAvail(t);
         if (av < 0.3 * cost0) { d.prog = Math.min(d.prog, 3.4); if (!t.fin.brk) { t.fin.brk = true; if (log) log.push({ t: t.id, broke: true, k: d.next }); } return; }   /* tak mampu: tunggu */
         var af = Math.min(1, av / cost0); sz *= af; t.fin.cash -= cost0 * af; t.fin.spent += cost0 * af;
       }
       devPackage(S, t, sz, ranks, tops, log, { k: d.next, fm: rush ? 1.45 : big ? 0.75 : 1, rush: rush, big: big });
-      d.prog = 0; d.rum = false; d.next = pickPart(S, t, tops); d.thN = gauss() * 0.2;
+      d.prog = 0; d.rum = false; d.next = pickPart(S, t, tops); d.thN = gauss() * (lead ? leadLerp(LEAD.timeSd, leadTPRating(t)) : 0.2);
     } else if (!d.rum && d.prog >= th - DEV.rate * 1.1 && log) { d.rum = true; log.push({ t: t.id, rumour: true, k: d.next, big: th >= 1.9 }); }
   });
 }
@@ -140,7 +160,8 @@ function devWinter(S, log) {
   if (typeof finSeason === 'function') finSeason(S);
   var ranks = devRank(S), tops = {}; PARTS.forEach(function (k) { tops[k] = Math.max.apply(null, S.teams.map(function (t) { return t.car[k]; })); });
   /* pengarah teknikal hanyut */
-  S.teams.forEach(function (t) { t.dev.td = clamp(t.dev.td + (1 - t.dev.td) * DEV.tdRev + gauss() * DEV.tdSd, 0.8, 1.2); });
+  /* old system: the team's director quality random-walks every winter whoever the person is. With Leadership it is the person's rating (it drifts slowly in the staff market). */
+  if (!(typeof leadOn === 'function' && leadOn(S, S.season + 1))) S.teams.forEach(function (t) { t.dev.td = clamp(t.dev.td + (1 - t.dev.td) * DEV.tdRev + gauss() * DEV.tdSd, 0.8, 1.2); });
   /* staf: ikut bajet, perlahan */
   S.teams.forEach(function (t) { var tg = 0.86 + 0.028 * t.prestige; t.dev.staff = clamp(t.dev.staff + (tg - t.dev.staff) * 0.3 + gauss() * 0.04, 0.8, 1.2); });
   /* juara curi jurutera dari pasukan lain */
@@ -151,7 +172,10 @@ function devWinter(S, log) {
   }
   /* TP yang gagal teruk dipecat */
   S.teams.forEach(function (t) {
-    if (ranks[t.id] - t.dev.target >= DEV.sackGap && rnd() < DEV.sack) { var old = t.dev.tp.name; t.dev.tp = newTP(t); if (log) log.push({ sack: true, t: t.id, old: old, nw: t.dev.tp.name }); }
+    if (ranks[t.id] - t.dev.target >= DEV.sackGap && rnd() < DEV.sack) { var old = t.dev.tp.name;
+      if (typeof leadOn === 'function' && leadOn(S, S.season + 1)) { t.dev.tp._fire = 1; if (log) log.push({ sack: true, t: t.id, old: old, nw: null }); return; }   /* Leadership: he goes into the pool and the team hires from the pool in the winter market */
+      t.dev.tp = newTP(t);
+      if (typeof leadOn === 'function' && leadOn(S, S.season + 1)) { var tries = 0; while (tries++ < 30 && S.teams.some(function (o) { return o !== t && o.dev.tp && o.dev.tp.name === t.dev.tp.name; })) t.dev.tp = newTP(t); }   /* Leadership: a new principal never shares a name with another team's */ if (log) log.push({ sack: true, t: t.id, old: old, nw: t.dev.tp.name }); }
   });
   /* peraturan baru: sebahagian kereta diundi semula, falsafah diundi semula */
   var pro = S.mode === 'pro' && S.world && S.world.era, kind = S.season + 1 >= S.regYear ? 'major' : (pro && S.regMinor && S.season + 1 >= S.regMinor ? 'minor' : null), reg = !!kind;
@@ -169,7 +193,7 @@ function devWinter(S, log) {
     if (pro) { S.regMinor = regNextMinor(S, kind); S.regLast = { kind: kind, season: S.season + 1 }; }
     if (log) log.push({ reg: true, kind: kind });
   }
-  S.teams.forEach(function (t) { var wsz = DEV.winter + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.rum = false; t.dev.next = null; });
+  S.teams.forEach(function (t) { var wsz = (typeof leadOn === 'function' && leadOn(S, S.season + 1) && t.dev.tp ? leadWinterSize(S, t) : DEV.winter) + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz, typeof leadOn === 'function' && leadOn(S, S.season + 1) ? LEAD.costMul : 1); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.regReady = false; t.dev.regDecided = false; t.dev.rum = false; t.dev.next = null; });
   if (typeof e4Winter === 'function') e4Winter(S, log);
   if (DEV.meanKeep) PARTS.forEach(function (k) { var d = S.target[k] - leagueMean(S, k); S.teams.forEach(function (t) { t.car[k] = clamp(t.car[k] + d, 45, 99); }); });
   if (DEV.sdTarget) {
@@ -185,7 +209,7 @@ function devWinter(S, log) {
 /* Regulation changes (Pro): a dynasty drops after a major change; minor changes shuffle the leaders a little. Preparation softens the fall. */
 /* share of each car that is rebuilt on a regulation change (one source for the winter re-roll and the Garage Watch expectation) */
 function regMix(pro, kind) { return !pro ? DEV.regMix : kind === 'major' ? 0.6 : 0.3; }
-function regPrep(t) { return clamp(((t.prestige || 5) - 5) * 0.04 + ((t.dev && t.dev.td) || 1) - 1 + ((t.dev && t.dev.staff) || 1) - 1, -0.2, 0.35); }
+function regPrep(t) { return clamp(((t.prestige || 5) - 5) * 0.04 + ((t.dev && t.dev.td) || 1) - 1 + ((t.dev && t.dev.staff) || 1) - 1 + (t.dev && t.dev.regReady ? LEAD.regBonus : 0), -0.2, 0.35); }
 function regBalance(S, kind, champId, lastId, before) {
   var champ = S.teams[champId], last = S.teams[lastId];
   function crew(t) { var ds = S.drivers.filter(function (d) { return d.team === t.id; }); return ds.length ? ds.reduce(function (a, d) { return a + baseOverall(d); }, 0) / ds.length : 70; }
