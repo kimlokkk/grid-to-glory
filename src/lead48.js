@@ -139,6 +139,7 @@ function leadFill(S, N, kind, pool, open, rankP) {
   var openIds = Object.keys(open).filter(function (k) { return open[k]; }).map(Number);
   var judge = function (t) { return kind === 'td' && t.dev.tp ? LEAD.judgeRating * leadOdds(S, t).sTP : 8; };
   var offerFor = function (t, c, relaxed) {
+    if (c.p.fired === N && c.from === t.id) return null;
     var ask = leadAsk(rate(c)), room = leadRoom(S, t, kind), offer = Math.min(ask * 1.1, Math.max(room, 0));
     if (!relaxed && offer < ask * 0.8) return null;
     if (relaxed) offer = Math.max(offer, ask * 0.7);
@@ -167,21 +168,120 @@ function leadFill(S, N, kind, pool, open, rankP) {
   });
   return out;
 }
+
+/* ===== principals and directors as people (design B14): a persistent pool, ageing, new generations, hire and fire ===== */
+var LEADP = { peak: { td: 48, tp: 50 }, decline: 58, retire: { td: 62, tp: 66 }, pool: { td: 10, tp: 8 }, fireGap: 18, fireShare: 0.5, maxFire: 2, idleQuit: 4, young: { td: [34, 41], tp: [38, 45] }, mixed: [36, 60] };
+/* lives in S.lead (S.mkt is rebuilt every winter) */
+function leadPool(S) { var m = S.lead; if (!m.pool) m.pool = { td: [], tp: [], ret: [], fresh: true, n: 0 }; return m.pool; }
+function leadPersonOf(t, kind) { return kind === 'td' ? t.dev.tdp : t.dev.tp; }
+/* fill in what an older record lacks (nationality, potential, history): the person keeps today's rating */
+function leadPerson(S, p, kind, t) {
+  if (!p || p.pid) return p;
+  var pool = leadPool(S); pool.n = (pool.n || 0) + 1; p.pid = pool.n; p.kind = kind;
+  if (!p.nat) p.nat = NATS[Math.floor(hashS(p.name + '|nat') * NATS.length) % NATS.length][0];
+  if (p.age == null) p.age = Math.round(rr(40, 60));
+  var pk = LEADP.peak[kind] + Math.round((hashS(p.name + '|pk') - 0.5) * 6), r = leadRating(kind, p.skill);
+  p.peak = pk; p.pot = p.pot || clamp(Math.round(r + Math.max(0, pk - p.age) * 1.0 + hgauss(p.name + '|pot') * 3), r, 96);
+  if (kind === 'tp' && p.amb == null) p.amb = 0;
+  if (p.loy == null) p.loy = hashS(p.name + '|loy');
+  p.status = p.status || (t ? 'employed' : 'free');
+  p.hist = p.hist || (t ? [{ s: S.season, t: t.id, r: r, pay: p.con ? p.con.pay : null }] : []);
+  return p;
+}
+/* a new person: mixed ages when the pool is first built, young when a new generation arrives */
+function leadNewPerson(S, kind, used, mixed) {
+  var age = Math.round(mixed ? rr(LEADP.mixed[0], LEADP.mixed[1]) : rr(LEADP.young[kind][0], LEADP.young[kind][1]));
+  var nat = NATS[Math.floor(rnd() * NATS.length)][0], nm = null, k = 0;
+  do { nm = genName(S, nat); } while (used[nm] && k++ < 12); used[nm] = 1;
+  var pot = clamp(Math.round(50 + gauss() * LEAD.poolSd), LEAD.poolMin, LEAD.poolMax), pk = LEADP.peak[kind] + Math.round(gauss() * 2);
+  var r = clamp(Math.round(pot - Math.max(0, pk - age) * 1.8 - (age > LEADP.decline ? (age - LEADP.decline) * 1.2 : 0) + gauss() * 2), 8, pot);
+  var p = { name: nm, nat: nat, age: age, skill: leadMul(kind, r), loy: rnd(), pot: pot, peak: pk, status: 'free', hist: [], idle: 0 };
+  if (kind === 'tp') p.amb = Math.round(clamp(gauss() * 1.2 + 0.4, -1, 3));
+  leadPerson(S, p, kind, null); return p;
+}
+/* one winter of ageing: grow towards the potential until the peak age, then slowly lose it */
+function leadAgeP(p, kind) {
+  var r = leadRating(kind, p.skill), nz = gauss() * LEAD.drift * 0.6;
+  if (p.age < p.peak) r += (p.pot - r) * 0.35 + nz; else if (p.age > LEADP.decline) r -= 0.9 + (p.age - LEADP.decline) * 0.25 - nz; else r += nz;
+  r = clamp(r, 4, 96); p.skill = leadMul(kind, r); return r;
+}
+function leadHire(S, p, t, N, kind) {
+  p.status = 'employed'; p.idle = 0; p.team = t.id; p.hist = p.hist || [];
+  p.hist.push({ s: N, t: t.id, r: leadRating(kind, p.skill), pay: p.con ? p.con.pay : null });
+}
+function leadRelease(S, p, N, fired) { p.status = 'free'; p.team = null; p.idle = 0; if (fired) p.fired = N; var h = p.hist && p.hist[p.hist.length - 1]; if (h && h.e == null) h.e = N - 1; p.con = null; }
+
+/* ===== profile of a principal or director (opened from Team HQ and from the free-agent list) ===== */
+function leadFind(S, kind, tid, pid) {
+  if (pid) { var L = leadPool(S)[kind] || [], i; for (i = 0; i < L.length; i++) if (L[i].pid === pid) return { p: L[i], t: null }; return null; }
+  var t = S.teams[tid]; return t && t.dev && leadPersonOf(t, kind) ? { p: leadPersonOf(t, kind), t: t } : null;
+}
+function leadProfileHTML(kind, tid, pid) {
+  var f = leadFind(S, kind, tid, pid); if (!f) return '<p class="dim">No longer available.</p>';
+  var p = leadPerson(S, f.p, kind, f.t), r = Math.round(leadRating(kind, p.skill)), role = kind === 'td' ? 'Technical director' : 'Team principal';
+  var ini = p.name.split(' ').map(function (w) { return w.charAt(0); }).join('').slice(0, 2);
+  var tn = function (id) { return S.teams[id] ? S.teams[id].name : 'Team ' + id; };
+  var st = f.t ? 'Employed by ' + esc(f.t.name) : p.fired ? 'Free agent (let go in S' + p.fired + ')' : 'Free agent';
+  var tiles = [['Rating', r], ['Age', p.age], ['Nationality', (typeof natName === 'function' ? esc(natName(p.nat)) : p.nat)]];
+  if (p.con && f.t) tiles.push(['Contract', 'Until S' + p.con.end + ' · ' + payTxt(p.con.pay)]); else tiles.push(['Asking', payTxt(leadAsk(r))]);
+  tiles.push([kind === 'tp' ? 'Style' : 'Overruled', kind === 'tp' ? tpStyle(p.amb) : (p.over || 0) + ' times']);
+  tiles.push(['Loyalty', p.loy >= 0.66 ? 'High' : p.loy <= 0.33 ? 'Low' : 'Normal']);
+  var phase = p.age < p.peak - 3 ? 'Still growing' : p.age > LEADP.decline ? 'Past his peak' : 'In his prime';
+  var hist = (p.hist || []).slice().reverse().map(function (h) { return '<li><b>S' + h.s + (h.e != null && h.e !== h.s ? '–S' + h.e : h.e == null ? '–now' : '') + '</b><span>' + esc(tn(h.t)) + '</span><em>' + Math.round(h.r) + (h.pay != null ? ' · ' + payTxt(h.pay) : '') + '</em></li>'; }).join('');
+  return '<div class="lp"><div class="lp-id"><span class="lp-av">' + esc(ini) + '</span><div><h3>' + esc(role) + '</h3><h2>' + (typeof flagE === 'function' ? flagE(p.nat) + ' ' : '') + esc(p.name) + '</h2><span class="dim">' + st + ' · ' + phase + '</span></div></div>' +
+    pfTiles(tiles) + '<h4>Career</h4>' + (hist ? '<ul class="lp-hist">' + hist + '</ul>' : '<p class="dim">No career record yet.</p>') + '<button class="btn wide" data-act="mclose">Close</button></div>';
+}
+if (typeof A !== 'undefined') A['sprof'] = function (x) { var v = String(x.v).split(':'); showModal(leadProfileHTML(v[0], v[1] === 'p' ? null : +v[1], v[1] === 'p' ? +v[2] : null)); };
+function leadFreeAgentsHTML(S) {
+  if (!leadOn(S, S.season + 1) || !S.lead || !S.lead.pool) return '';
+  var out = '';
+  [['td', 'Free technical directors'], ['tp', 'Free principals']].forEach(function (k) {
+    var L = (S.lead.pool[k[0]] || []).slice().sort(function (a, b) { return b.skill - a.skill; }).slice(0, 6); if (!L.length) return;
+    out += '<h5>' + k[1] + '</h5>' + L.map(function (p) { return '<button class="mk-r" data-act="sprof" data-v="' + k[0] + ':p:' + p.pid + '"><b>' + esc(p.name) + '</b><span>' + (typeof flagE === 'function' ? flagE(p.nat) : '') + ' age ' + p.age + ' · rating ' + Math.round(leadRating(k[0], p.skill)) + '</span><em>' + payTxt(leadAsk(leadRating(k[0], p.skill))) + '</em></button>'; }).join('');
+  });
+  return out;
+}
+
 function leadMarket(S, N, ord) {
   var n = S.teams.length, st = S.mkt && S.mkt.staff ? S.mkt.staff : (S.mkt.staff = []);
   var rankP = {}; S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }).forEach(function (t, i) { rankP[t.id] = i + 1; });
   var used = {}; S.teams.forEach(function (t) { used[t.dev.tdp && t.dev.tdp.name] = 1; used[t.dev.tp && t.dev.tp.name] = 1; });
-  /* directors: rating drifts a little, the oldest retire, a director who was overruled too often may walk out */
-  var tdPool = [], tdOpen = {};
+  /* people: records filled in, the pool of free agents ages one winter (some retire), a first pool is built for old saves */
+  var pool = leadPool(S), firedTP = {};
+  S.teams.forEach(function (t) { leadPerson(S, t.dev.tdp, 'td', t); leadPerson(S, t.dev.tp, 'tp', t); });
+  ['td', 'tp'].forEach(function (kind) {
+    pool[kind] = pool[kind].filter(function (q) {
+      q.age++; q.idle = (q.idle || 0) + 1; var r = leadAgeP(q, kind);
+      var out = (q.age >= LEADP.retire[kind] && rnd() < 0.5) || (q.idle >= LEADP.idleQuit && r < 45);
+      if (out) { q.status = 'retired'; pool.ret.push({ n: q.name, k: kind, nat: q.nat, age: q.age, s: N, r: Math.round(r) }); }
+      return !out;
+    });
+    pool[kind].forEach(function (q) { used[q.name] = 1; });
+  });
+  if (pool.ret.length > 60) pool.ret = pool.ret.slice(-60);
+  if (pool.fresh) { pool.fresh = false; for (var q0 = 0; q0 < 8; q0++) pool.td.push(leadNewPerson(S, 'td', used, true)); for (var q1 = 0; q1 < 6; q1++) pool.tp.push(leadNewPerson(S, 'tp', used, true)); }
+  var leave = function (p, kind, t, why) { p.status = 'retired'; pool.ret.push({ n: p.name, k: kind, nat: p.nat, age: p.age, s: N, r: leadRating(kind, p.skill), t: t.id, why: why }); var h = p.hist && p.hist[p.hist.length - 1]; if (h && h.e == null) h.e = N - 1; };
+  /* directors: rating follows the age curve, the oldest retire, a director who was overruled too often may walk out */
+  var tdPool = pool.td.map(function (q) { return { p: q, from: -1 }; }), tdOpen = {}; pool.td = [];
   S.teams.forEach(function (t) {
     var p = t.dev.tdp; if (!p) return;
-    var r = leadRating('td', t.dev.td); r = clamp(r + gauss() * LEAD.drift + (p.age < 42 ? 0.8 : p.age > 54 ? -1 : 0), 4, 96); t.dev.td = leadMul('td', r); p.skill = t.dev.td;
+    p.skill = t.dev.td; var r = leadAgeP(p, 'td'); t.dev.td = p.skill;
     if (p.loy == null) p.loy = rnd();
-    var quits = (p.over || 0) >= LEAD.quitOver && r >= 55 && rnd() < 0.5, retires = p.age >= LEAD.retireAge && rnd() < 0.5;
-    if (retires) { p.con = Object.assign({}, p.con || {}, { end: N - 1 }); tdOpen[t.id] = 1; st.push({ k: 'tdout', n: p.name, t: t.id, why: 'retires' }); return; }
-    if (quits) { p.con = Object.assign({}, p.con || {}, { end: N - 1 }); tdPool.push({ p: p, from: t.id }); tdOpen[t.id] = 1; st.push({ k: 'tdout', n: p.name, t: t.id, why: 'overruled' }); pushNews(S, { k: 'garage', kick: 'GARAGE', t: t.id, s: N, r: 0, head: p.name + ' leaves ' + t.name, sub: 'The technical director has had enough of being overruled and walks out. The seat is open on the market.' }); p.over = 0; return; }
+    var quits = (p.over || 0) >= LEAD.quitOver && r >= 55 && rnd() < 0.5, retires = p.age >= LEADP.retire.td && rnd() < 0.5;
+    if (retires) { leave(p, 'td', t, 'retires'); p.con = Object.assign({}, p.con || {}, { end: N - 1 }); tdOpen[t.id] = 1; st.push({ k: 'tdout', n: p.name, t: t.id, why: 'retires' }); return; }
+    if (quits) { leadRelease(S, p, N, false); p.con = Object.assign({}, p.con || {}, { end: N - 1 }); tdPool.push({ p: p, from: t.id }); tdOpen[t.id] = 1; st.push({ k: 'tdout', n: p.name, t: t.id, why: 'overruled' }); pushNews(S, { k: 'garage', kick: 'GARAGE', t: t.id, s: N, r: 0, head: p.name + ' leaves ' + t.name, sub: 'The technical director has had enough of being overruled and walks out. The seat is open on the market.' }); p.over = 0; return; }
     p.over = 0;
-    if (p.con && p.con.end < N) { tdPool.push({ p: p, from: t.id }); tdOpen[t.id] = 1; }
+    if (p.con && p.con.end < N) { leadRelease(S, p, N, false); tdPool.push({ p: p, from: t.id }); tdOpen[t.id] = 1; }
+  });
+  /* a principal who thinks a free agent is clearly better than his director can let him go (pays half the rest of the contract) */
+  var nFire = 0;
+  shuffle(S.teams.slice()).forEach(function (t) {
+    var p = t.dev.tdp; if (nFire >= LEADP.maxFire || !p || tdOpen[t.id] || !t.dev.tp || !p.con || p.con.end < N || !t.fin) return;
+    var sd = LEAD.judgeRating * leadOdds(S, t).sTP, cur = leadRating('td', p.skill) + gauss() * sd, best = null, bv = -1, fee = Math.round(LEADP.fireShare * p.con.pay * (p.con.end - N + 1) * 10) / 10;
+    tdPool.forEach(function (c) { if (c.from !== -1) return; var v = leadRating('td', c.p.skill) + gauss() * sd; if (v > bv) { bv = v; best = c; } });
+    if (!best || bv < cur + LEADP.fireGap || t.fin.cash < fee * 2 || rnd() >= 0.5) return;
+    nFire++; t.fin.cash -= fee; leadRelease(S, p, N, true); tdPool.push({ p: p, from: t.id }); tdOpen[t.id] = 1; st.push({ k: 'tdfire', n: p.name, t: t.id, fee: fee });
+    pushNews(S, { k: 'garage', kick: 'GARAGE', t: t.id, s: N, r: 0, head: t.name + ' let technical director ' + p.name + ' go', sub: 'The principal wants a stronger technical director. The contract is paid off for about $' + fee + 'M.' });
   });
   /* one poaching attempt per winter at most: a stronger director is bought out of his contract by a team that scores better with him */
   if (rnd() < LEAD.poach) {
@@ -203,29 +303,35 @@ function leadMarket(S, N, ord) {
     }
   }
   var vac = Object.keys(tdOpen).length;
-  for (var i = tdPool.length; i < vac + 1; i++) {
-    var nm = shuffle(TDNAMES.filter(function (x) { return !used[x]; }))[0] || pick(TDNAMES); used[nm] = 1;
-    var r0 = clamp(Math.round(50 + gauss() * LEAD.poolSd), LEAD.poolMin, LEAD.poolMax);
-    tdPool.push({ p: { name: nm, age: Math.round(rr(37, 58)), skill: leadMul('td', r0), loy: rnd() }, from: -1 });
-  }
+  while (tdPool.length < Math.max(LEADP.pool.td, vac + 3)) tdPool.push({ p: leadNewPerson(S, 'td', used, false), from: -1 });
   leadFill(S, N, 'td', tdPool, tdOpen, rankP).forEach(function (a) {
     var p = a.c.p, old = a.t.dev.tdp, len = 2 + Math.floor(rnd() * (leadRating('td', p.skill) >= 70 ? 2 : 3));
-    p.con = { len: len, end: N + len - 1, pay: a.pay }; a.t.dev.tdp = p; a.t.dev.td = clamp(p.skill, LEAD.rng.td[0], LEAD.rng.td[1]);
+    p.con = { len: len, end: N + len - 1, pay: a.pay }; a.t.dev.tdp = p; a.t.dev.td = clamp(p.skill, LEAD.rng.td[0], LEAD.rng.td[1]); leadHire(S, p, a.t, N, 'td');
     st.push(a.c.from === a.t.id ? { k: 'tdre', n: p.name, t: a.t.id } : { k: 'td', n: p.name, f: a.c.from, t: a.t.id, old: old ? old.name : '' });
   });
+  tdPool.forEach(function (c) { if (!c.done && c.p.status !== 'retired') { c.p.status = 'free'; pool.td.push(c.p); } });
   /* principals: most are re-signed, some are released, newcomers join the pool; everyone chooses the best offer */
-  var tpPool = [], tpOpen = {};
+  var tpPool = pool.tp.map(function (q) { return { p: q, from: -1 }; }), tpOpen = {}; pool.tp = [];
   S.teams.forEach(function (t) {
-    var p = t.dev.tp; if (!p || !p.con || p.con.end >= N) return;
+    var p = t.dev.tp; if (!p || !p.con) return; p.team = t.id; leadAgeP(p, 'tp');
+    if (p.age >= LEADP.retire.tp && rnd() < 0.5) { leave(p, 'tp', t, 'retires'); p.con = Object.assign({}, p.con, { end: N - 1 }); tpOpen[t.id] = 1; st.push({ k: 'tpout', n: p.name, t: t.id, why: 'retires' }); return; }
+    if (p._fire) {
+      var fee = t.fin ? Math.round(LEADP.fireShare * p.con.pay * Math.max(0, p.con.end - N + 1) * 10) / 10 : 0; delete p._fire; if (t.fin) t.fin.cash -= fee;
+      leadRelease(S, p, N, true); tpPool.push({ p: p, from: t.id }); tpOpen[t.id] = 1; firedTP[t.id] = p.name; st.push({ k: 'tpfire', n: p.name, t: t.id, fee: fee }); return;
+    }
+    if (p.con.end >= N) return;
     if (rnd() < LEAD.keepTP) { p.con = staffCon(S, p.skill, false); p.con.end = N + p.con.len - 1; st.push({ k: 'tpre', n: p.name, t: t.id }); }
-    else { tpPool.push({ p: p, from: t.id }); tpOpen[t.id] = 1; }
+    else { leadRelease(S, p, N, false); tpPool.push({ p: p, from: t.id }); tpOpen[t.id] = 1; }
   });
   var vacT = Object.keys(tpOpen).length;
-  for (var q = tpPool.length; q < vacT + 1 && vacT > 0; q++) { var np = newTP(S.teams[0]), tries = 0; while (used[np.name] && tries++ < 20) np = newTP(S.teams[0]); used[np.name] = 1; np.age = Math.round(rr(40, 60)); tpPool.push({ p: np, from: -1 }); }
+  while (tpPool.length < Math.max(LEADP.pool.tp, vacT + 3)) tpPool.push({ p: leadNewPerson(S, 'tp', used, false), from: -1 });
   leadFill(S, N, 'tp', tpPool, tpOpen, rankP).forEach(function (a) {
-    var p = a.c.p, old = a.t.dev.tp; p.con = staffCon(S, p.skill, false); p.con.end = N + p.con.len - 1; a.t.dev.tp = p;
+    var p = a.c.p, old = a.t.dev.tp; p.con = staffCon(S, p.skill, false); p.con.end = N + p.con.len - 1; a.t.dev.tp = p; leadHire(S, p, a.t, N, 'tp');
+    if (firedTP[a.t.id]) pushNews(S, { k: 'garage', kick: 'GARAGE', t: a.t.id, s: N, r: 0, head: a.t.name + ' appoint ' + p.name + ' as team principal', sub: p.name + ' replaces ' + firedTP[a.t.id] + '.' });
     st.push(a.c.from === a.t.id ? { k: 'tpre', n: p.name, t: a.t.id } : { k: 'tp', n: p.name, f: a.c.from, t: a.t.id, old: old ? old.name : '' });
   });
+  tpPool.forEach(function (c) { if (!c.done && c.p.status !== 'retired') { c.p.status = 'free'; pool.tp.push(c.p); } });
+  ['td', 'tp'].forEach(function (kind) { if (pool[kind].length > LEADP.pool[kind] + 4) { pool[kind].sort(function (a, b) { return b.skill - a.skill; }); pool[kind].slice(LEADP.pool[kind] + 4).forEach(function (q) { q.status = 'retired'; pool.ret.push({ n: q.name, k: kind, nat: q.nat, age: q.age, s: N, r: leadRating(kind, q.skill) }); }); pool[kind] = pool[kind].slice(0, LEADP.pool[kind] + 4); } });
   if (typeof setTargets === 'function') setTargets(S);
 }
 

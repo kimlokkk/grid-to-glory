@@ -537,7 +537,7 @@ Patch 1, then Patch 2, then the major update in the order of E1 (phase 2 mechani
 - Locked benefits of feedback (final tuning, target: +10 team feedback worth 30 to 40% of +10 pace; +10 pace both drivers = 4.0 car power equivalent because drvK 0.018 / carK 0.045): team gain 1+(fb-70)/55, failure x(1-(fb-70)/200), in-season progress x(1+(fb-70)/125), a bad weekend setup costs less (`leadSetup`, 5% per point, clamp 0.5 to 1.5; good setups unchanged), good principals prefer it in the draft (`fitFb` 0.10) and the market pays a little more (`payFb` 0.003). Measured per +10 feedback: development +0.60 power a year (+/-0.08), setup about +0.67 by calculation (too small to see in constructor points, which are +/-2), total about 1.3 power = 32% of +10 pace. Constructor points are too noisy to tune feedback; use car power. League health with this tuning: in-season 2+ places 26%, winter 23%, champions 3.1 per 8 years.
 - Gate off = unchanged. QA: same 16 UI-flow failures with and without this change (browser flow timeouts in this container); leadership suite passes.
 
-## B14. Principals and directors as people, with a pool (plan, not built yet)
+## B14. Principals and directors as people, with a pool (built in 2.6.0)
 
 Goal: a team principal (TP) and a technical director (TD) are people like drivers: profile, a pool of free agents, hire and fire, and new generations.
 
@@ -552,3 +552,5 @@ Plan:
 6. Tuning: the market now has more candidates, so re-check league health (in-season and winter movement, champions, cash) with 24+ seeds, and the gate-off, old-save and full suite checks.
 
 Open choices: (a) a board as a real actor, later; (b) whether the player can hire and fire (the player's own team has no such menu yet).
+
+Built (steps 1 to 5, the player stays a driver: he gives feedback and drives; the team holds all hiring and firing power; the board stays a stand-in, the team): records with id, nationality, potential, peak age, career history; ageing (grow to the peak, flat, decline after 58); retirement (TD 62, TP 66, 50% a winter); persistent free-agent pool kept in `S.lead.pool` (not `S.mkt`, which is rebuilt each winter), about 10 TDs and 8 TPs, a first mixed-age pool for old saves; new generations of young people each winter; a principal can let a director go when he judges a free agent clearly better (gap 18 rating points, half the rest of the contract paid, at most 2 a winter); a sacked principal (`devWinter`) goes into the pool and the team hires through `leadFill`; profile card from Team HQ and from the free-agent list in the winter recap; tests in `qa/leadership.js` section 6b. League health after the change (24 seeds): TD +0.33, TP +0.33, staff +0.20 per +10 rating, in-season 2+ places 24%, winter 24%, champions 2.9 per 8 years, cash below zero 13%.

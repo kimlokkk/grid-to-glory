@@ -172,7 +172,9 @@ function devWinter(S, log) {
   }
   /* TP yang gagal teruk dipecat */
   S.teams.forEach(function (t) {
-    if (ranks[t.id] - t.dev.target >= DEV.sackGap && rnd() < DEV.sack) { var old = t.dev.tp.name; t.dev.tp = newTP(t);
+    if (ranks[t.id] - t.dev.target >= DEV.sackGap && rnd() < DEV.sack) { var old = t.dev.tp.name;
+      if (typeof leadOn === 'function' && leadOn(S, S.season + 1)) { t.dev.tp._fire = 1; if (log) log.push({ sack: true, t: t.id, old: old, nw: null }); return; }   /* Leadership: he goes into the pool and the team hires from the pool in the winter market */
+      t.dev.tp = newTP(t);
       if (typeof leadOn === 'function' && leadOn(S, S.season + 1)) { var tries = 0; while (tries++ < 30 && S.teams.some(function (o) { return o !== t && o.dev.tp && o.dev.tp.name === t.dev.tp.name; })) t.dev.tp = newTP(t); }   /* Leadership: a new principal never shares a name with another team's */ if (log) log.push({ sack: true, t: t.id, old: old, nw: t.dev.tp.name }); }
   });
   /* peraturan baru: sebahagian kereta diundi semula, falsafah diundi semula */

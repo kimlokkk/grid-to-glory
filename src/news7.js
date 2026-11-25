@@ -74,7 +74,7 @@ function newsStory(n, game) {
       sub: 'A bigger pay cheque at ' + t.short + ', a dent in morale at ' + T(n.f).short + '.' };
     case 'sack': return { kick: 'BREAKING', kc: 'k-brk', col: t.color, team: t,
       head: t.name + ' part ways with team principal ' + n.o,
-      sub: n.n + ' takes charge with immediate effect.' };
+      sub: n.n ? n.n + ' takes charge with immediate effect.' : 'The team will search for a successor in the winter market.' };
     case 'winter': return { kick: 'TECHNICAL', kc: 'k-tech', col: t.color, team: t,
       head: n.g >= 0 ? t.name + '’s winter upgrade delivers' : t.name + '’s winter upgrade falls short',
       sub: n.g >= 0 ? '+' + n.g + ' ' + part + ' found over the off-season.' : 'The ' + part + ' went backwards (' + n.g + '). Not the start the team wanted.' };

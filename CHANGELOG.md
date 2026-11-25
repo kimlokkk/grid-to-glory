@@ -2,6 +2,7 @@
 
 ## 2.6.0 — 23 November 2026 (Leadership)
 
+- Principals and directors are people (design B14): nationality, age, potential, career list, a profile card (Team HQ and the winter recap), ageing and retirement, young new generations each winter, and a lasting pool of free agents. A principal can let a director go for a clearly better free agent (half the rest of the contract is paid), and a sacked principal goes into the pool and the team hires another from it. The player stays a driver; the team holds all hiring and firing.
 - Driver wages are paid outside the R&D fund; the principal sets a separate driver budget with a hard limit in the draft (design B13). Driver feedback now counts for more: bigger and faster development gains, fewer failures, a bad weekend setup costs less (tuned so +10 feedback is worth about a third of +10 pace), good principals prefer it and pay a little more for it.
 - Gate `S.lead = { v:1, from }`. New careers on; a save with round 0 turns on at once; a save part-way through a season turns on from the next season. Gate off = old code and old random numbers (checked identical to 2.5.x over seeded seasons).
 - Director quality is the person's rating (0 to 100 = x0.8 to x1.2). The old winter random walk of the team's director value (`dev2.js` devWinter, sd 0.12 a year, 25 rating points a year on average) is skipped when on; ratings drift about 1.5 points a year in the market.

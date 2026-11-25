@@ -78,6 +78,19 @@ const path = require('node:path');
       ck('after every winter each team has one director and one principal, no one twice', dup === 0, dup);
       ck('director ratings spread without piling up at 0 or 100', ratings.filter(r => r <= 3 || r >= 97).length / ratings.length < 0.05, ratings.filter(r => r <= 3 || r >= 97).length + '/' + ratings.length);
       ck('every director has a contract that has not ended and a salary', S.teams.every(t => t.dev.tdp.con && t.dev.tdp.con.end >= S.season && t.dev.tdp.con.pay >= 1), S.teams.map(t => t.dev.tdp.con));
+      /* 6b. principals and directors are people: records, a pool that lasts, new generations, ageing, profiles */
+      { const P = S.lead.pool, emp = S.teams.map(t => t.dev.tdp).concat(S.teams.map(t => t.dev.tp)), all = emp.concat(P.td, P.tp), ids = all.map(x => x.pid);
+        ck('every principal and director has an id, nationality, potential and a career list', all.every(x => x.pid && x.nat && x.pot != null && Array.isArray(x.hist)));
+        ck('nobody has the same id twice, and nobody works for a team while also in the pool', ids.length === new Set(ids).size && emp.every(x => x.status === 'employed'));
+        ck('the free-agent pool lasts between winters and holds both kinds', P.td.length >= 3 && P.tp.length >= 3 && P.td.every(x => x.status === 'free'), [P.td.length, P.tp.length]);
+        ck('new generations arrive young and the old retire (record kept)', all.some(x => x.age < 44) && P.ret.length >= 1 && P.ret.every(x => x.n && x.k), [P.ret.length]);
+        ck('nobody works past the retirement age plus a margin', emp.every(x => x.age <= 72), emp.map(x => x.age));
+        ck('a profile opens for an employed person and for a free agent, with a career list', (() => { A.sprof({ v: 'td:' + S.teams[2].id }); const a = document.querySelector('.lp h2') && document.querySelectorAll('.lp-hist li').length > 0; A.sprof({ v: 'tp:p:' + P.tp[0].pid }); const b = !!document.querySelector('.lp h2'); closeModal(); return a && b; })());
+        save(); const L2 = loadSave(); ck('the pool survives save and load', L2.lead.pool && L2.lead.pool.td.length === P.td.length && L2.lead.pool.n === P.n);
+        /* firing: a sacked principal goes to the pool and the team hires from the pool, not a random newcomer */
+        const tt = S.teams[4], oldTP = tt.dev.tp; oldTP._fire = 1; const nT = P.tp.length; leadMarket(S, S.season + 1, S.teams.slice());
+        ck('a sacked principal goes into the pool and the team gets another one', tt.dev.tp !== oldTP && tt.dev.tp.status === 'employed' && (oldTP.status === 'free' || oldTP.status === 'employed'), [oldTP.status]);
+        ck('the sacked principal is not hired back by the same team the same winter', tt.dev.tp !== oldTP); }
       /* 7. overrule news is capped to one per team and season */
       const ev = Object.keys(S.lead.ev || {}); ck('at most one overrule story per team and season', ev.length === new Set(ev).size);
       /* 8. save round trip */

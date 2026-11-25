@@ -324,6 +324,8 @@ function mktCard(cls) {
   if (rk.length) h += '<h5>New faces</h5>' + rows(rk, function (x) { return '<div class="mk-r"><b>' + esc(x.n) + '</b><span>' + flagE(x.nat) + ' age ' + x.a + (x.ac ? ' · own academy' : '') + (x.ch ? ' · junior champion' : '') + '</span><em>' + tg(x.t) + '</em></div>'; });
   if (out.length) h += '<h5>Out of a seat</h5>' + rows(out, function (x) { return '<div class="mk-r"><b>' + esc(x.n) + '</b><span>age ' + x.a + (x.k === 'retire2' ? ' · retires' : ' · reserve') + '</span><em>' + (x.f != null && x.f >= 0 ? tg(x.f) : '') + '</em></div>'; });
   if (m.staff.some(function (x) { return x.k === 'td' || x.k === 'tp'; })) h += '<h5>Staff</h5>' + rows(m.staff.filter(function (x) { return x.k === 'td' || x.k === 'tp'; }), function (x) { return '<div class="mk-r"><b>' + esc(x.n) + '</b><span>' + (x.k === 'td' ? 'Technical director' : 'Team principal') + '</span><em>' + (x.f >= 0 ? tg(x.f) + ' → ' : '') + tg(x.t) + '</em></div>'; });
+  if (m.staff.some(function (x) { return x.k === 'tdfire' || x.k === 'tpfire'; })) h += '<h5>Let go</h5>' + rows(m.staff.filter(function (x) { return x.k === 'tdfire' || x.k === 'tpfire'; }), function (x) { return '<div class="mk-r"><b>' + esc(x.n) + '</b><span>' + (x.k === 'tdfire' ? 'Technical director' : 'Team principal') + ' · paid off $' + x.fee + 'M</span><em>' + tg(x.t) + '</em></div>'; });
+  if (typeof leadFreeAgentsHTML === 'function') h += leadFreeAgentsHTML(S);
   h += '<div class="mk-f"><p class="dim" style="font-size:12.5px;margin:0 0 10px">' + (m.stay != null ? m.stay + ' of 19 rivals stayed put under contract or re-signed.' : '') + '</p><button class="btn wide" data-act="mkt-x">Got it</button></div></div>';
   return h;
 }
