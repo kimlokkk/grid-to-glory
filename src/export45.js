@@ -142,8 +142,9 @@ function spNews(S, minRound) {
 /* the track: what kind of circuit it is, its history in this league, and the player's record and mastery there */
 function spTrack(S, ci, beforeSeason) {
   var c = circuitFor(S, ci); if (!c) return '';
-  var wear = c.wear >= 1.5 ? 'high tyre wear' : c.wear <= 0.95 ? 'low tyre wear' : 'medium tyre wear', ot = c.ot >= 0.7 ? 'easy to overtake' : c.ot <= 0.45 ? 'hard to overtake' : 'overtaking possible', pw = c.pw >= 0.55 ? 'power track (engine matters most)' : c.pw <= 0.35 ? 'downforce track (aero and chassis matter most)' : 'balanced (engine and aero both matter)';
-  var L = ['Track: ' + c.name + ' (' + c.loc + ') · ' + (c.km ? c.km + ' km, ' : '') + laps2(c) + ' laps · ' + pw + ' · ' + wear + ' (' + c.wear + ') · ' + ot + ' · rain chance ' + Math.round(c.rain * 100) + '% · pit stop costs about ' + c.pit + 's'];
+  /* same bands as the circuit chips on screen (circuitChips): a higher overtaking value means harder to pass */
+  var wear = (c.wear < 0.95 ? 'low' : c.wear < 1.15 ? 'medium' : 'high') + ' tyre wear', ot = c.ot < 0.5 ? 'easy to overtake' : c.ot < 0.7 ? 'medium to overtake' : 'hard to overtake', pw = c.pw >= 0.55 ? 'power track (engine matters most)' : c.pw <= 0.4 ? 'downforce track (aero and chassis matter most)' : 'balanced (engine and aero both matter)';
+  var L = ['Track: ' + c.name + ' (' + c.loc + ') · ' + (c.km ? c.km + ' km, ' : '') + laps2(c) + ' laps · ' + pw + ' · ' + wear + ' (' + c.wear + ') · ' + ot + ' (difficulty ' + c.ot + ') · rain chance ' + Math.round(c.rain * 100) + '% · pit stop costs about ' + c.pit + 's'];
   if (typeof thStats === 'function') {
     var st = thStats(ci, leagueOf(S)), past = st.a.filter(function (r) { return beforeSeason == null || r.s < beforeSeason; }).slice(-3).reverse();
     if (past.length) L.push('  History here (' + leagueOf(S).toUpperCase() + '): ' + past.map(function (r) { return 'S' + r.s + ' won by ' + (r.w ? r.w.n + ' (' + r.w.t + ')' : '?') + (r.pl ? ', pole ' + r.pl.n : ''); }).join('; ') + (st.top && st.top.n > 1 ? ' · most wins here: ' + st.top.name + ' x' + st.top.n : '') + (st.lap ? ' · lap record ' + fmtT(st.lap.t) + ' by ' + st.lap.n + ' (S' + st.lap.s + ')' : ''));

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.8 — 25 November 2026 (story pack track fix)
+
+- `spTrack` read `c.ot` as ease; it is difficulty (the engine subtracts it from the pass score, fewer zones above 0.85). Bands now copy `circuitChips`: overtaking < 0.5 easy, < 0.7 medium, else hard; tyre wear < 0.95 low, < 1.15 medium, else high; engine >= 0.55 power, <= 0.4 downforce. Test in `qa/records.js`.
+
 ## 2.6.7 — 25 November 2026 (training XP clarity, dev branch only)
 
 - Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.
