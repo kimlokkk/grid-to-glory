@@ -58,7 +58,7 @@ function spPlayer(S) {
     var ev = typeof evaluationSummary === 'function' ? evaluationSummary(S) : null;
     L.push('Tier: ' + EVALUATION.tiers[p.evaluation.tier] + (ev && ev.sts != null ? ' · season STS ' + ev.sts.toFixed(1) + '/100 · head-to-head ' + ev.h2hWins + '/' + ev.h2hRaces : ''));
   }
-  L.push('Career (incl. this season): titles ' + ((p.cs && p.cs.titles) || 0) + ', wins ' + (((p.cs && p.cs.wins) || 0) + (p.wins || 0)) + ', podiums ' + (((p.cs && p.cs.pods) || 0) + (p.pods || 0)));
+  L.push('Career by league (incl. this season, never added together): ' + careerLeagueText(p));
   L.push('This season: ' + p.pts + ' pts, ' + p.wins + ' wins, ' + p.pods + ' podiums, ' + (S.results || []).filter(function (r) { return r.dnf; }).length + ' DNFs' + (S.round ? '' : ' (no races yet)'));
   if (mate) L.push('Teammate: ' + mate.name + ' (OVR ' + ovr(mate) + ', ' + mate.pts + ' pts)' + (S.tm ? ' · relationship ' + tmLabel(S.tm.rel) + ' (' + spN(S.tm.rel, 1) + '), team orders obeyed ' + S.tm.yes + ', refused ' + S.tm.no : ''));
   return L.join('\n');
@@ -129,7 +129,7 @@ function spDrivers(S) {
   driverStandings(S).forEach(function (d) {
     var con = typeof conOf === 'function' ? conOf(S, d) : null, cs = d.cs || {}, ab = d.abilities && d.abilities.owned ? ' · abilities: ' + d.abilities.owned.map(function (k) { return ABILITIES[k] ? ABILITIES[k].n : k; }).join(', ') : '';
     L.push(d.code + ' ' + d.name + ' #' + d.num + ' · ' + (d.nat || '') + ' · age ' + d.age + ' · ' + spTeamLine(S, d.team) + ' · OVR ' + ovr(d) + ' (pace ' + d.pace + ', cons ' + d.cons + ', race ' + d.race + ', wet ' + d.wet + ', tyre ' + d.tyre + ', fb ' + d.fb + ')' + (typeof DTYPES !== 'undefined' && typeof typeOf === 'function' ? ' · ' + DTYPES[typeOf(d)].n : '') + ab);
-    L.push('   Career: ' + (cs.titles || 0) + ' titles, ' + ((cs.wins || 0) + d.wins) + ' wins, ' + ((cs.pods || 0) + d.pods) + ' podiums · this season ' + d.pts + ' pts, ' + d.wins + ' wins' + (con ? ' · contract to ' + con.end + ' ($' + spN(con.pay, 1) + 'M)' : ''));
+    L.push('   Career by league: ' + careerLeagueText(d) + ' · this season ' + d.pts + ' pts, ' + d.wins + ' wins' + (con ? ' · contract to ' + con.end + ' ($' + spN(con.pay, 1) + 'M)' : ''));
   });
   return L.join('\n');
 }

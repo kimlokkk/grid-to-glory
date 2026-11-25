@@ -1,6 +1,13 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.3', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.4', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.4', d: 'Archive for every series, records per league', date: '25 Nov 2026', l: [
+    "The Archive now has F1, F2 and F3 side by side. Every finished season of every series is on file, with champions and final standings, whether you raced in it or not. Race-by-race results are kept for the series you race in.",
+    "Your records are kept per league and never added together: the profile shows a table for F1, F2 and F3 (seasons, titles, wins, podiums, best finish), and the overview counts only the series you race in now. The Story pack gives the career per league too.",
+    "Fixed the profile's league history showing extra \"Legacy\" rows: every season appeared twice because the season record did not say which league it was. Old saves are read from your season records, so no row is lost.",
+    "A new car concept takes half from the technical director who worked on it through the season before the change and half from the one in charge after the winter market, so signing a strong director a year early pays off.",
+    "Calendar: the round strip on a phone now breaks into two even rows, so round numbers 10 to 22 no longer split across two lines."
+  ] },
   { v: '2.6.3', d: 'Reg Report and story pack: who built the new car', date: '25 Nov 2026', l: [
     "The Reg Report now splits each team's move into old-rules exposure, leadership (director, principal, preparation, staff and money), catch-up for the slowest, concept luck and winter development, and records who led each team at the change.",
     "Reasons name the real source: for example \"Head start from starting the new car in time and the director's concept\" or \"Started behind: a weak director's concept\". The old \"Champion handicap\" reason no longer appears, because there is no handicap any more.",

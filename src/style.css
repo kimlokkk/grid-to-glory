@@ -3887,3 +3887,11 @@ svg.lp-av { display: block; }
 .lp-fa strong small { font: 7px var(--mono); letter-spacing: 1px; color: #c4cce0; margin-top: 3px; }
 .lp-fa .country-flag { width: 14px; height: auto; vertical-align: -1px; }
 @media (max-width: 520px) { .lp-hero-av { flex-basis: 96px; } .lp-hero-av svg { width: 96px; height: 96px; } }
+.ar-seg.ar-lg { margin: 0 0 8px; background: #182032; } .ar-seg.ar-lg button { color: #c9d2e6; } .ar-seg.ar-lg button.on { background: #ffd24a; color: #182032; }
+
+.pd-lg-t th { font-size: 9px; letter-spacing: .4px; padding: 8px 4px; } .pd-lg-t td { padding: 10px 4px; } .pd-lg-t { width: 100%; table-layout: fixed; }
+/* round strip: one tidy grid; on a phone it breaks into two even rows so two-digit rounds never wrap */
+.sc-prog { display: grid; grid-template-columns: repeat(var(--n, 22), minmax(0, 1fr)); gap: 4px; }
+.sc-prog i { min-width: 0; height: 24px; }
+.sc-prog u { white-space: nowrap; letter-spacing: -.3px; }
+@media (max-width: 640px) { .sc-prog { grid-template-columns: repeat(var(--h, 11), minmax(0, 1fr)); row-gap: 5px; } .sc-prog i { height: 26px; } .sc-prog u { font-size: 11px; } }

@@ -105,7 +105,7 @@ function drvRecord(S) {
   teamStandings(S).forEach(function (t, i) { t.sh = t.sh || []; if (t.sh.length && t.sh[t.sh.length - 1].s === S.season) return; var pods = 0; S.drivers.forEach(function (d) { if (d.team === t.id) pods += d.pods; }); t.sh.push({ s: S.season, pos: i + 1, pts: t.pts, wins: t.wins, pods: pods }); });
   ds.forEach(function (d, i) {
     var t = S.teams[d.team];
-    d.sh.push({ s: S.season, t: t ? t.short : '–', tc: t ? t.color : '#888', pos: i + 1, pts: d.pts, wins: d.wins, pods: d.pods });
+    d.sh.push({ s: S.season, league: S.mode === 'pro' ? leagueOf(S) : undefined, t: t ? t.short : '–', tc: t ? t.color : '#888', pos: i + 1, pts: d.pts, wins: d.wins, pods: d.pods });
     d.cs.wins += d.wins; d.cs.pods += d.pods; if (i === 0 && (S.mode !== 'pro' || leagueOf(S) === 'f1')) d.cs.titles++; d.cs.rec = S.season;
   });
   syncPeople(S);
@@ -173,6 +173,29 @@ function starsH(n) { var h = ''; for (var i = 0; i < 5; i++) h += '<i class="' +
 function careerOf(d) {
   var c = d.cs || { starts: 0, wins: 0, pods: 0, poles: 0, titles: 0 }, done = c.rec === S.season;
   return { starts: c.starts + (d.starts || 0), wins: c.wins + (done ? 0 : d.wins || 0), pods: c.pods + (done ? 0 : d.pods || 0), poles: c.poles + (d.poles || 0), titles: c.titles };
+}
+/* which league a season line belongs to: the line itself, the player's own season record, the world history, then the driver's last known league */
+function shLeague(d, h) {
+  if (h.league) return h.league;
+  if (S.mode !== 'pro') return leagueOf(S);
+  var w = (d.worldHistory || []).filter(function (r) { return r.season === h.s; })[0]; if (w) return w.league;
+  var mine = S.playerUid ? d.uid === S.playerUid : S.drivers[S.pi] === d;
+  if (mine) { var r = (S.hist || []).filter(function (x) { return x.season === h.s; })[0]; if (r) return r.league || 'f1'; }
+  return d.legacyLeague || leagueOf(S);
+}
+/* career numbers kept apart per league (F1, F2 and F3 never added together) */
+function careerByLeague(d) {
+  var o = {}, seen = {}, g = function (l) { return o[l] || (o[l] = { l: l, seasons: 0, wins: 0, pods: 0, titles: 0, best: null }); };
+  var put = function (x, pos, w, pd) { x.seasons++; x.wins += w || 0; x.pods += pd || 0; if (pos === 1) x.titles++; if (pos) x.best = x.best == null ? pos : Math.min(x.best, pos); };
+  (d.worldHistory || []).forEach(function (r) { if (r.pos == null) return; seen[r.season + ':' + r.league] = 1; var sh = (d.sh || []).filter(function (h) { return h.s === r.season && (h.league === r.league || !h.league); })[0]; put(g(r.league), r.pos, r.wins, sh ? sh.pods : 0); });
+  (d.sh || []).forEach(function (h) { var l = shLeague(d, h); if (seen[h.s + ':' + l]) return; seen[h.s + ':' + l] = 1; put(g(l), h.pos, h.wins, h.pods); });
+  var cur = S.mode === 'pro' ? leagueOf(S) : leagueOf(S), active = S.drivers.indexOf(d) >= 0;
+  if (active && !seen[S.season + ':' + cur] && S.round > 0) { var x = g(cur); x.wins += d.wins || 0; x.pods += d.pods || 0; x.live = true; }
+  return ['f1', 'f2', 'f3'].concat(Object.keys(o).filter(function (k) { return ['f1', 'f2', 'f3'].indexOf(k) < 0; })).filter(function (k) { return o[k]; }).map(function (k) { return o[k]; });
+}
+function careerLeagueText(d) {
+  var L = careerByLeague(d); if (!L.length) return 'no completed seasons yet';
+  return L.map(function (x) { return x.l.toUpperCase() + ': ' + x.seasons + (x.seasons === 1 ? ' season' : ' seasons') + ', ' + x.titles + (x.titles === 1 ? ' title' : ' titles') + ', ' + x.wins + (x.wins === 1 ? ' win, ' : ' wins, ') + x.pods + (x.pods === 1 ? ' podium' : ' podiums') + (x.best ? ', best P' + x.best : '') + (x.live ? ' (incl. this season so far)' : ''); }).join('; ');
 }
 function pfTiles(arr) { return '<div class="pf-tiles">' + arr.map(function (x) { return '<div><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('') + '</div>'; }
 function pfAttrs(d) {
