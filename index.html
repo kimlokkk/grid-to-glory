@@ -6769,13 +6769,30 @@ A['menu'] = function () { stopRun(); UI.screen = 'menu'; UI.wk = null; render();
 A['import'] = function () {
   showModal('<h2>Import save</h2><p class="dim">Paste the save code you exported earlier.</p><textarea id="imp" spellcheck="false"></textarea><div class="row"><button class="btn pri" data-act="import-go">Import</button><button class="btn" data-act="mclose">Cancel</button></div>');
 };
+/* Export code (2.6.5): "GTG2." + base64 of the save JSON compressed with deflate (about 7 times shorter, nothing left out).
+   Old codes (plain base64 JSON) still import. Browsers without CompressionStream keep the old format. */
+var XP_TAG = 'GTG2.';
+function b64Bytes(buf) { var bin = '', i; for (i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000)); return btoa(bin); }
+function bytesB64(b64) { var bin = atob(b64), out = new Uint8Array(bin.length), i; for (i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+function expZip(json) {
+  if (typeof CompressionStream === 'undefined') return Promise.resolve(btoa(unescape(encodeURIComponent(json))));
+  var cs = new CompressionStream('deflate-raw'), w = cs.writable.getWriter(); w.write(new TextEncoder().encode(json)); w.close();
+  return new Response(cs.readable).arrayBuffer().then(function (ab) { return XP_TAG + b64Bytes(new Uint8Array(ab)); });
+}
+function expUnzip(code) {
+  code = String(code || '').replace(/\s+/g, '');
+  if (code.indexOf(XP_TAG) !== 0) return Promise.resolve(decodeURIComponent(escape(atob(code))));
+  if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('This browser cannot read compressed save codes.'));
+  var ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(bytesB64(code.slice(XP_TAG.length))); w.close();
+  return new Response(ds.readable).text();
+}
 A['import-go'] = function () {
-  try {
-    var v = document.getElementById('imp').value.trim();
-    var o = JSON.parse(decodeURIComponent(escape(atob(v))));
+  var v = document.getElementById('imp').value.trim();
+  expUnzip(v).then(function (json) {
+    var o = JSON.parse(json);
     if (!o.drivers || !o.teams) throw 0;
     S = migrate(o); save(); closeModal(); UI.screen = 'hub'; UI.tab = 'utama'; render(); toast('Save imported.');
-  } catch (e) { toast('Invalid code.'); }
+  }).catch(function (e) { toast(e && e.message && /browser/.test(e.message) ? e.message : 'Invalid code.'); });
 };
 A['mclose'] = function () { closeModal(); };
 
@@ -6913,8 +6930,10 @@ A['mini'] = function () { S.settings.mini = !S.settings.mini; save(); render(); 
 A['export'] = function () {
   var sv = UI.screen === 'menu' ? loadSave() : S;
   if (!sv) { toast('No saved career to export.'); return; }
-  var code = btoa(unescape(encodeURIComponent(JSON.stringify(sv))));
-  showModal('<h2>Export save</h2><p class="dim">Copy this code and keep it somewhere safe.</p><textarea id="exp" readonly spellcheck="false">' + code + '</textarea><div class="row"><button class="btn pri" data-act="copy">Copy</button><button class="btn" data-act="mclose">Close</button></div>');
+  var json = JSON.stringify(sv), old = Math.round(json.length * 4 / 3);
+  expZip(json).then(function (code) {
+    showModal('<h2>Export save</h2><p class="dim">Copy this code and keep it somewhere safe. ' + (code.indexOf(XP_TAG) === 0 ? 'Compressed: ' + Math.round(code.length / 1000) + 'k characters, about ' + Math.max(1, Math.round(old / code.length)) + ' times shorter than before, nothing left out.' : '') + '</p><textarea id="exp" readonly spellcheck="false">' + code + '</textarea><div class="row"><button class="btn pri" data-act="copy">Copy</button><button class="btn" data-act="mclose">Close</button></div>');
+  });
 };
 A['copy'] = function () {
   var ta = document.getElementById('exp'); ta.select();
@@ -11043,8 +11062,12 @@ function thStrip(ci) {
 }
 if (typeof A !== 'undefined') A['th'] = function (d) { showModal(thHTML(+d.v)); };
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.4', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.5', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.5', d: 'Shorter export code', date: '25 Nov 2026', l: [
+    "Export save codes are now compressed: about 7 times shorter (a career of 8 seasons goes from about 1.7 million characters to about 230 thousand), with nothing left out. The Export screen says how much shorter the code is.",
+    "Old codes still import, and line breaks or spaces picked up while copying are ignored. A browser too old to compress keeps the old format."
+  ] },
   { v: '2.6.4', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
     "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."

@@ -48,7 +48,7 @@ const path=require('node:path'),fs=require('node:fs');
   const ask=await pg.evaluate(()=>S.settings.ask);await clickUI(pg,'[data-act=ask]',true);
   check('settings toggle still changes the real saved setting',await pg.evaluate(ask=>S.settings.ask===!ask&&loadSave().settings.ask===!ask,ask));
   await clickUI(pg,'[data-act=export]',true);
-  const code=await pg.locator('#exp').inputValue(),exported=JSON.parse(Buffer.from(code,'base64').toString('utf8'));
+  const code=await pg.locator('#exp').inputValue(),exported=JSON.parse(await pg.evaluate(c=>expUnzip(c),code));
   check('export remains functional from Settings',exported.round===1&&exported.saveVer===2);
   await pg.clock.runFor(800);await clickUI(pg,'#modal [data-act=mclose]',true);
   await clickUI(pg,'[data-act=glossary]',true);check('glossary remains reachable',await pg.locator('#modal > *').count()===1);await pg.evaluate(()=>closeModal());
