@@ -90,9 +90,18 @@ const path = require('node:path');
         ck('the story pack lists every team principal and director as a person, the winter moves and the free agents', (() => { const t = storyPackText('latest'); return /## PRINCIPALS AND DIRECTORS/.test(t) && /Free technical directors/.test(t) && S.teams.every(x => t.indexOf('Team principal: ' + x.dev.tp.name + ' · ') >= 0); })());
         save(); const L2 = loadSave(); ck('the pool survives save and load', L2.lead.pool && L2.lead.pool.td.length === P.td.length && L2.lead.pool.n === P.n);
         /* firing: a sacked principal goes to the pool and the team hires from the pool, not a random newcomer */
-        const tt = S.teams[4], oldTP = tt.dev.tp; oldTP._fire = 1; const nT = P.tp.length; leadMarket(S, S.season + 1, S.teams.slice());
+        const tt = S.teams.find(x => x.dev.tp.age < LEADP.retire.tp - 2) || S.teams[4], oldTP = tt.dev.tp; oldTP._fire = 1; const nT = P.tp.length; leadMarket(S, S.season + 1, S.teams.slice());
         ck('a sacked principal goes into the pool and the team gets another one', tt.dev.tp !== oldTP && tt.dev.tp.status === 'employed' && (oldTP.status === 'free' || oldTP.status === 'employed'), [oldTP.status]);
         ck('the sacked principal is not hired back by the same team the same winter', tt.dev.tp !== oldTP); }
+      /* 6c. regulations phase A: a major change rebuilds 70%, a minor one targets one or two areas */
+      { ck('Leadership careers use the new regulation rules', regAOn(S) && S.lead.reg === 1);
+        S.regMinor = S.season + 1; S.regParts = null; const mp = regMinorParts(S), again = regMinorParts(S);
+        ck('a minor change targets one or two of aero, chassis and engine, never reliability, and the choice is stable', mp.length >= 1 && mp.length <= 2 && mp.every(k => ['aero', 'chassis', 'engine'].indexOf(k) >= 0) && new Set(mp).size === mp.length && JSON.stringify(mp) === JSON.stringify(again), mp);
+        ck('minor: only the targeted parts are reworked (75%); major: every part 70%', PARTS.every(k => regPartMix(S, 'minor', k) === (mp.indexOf(k) >= 0 ? 0.75 : 0)) && PARTS.every(k => regPartMix(S, 'major', k) === 0.7));
+        ck('Regulation Watch words name the targeted areas', regWords(S, 'minor').line.indexOf(regPartsText(mp)) >= 0 && /70%/.test(regWords(S, 'major').line));
+        const lg = []; S.regYear = S.season + 9; const was = S.teams.map(t => Object.assign({}, t.car)); devWinter(S, lg); const e = lg.find(x => x.reg);
+        ck('a minor change applied in the winter is logged with its areas and recorded in the Reg Report', e && e.kind === 'minor' && JSON.stringify(e.parts) === JSON.stringify(mp) && S.regReports.slice(-1)[0].parts && S.regReports.slice(-1)[0].parts.join() === mp.join(), e);
+        const k0 = S.lead.reg; S.lead.reg = 0; ck('with the flag off the old rules apply (major 60%, minor 30% of every part)', PARTS.every(k => regPartMix(S, 'minor', k) === 0.3 && regPartMix(S, 'major', k) === 0.6)); S.lead.reg = k0; }
       /* 7. overrule news is capped to one per team and season */
       const ev = Object.keys(S.lead.ev || {}); ck('at most one overrule story per team and season', ev.length === new Set(ev).size);
       /* 8. save round trip */

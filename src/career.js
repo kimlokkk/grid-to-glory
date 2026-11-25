@@ -228,7 +228,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
     ensureDev(S);
     var wl = [], reg = S.mode === 'pro' && leagueOf(S) !== 'f1' ? worldJuniorWinter(S, wl) : devWinter(S, wl), mineT = S.drivers[S.pi].team;
     S.news = S.news || [];
-    if (reg) pushNews(S, { k: 'reg', kind: (wl.filter(function (e) { return e.reg; })[0] || {}).kind || 'major', s: S.season + 1, r: 0 });
+    if (reg) { var rgK = (wl.filter(function (e) { return e.reg; })[0] || {}).kind || 'major', rgN = { k: 'reg', kind: rgK, s: S.season + 1, r: 0 }; if (typeof regAOn === 'function' && regAOn(S)) { if (rgK === 'minor') rgN.parts = regPartsText((wl.filter(function (e) { return e.reg; })[0] || {}).parts || []); else rgN.pct = '70%'; } pushNews(S, rgN); }
     if (typeof rgAfterWinter === 'function') { try { rgAfterWinter(S, wl, reg); } catch (e) { } }
     dlog.forEach(function (e) {
       if (e.jchamp) pushNews(S, { k: 'jchamp', n: e.jchamp, nat: e.nat, w: e.w, s: S.season + 1, r: 0 });

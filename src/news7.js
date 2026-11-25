@@ -64,9 +64,9 @@ function newsStory(n, game) {
       sub: 'Development on the current car has stopped. Every resource now goes into next year.' };
     case 'reg': return n.kind === 'minor' ? { kick: 'REGULATIONS', kc: 'k-reg', col: '#2f6fbd', team: null,
       head: 'Technical update reshuffles the cars',
-      sub: 'About a third of every car is reworked for Season ' + n.s + '. Teams adapt rather than rebuild, but the order still moves.' } : { kick: 'BREAKING', kc: 'k-brk', col: '#e2342b', team: null,
+      sub: n.parts ? 'The ' + n.parts + ' rules change for Season ' + n.s + ': about 75% of ' + (/ and /.test(n.parts) ? 'those areas' : 'that area') + ' is reworked and the rest carries over. Teams strong in ' + n.parts + ' have the most to lose.' : 'About a third of every car is reworked for Season ' + n.s + '. Teams adapt rather than rebuild, but the order still moves.' } : { kick: 'BREAKING', kc: 'k-brk', col: '#e2342b', team: null,
       head: 'New regulations rip up the rulebook',
-      sub: 'About 60% of every car is redesigned for Season ' + n.s + '. The pecking order is up for grabs.' };
+      sub: 'About ' + (n.pct || '60%') + ' of every car is redesigned for Season ' + n.s + '. The pecking order is up for grabs.' };
     case 'regnews': return { kick: n.rg === 'warn' ? 'REGULATIONS' : 'REGULATION REPORT', kc: 'k-reg', col: n.col || '#e2342b', team: n.t != null ? T(n.t) : null, head: n.head, sub: n.sub };
     case 'garage': return { kick: n.kick || 'GARAGE', kc: 'k-gar', col: n.col || (t ? t.color : '#888'), team: t, head: n.head, sub: n.sub };
     case 'poach': return { kick: 'TRANSFER', kc: 'k-trf', col: t.color, team: t,
