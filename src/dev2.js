@@ -232,7 +232,7 @@ function regPartMix(S, kind, k) {
 /* Regulations phase B (S.lead.reg >= 2): the new car comes from the people, not from a fixed handicap.
    Concept = director rating + principal rating + preparation (the principal started the new car in time) + money + luck (wider for a weak director).
    Execution = technical staff (reliability and the first packages). No forced drop for the champion; the slowest team gets a smaller lift. */
-var REGB = { td: 5, tp: 2, prep: 2.5, money: 2, staff: 2, luck: 2.5, sd: 5, minorK: 0.6, lift: 8 };
+var REGB = { td: 7, tp: 3, prep: 3, money: 2, staff: 2, luck: 3, sd: 4, minorK: 0.6, lift: 8 };
 function regMeritOn(S) { return regAOn(S) && S.lead.reg >= 2 && typeof leadOn === 'function' && leadOn(S, S.season + 1); }
 function regRatings(t) {
   var dv = t.dev || {};

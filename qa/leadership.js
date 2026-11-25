@@ -94,13 +94,18 @@ const path = require('node:path');
         ck('a sacked principal goes into the pool and the team gets another one', tt.dev.tp !== oldTP && tt.dev.tp.status === 'employed' && (oldTP.status === 'free' || oldTP.status === 'employed'), [oldTP.status]);
         ck('the sacked principal is not hired back by the same team the same winter', tt.dev.tp !== oldTP); }
       /* 6c. regulations phase A: a major change rebuilds 70%, a minor one targets one or two areas */
-      { ck('Leadership careers use the new regulation rules', regAOn(S) && S.lead.reg === 1);
+      { ck('Leadership careers use the new regulation rules', regAOn(S) && S.lead.reg >= 1);
         S.regMinor = S.season + 1; S.regParts = null; const mp = regMinorParts(S), again = regMinorParts(S);
         ck('a minor change targets one or two of aero, chassis and engine, never reliability, and the choice is stable', mp.length >= 1 && mp.length <= 2 && mp.every(k => ['aero', 'chassis', 'engine'].indexOf(k) >= 0) && new Set(mp).size === mp.length && JSON.stringify(mp) === JSON.stringify(again), mp);
         ck('minor: only the targeted parts are reworked (75%); major: every part 70%', PARTS.every(k => regPartMix(S, 'minor', k) === (mp.indexOf(k) >= 0 ? 0.75 : 0)) && PARTS.every(k => regPartMix(S, 'major', k) === 0.7));
         ck('Regulation Watch words name the targeted areas', regWords(S, 'minor').line.indexOf(regPartsText(mp)) >= 0 && /70%/.test(regWords(S, 'major').line));
         const lg = []; S.regYear = S.season + 9; const was = S.teams.map(t => Object.assign({}, t.car)); devWinter(S, lg); const e = lg.find(x => x.reg);
         ck('a minor change applied in the winter is logged with its areas and recorded in the Reg Report', e && e.kind === 'minor' && JSON.stringify(e.parts) === JSON.stringify(mp) && S.regReports.slice(-1)[0].parts && S.regReports.slice(-1)[0].parts.join() === mp.join(), e);
+        ck('phase B is on for Leadership careers: the new car comes from the people', S.lead.reg >= 2 && regMeritOn(S));
+        { const tA = S.teams[0], tB = S.teams[1], a0 = tA.dev.td, b0 = tB.dev.td; tA.dev.td = leadMul('td', 90); tB.dev.td = leadMul('td', 20); const cA = regConcept(S, tA, false).c, cB = regConcept(S, tB, false).c; tA.dev.td = a0; tB.dev.td = b0;
+          ck('a strong director gives a better expected concept than a weak one', cA > cB + 5, [cA, cB]); }
+        { const keep = S.teams.map(t => Object.assign({}, t.car)), champ = S.teams[0]; PARTS.forEach(k => champ.car[k] = 99); const before = powerRank(S), p0 = teamPower(champ); regBalance(S, 'major', champ.id, S.teams[9].id, before, true);
+          ck('no forced drop for the champion under phase B', teamPower(champ) === p0); S.teams.forEach((t, i) => t.car = keep[i]); }
         const k0 = S.lead.reg; S.lead.reg = 0; ck('with the flag off the old rules apply (major 60%, minor 30% of every part)', PARTS.every(k => regPartMix(S, 'minor', k) === 0.3 && regPartMix(S, 'major', k) === 0.6)); S.lead.reg = k0; }
       /* 7. overrule news is capped to one per team and season */
       const ev = Object.keys(S.lead.ev || {}); ck('at most one overrule story per team and season', ev.length === new Set(ev).size);
