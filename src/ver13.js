@@ -1,6 +1,10 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.3', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.4', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.4', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
+    "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
+    "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
+  ] },
   { v: '2.6.3', d: 'Archive for every series, records per league', date: '25 Nov 2026', l: [
     "The Archive now has F1, F2 and F3 side by side. Every finished season of every series is on file, with champions and final standings, whether you raced in it or not. Race-by-race results are kept for the series you race in.",
     "Your records are kept per league and never added together: the profile shows a table for F1, F2 and F3 (seasons, titles, wins, podiums, best finish), and the overview counts only the series you race in now. The Story pack gives the career per league too.",

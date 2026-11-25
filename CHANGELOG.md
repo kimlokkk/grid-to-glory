@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.4 — 25 November 2026 (training XP clarity, dev branch only)
+
+- Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.
+
 ## 2.6.3 — 25 November 2026 (archive for every series, records per league)
 
 - `arAll(S, lg)` builds every season of a league from the world's per-driver season lines (`arFromWH`), plus stored and rebuilt seasons of the player's own league; Archive has an F1 / F2 / F3 switch (`UI.arLg`), records per league (`arRecords(S, lg)`).
