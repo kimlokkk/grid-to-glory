@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.6 — 25 November 2026 (weekend hold, winter news against the field)
+
+- `src/wkhold49.js`: qualifying and strategy state is kept in `S.wkHold` (key season:round:league) once a session has run; `wk-start` restores it; the race clears it. Found while checking: Exit in qualifying and Start weekend again re-rolled qualifying (6 tries gave P14, P16, P11, P18, P13, P10).
+- Winter news `g` is now the change against the league average after the winter (`rel`), with the raw gain kept as `raw`.
+- Test: `qa/wkhold.js`.
+
 ## 2.6.5 — 25 November 2026 (training XP clarity, dev branch only)
 
 - Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.

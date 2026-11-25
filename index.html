@@ -5479,6 +5479,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
   p.pts = 0; p.wins = 0; p.pods = 0; p.fp = [];
   if (typeof devWinter === 'function') {
     ensureDev(S);
+    var wb0 = S.teams.map(function (t) { return Object.assign({}, t.car); });   /* cars before the winter, so the news can say what was gained against the field */
     var wl = [], reg = S.mode === 'pro' && leagueOf(S) !== 'f1' ? worldJuniorWinter(S, wl) : devWinter(S, wl), mineT = S.drivers[S.pi].team;
     S.news = S.news || [];
     if (reg) { var rgK = (wl.filter(function (e) { return e.reg; })[0] || {}).kind || 'major', rgN = { k: 'reg', kind: rgK, s: S.season + 1, r: 0 }; if (typeof regAOn === 'function' && regAOn(S)) { if (rgK === 'minor') rgN.parts = regPartsText((wl.filter(function (e) { return e.reg; })[0] || {}).parts || []); else rgN.pct = '70%'; } pushNews(S, rgN); }
@@ -5493,7 +5494,7 @@ function startNewSeason(S, teamId, years, buyId, opts) {
       else if (e.sack) pushNews(S, { k: 'sack', t: e.t, o: e.old, n: e.nw, s: S.season + 1, r: 0 });
       else if (e.eng) pushNews(S, { k: 'eng', t: e.t, f: e.f, to: e.to, s: S.season + 1, r: 0 });
       else if (e.fac) pushNews(S, { k: 'fac', t: e.t, up: e.up, lv: e.lv, s: S.season + 1, r: 0 });
-      else if (e.g != null && e.t === mineT) pushNews(S, { k: 'winter', t: e.t, p: e.k, g: +e.g.toFixed(1), s: S.season + 1, r: 0 });
+      else if (e.g != null && e.t === mineT) { var wk0 = e.k, mean = function (cars) { return cars.reduce(function (a, c) { return a + (c[wk0] || 0); }, 0) / cars.length; }, rel = wb0[e.t] && S.teams[e.t] && S.teams[e.t].car[wk0] != null ? (S.teams[e.t].car[wk0] - wb0[e.t][wk0]) - (mean(S.teams.map(function (t) { return t.car; })) - mean(wb0)) : e.g; pushNews(S, { k: 'winter', t: e.t, p: e.k, g: +rel.toFixed(1), raw: +e.g.toFixed(1), rel: 1, s: S.season + 1, r: 0 }); }
     });
     S.teams.forEach(function (t) { var tp = t.dev && t.dev.tp; if (tp && tp.amb >= 2 && rnd() < 0.5) pushNews(S, { k: 'tp', t: t.id, n: tp.name, x: t.dev.target, am: tp.amb, s: S.season + 1, r: 0 }); });
     if (S.mode === 'pro' && leagueOf(S) === 'f1') S.regYear = S.world.era.next;
@@ -9423,7 +9424,7 @@ function newsStory(n, game) {
       sub: n.n ? n.n + ' takes charge with immediate effect.' : 'The team will search for a successor in the winter market.' };
     case 'winter': return { kick: 'TECHNICAL', kc: 'k-tech', col: t.color, team: t,
       head: n.g >= 0 ? t.name + '’s winter upgrade delivers' : t.name + '’s winter upgrade falls short',
-      sub: n.g >= 0 ? '+' + n.g + ' ' + part + ' found over the off-season.' : 'The ' + part + ' went backwards (' + n.g + '). Not the start the team wanted.' };
+      sub: n.rel ? (n.g >= 0 ? '+' + n.g + ' ' + part + ' gained on the rest of the field over the off-season.' : 'The ' + part + ' lost ground on the rest of the field (' + n.g + '). Not the start the team wanted.') : n.g >= 0 ? '+' + n.g + ' ' + part + ' found over the off-season.' : 'The ' + part + ' went backwards (' + n.g + '). Not the start the team wanted.' };
     case 'tp': return { kick: 'INTERVIEW', kc: 'k-int', col: t.color, team: t,
       head: '“We’re targeting P' + n.x + ' this year”',
       sub: n.n + ' (' + t.name + ') ' + (n.am == null || n.am >= 2 ? 'sets a bold goal. Journalists exchange knowing looks.' : n.am <= 0 ? 'plays it safe and asks for patience as the new season begins.' : 'lays out the plan for the new season.') };
@@ -11062,8 +11063,12 @@ function thStrip(ci) {
 }
 if (typeof A !== 'undefined') A['th'] = function (d) { showModal(thHTML(+d.v)); };
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.5', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.6', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.6', d: 'Weekend hold and honest winter news', date: '25 Nov 2026', l: [
+    "Leaving a race weekend during qualifying or on the strategy page still takes you Home, and Start weekend now continues exactly where you left it, even after closing the game. Before, qualifying started again with a new result, so a bad grid could be re-rolled. Leaving during the race still finishes the race for you, as before.",
+    "The winter upgrade story now says what your team gained on the rest of the field, not the raw number before every team's winter work is counted."
+  ] },
   { v: '2.6.5', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
     "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
@@ -16412,4 +16417,45 @@ function leadPickAffordable(g, t, pool, here) {
   for (var i = 0; i < pool.length; i++) { var d = pool[i], pay = payFor(ovr(d), 0.75) * leadPayMul(g, t) * leadFbPay(g, t, d); if (spent + pay <= budget) { pool.splice(i, 1); return d; } }
   return null;
 }
+'use strict';
+/* ===== Weekend hold (2.6.5): leaving qualifying or the strategy page keeps the weekend as it was =====
+   Before this, Exit during qualifying threw the session away and a new start ran qualifying again with a new result, so a bad
+   grid could be re-rolled. Now the weekend (qualifying progress, grid and strategy) is kept in the save until the race starts;
+   Exit still goes back to Home, and Start weekend continues exactly where the player left. The race itself was already locked. */
+function wkHoldKey(S) { return S.season + ':' + S.round + ':' + (typeof leagueOf === 'function' ? leagueOf(S) : ''); }
+function wkHoldSnap() {
+  var w = UI.wk; if (!w || (w.step !== 'quali' && w.step !== 'strat')) return null;
+  var o = {}; Object.keys(w).forEach(function (k) { if (k !== 'c' && typeof w[k] !== 'function') o[k] = w[k]; });
+  try { return JSON.parse(JSON.stringify(o)); } catch (e) { return null; }
+}
+function wkHoldSave() {
+  if (!S || S.mode !== 'pro' || !UI.wk) return;
+  var w = UI.wk, started = w.q || (w.Q && ((w.Q.s || 0) > 0 || (w.Q.res && w.Q.res.length) || (w.Q.log && w.Q.log.length)));
+  if (!started && w.step === 'quali') return;   /* nothing run yet: nothing to protect */
+  var snap = wkHoldSnap(); if (!snap) return;
+  var fp = JSON.stringify(snap).length + ':' + snap.step + ':' + (snap.q ? snap.q.length : 0) + ':' + (snap.Q ? snap.Q.s : '');
+  if (S.wkHold && S.wkHold.key === wkHoldKey(S) && S.wkHold.fp === fp) return;
+  S.wkHold = { key: wkHoldKey(S), fp: fp, wk: snap };
+  if (typeof save === 'function') save();
+}
+(function () {
+  var render0 = render;
+  render = function () {
+    var r = render0.apply(this, arguments);
+    try {
+      if (S && UI.screen === 'wk' && UI.wk) { if (UI.wk.step === 'quali' || UI.wk.step === 'strat') wkHoldSave(); else if (S.wkHold) { delete S.wkHold; } }
+      if (S && S.wkHold && S.wkHold.key !== wkHoldKey(S)) delete S.wkHold;
+    } catch (e) { }
+    return r;
+  };
+  var start0 = A['wk-start'];
+  A['wk-start'] = function () {
+    if (S && S.wkHold && S.wkHold.key === wkHoldKey(S) && S.wkHold.wk && S.wkHold.wk.ci === S.cal[S.round]) {
+      var w = JSON.parse(JSON.stringify(S.wkHold.wk)); w.c = circuitFor(S, w.ci); UI.wk = w; UI.screen = 'wk'; render(); window.scrollTo(0, 0);
+      if (typeof toast === 'function') toast(w.step === 'strat' ? 'Back to your strategy. Qualifying is done.' : 'Qualifying continues where you left it.');
+      return;
+    }
+    return start0.apply(this, arguments);
+  };
+})();
 </script>
