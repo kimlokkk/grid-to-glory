@@ -425,7 +425,7 @@ function leadIncome(S, round) {
   var rounds = seasonRounds(S), rk = devRank(S);
   S.teams.forEach(function (t) {
     var f = t.fin; if (!f) return;
-    var prize = LEAD.prizeIn * FIN.prize[rk[t.id] - 1] / rounds, dp = t.pts - (t.dev.ptsSeen || 0), spon = LEAD.sponPoint * Math.max(0, dp);
+    var prize = LEAD.prizeIn * FIN.prize[rk[t.id] - 1] / rounds, dp = t.pts - (t.dev.ptsSeen || 0), spon = typeof spxOn === 'function' && spxOn(S) ? 0 : LEAD.sponPoint * Math.max(0, dp);   /* with team sponsors the bonus comes per podium and win instead */
     t.dev.ptsSeen = t.pts;
     f.cash += prize + spon; f.paidPz = (f.paidPz || 0) + prize; f.paidSp = (f.paidSp || 0) + spon;
   });
@@ -454,6 +454,6 @@ function leadFit(g, t, d) { return leadOn(g, g.season + 1) && t.dev && t.dev.tp 
 function leadPickAffordable(g, t, pool, here) {
   if (!leadOn(g, g.season + 1) || !t.dev || !t.dev.tp) return null;
   var budget = leadDriverBudget(g, t), spent = here.reduce(function (a, d) { return a + (d.con && Number.isFinite(d.con.pay) ? d.con.pay : payFor(ovr(d), 0.75)); }, 0);
-  for (var i = 0; i < pool.length; i++) { var d = pool[i], pay = payFor(ovr(d), 0.75) * leadPayMul(g, t) * leadFbPay(g, t, d); if (spent + pay <= budget) { pool.splice(i, 1); return d; } }
+  for (var i = 0; i < pool.length; i++) { var d = pool[i], pay = Math.max(0, payFor(ovr(d), 0.75) * leadPayMul(g, t) * leadFbPay(g, t, d) - (typeof spxOn === 'function' && spxOn(g) ? spxBack(g, d) : 0)); if (spent + pay <= budget) { pool.splice(i, 1); return d; } }
   return null;
 }

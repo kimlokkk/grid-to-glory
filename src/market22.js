@@ -130,7 +130,7 @@ function marketPublish(g){
  var cands=[];targets.forEach(function(l){worldView(g,l).teams.forEach(function(t){
   var id=w.id+':'+l+':'+t.id+':seat';if(w.offers.some(function(o){return o.id===id||o.league===l&&o.team===t.id&&o.protected;}))return;
   var scout=m.scouts['seat:'+l+':'+t.id],same=l===leagueOf(g)&&t.id===p.team,guaranteed=l!=='f1'&&same&&pos!==1&&!(l==='f3'&&marketF3Seasons(g)>=MARKET8.maxF3);
-  if(!guaranteed&&(!scout||scout.score<scout.threshold+(w.round===1?2:w.round===2?0:-2)-(m.agent===g.season?1:0)))return;
+  if(!guaranteed&&(!scout||scout.score<scout.threshold+(w.round===1?2:w.round===2?0:-2)-(m.agent===g.season?1:0)-(l==='f1'&&typeof spxOn==='function'&&spxOn(g)?Math.min(2,spxBack(g,p)/5):0)))return;
   if(same&&g.fired&&!guaranteed)return;
   cands.push({l:l,t:t,scout:scout,guaranteed:guaranteed});
  });});

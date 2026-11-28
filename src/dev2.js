@@ -47,6 +47,7 @@ function initDev(S) {
   if (typeof leadMigrate === 'function') leadMigrate(S);
   if (typeof puMigrate === 'function') puMigrate(S);
   if (typeof stewMigrate === 'function') stewMigrate(S);
+  if (typeof spxMigrate === 'function') spxMigrate(S);
 }
 
 /* kedudukan semasa ikut mata (jika belum ada mata, ikut kekuatan kereta) */

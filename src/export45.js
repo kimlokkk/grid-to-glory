@@ -78,9 +78,10 @@ function spTeams(S) {
   var ranks = { aero: spRank(S.teams, 'aero'), engine: spRank(S.teams, 'engine'), chassis: spRank(S.teams, 'chassis'), rel: spRank(S.teams, 'rel') }, pr = powerRank(S), me0 = S.drivers[S.pi].team, L = [];
   teamStandings(S).forEach(function (t, i) {
     var c = t.car, d = t.dev || {}, f = t.fin, tp = d.tp, ch = typeof TEAM_CHARS !== 'undefined' && t.char && TEAM_CHARS[t.char] ? TEAM_CHARS[t.char].name : '';
-    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + ' (' + t.short + ')' + (S.round ? ' · constructors P' + (i + 1) : ' · no races yet') + ' · car pace rank #' + teamPaceRank(S, t.id) + ' (aero, engine, chassis avg ' + teamPace(t).toFixed(1) + ') · reliability ' + Math.round(c.rel) + ' (#' + teamRelRank(S, t.id) + ')');
+    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + (typeof spxOn === 'function' && spxOn(S) && spxName(t) !== t.name ? ' [racing as ' + spxName(t) + ']' : '') + ' (' + t.short + ')' + (S.round ? ' · constructors P' + (i + 1) : ' · no races yet') + ' · car pace rank #' + teamPaceRank(S, t.id) + ' (aero, engine, chassis avg ' + teamPace(t).toFixed(1) + ') · reliability ' + Math.round(c.rel) + ' (#' + teamRelRank(S, t.id) + ')');
     L.push('  Car: aero ' + Math.round(c.aero) + ' (#' + ranks.aero[t.id] + '), engine ' + Math.round(c.engine) + ' (#' + ranks.engine[t.id] + '), chassis ' + Math.round(c.chassis) + ' (#' + ranks.chassis[t.id] + '), reliability ' + Math.round(c.rel) + ' (#' + ranks.rel[t.id] + ')');
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
+    if (typeof spxOn === 'function' && spxOn(S) && t.spxP) L.push('  ' + spxPackLine(S, t));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
     var LP = typeof leadOn === 'function' && leadOn(S) && typeof leadPerson === 'function' && !t.spec;
     if (tp && LP) L.push('  Team principal: ' + spPerson(S, leadPerson(S, tp, 'tp', t), 'tp', t));
