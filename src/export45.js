@@ -3,7 +3,7 @@
    full qualifying and race results, race logs). Copy it into a chat and a story can be written without screenshots. =====
    Extra per-race data (qualifying times, tyres, race log, key radio) is recorded in the existing S.rr entry when a race is
    committed and kept for the current and previous season only, so saves stay small. */
-var SP = { scope: 'latest', keep: 2, last: 5 };
+var SPK = { scope: 'latest', keep: 2, last: 5 };   /* story pack settings (was SP, which overwrote the sponsor settings SP in spon12.js and broke fame) */
 
 function spPct(v, lo, hi) { return clamp(Math.round((v - lo) / (hi - lo) * 100), 0, 100); }
 function spN(v, d) { return Number.isFinite(v) ? v.toFixed(d == null ? 0 : d) : '-'; }
@@ -36,7 +36,7 @@ function storyRecord(S, wk) {
     return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info, pos && pos[0] != null ? pos : 0];
   });
   rec.rd = (R.radio || []).filter(function (r) { return r.imp; }).slice(-60).map(function (r) { return [r.lap, r.t]; });
-  S.rr.forEach(function (r) { if (r.s < S.season - (SP.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
+  S.rr.forEach(function (r) { if (r.s < S.season - (SPK.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
 }
 
 /* ---------- text sections ---------- */
@@ -161,7 +161,7 @@ function spTrack(S, ci, beforeSeason) {
 }
 function spRaces(S, scope) {
   var lg = leagueOf(S), all = (S.rr || []).filter(function (r) { return r.s === S.season && r.league === lg; }).sort(function (a, b) { return a.r - b.r; });
-  var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SP.last) : all.slice(-1);
+  var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SPK.last) : all.slice(-1);
   if (!pick.length) return { text: '(no races completed this season yet)', first: 0 };
   var out = [];
   pick.forEach(function (rec) {
@@ -213,7 +213,7 @@ function spRaces(S, scope) {
 }
 function storyPackText(scope) {
   var races = spSafe('races', function () { return spRaces(S, scope); }), done = S.round, tot = seasonRounds(S);
-  var head = ['GRID TO GLORY · STORY PACK', spLead(S) + ' Season ' + S.season + ' · ' + done + '/' + tot + ' rounds completed · scope: ' + (scope === 'season' ? 'whole season' : scope === 'last' ? 'last ' + SP.last + ' races' : 'latest race'), '',
+  var head = ['GRID TO GLORY · STORY PACK', spLead(S) + ' Season ' + S.season + ' · ' + done + '/' + tot + ' rounds completed · scope: ' + (scope === 'season' ? 'whole season' : scope === 'last' ? 'last ' + SPK.last + ' races' : 'latest race'), '',
     'HOW TO USE: Everything below is fact from the game. Write the story in English from it: keep names, numbers, results and continuity exact; invent only dialogue, personalities and small scene details, and say which parts are invented.', ''];
   var sec = function (t, body) { return '## ' + t + '\n' + body + '\n'; };
   return head.join('\n') + '\n' + sec('MY DRIVER', spSafe('player', function () { return spPlayer(S); })) + '\n' + sec('STANDINGS', spSafe('standings', function () { return spStandings(S); })) + '\n' +
@@ -223,21 +223,21 @@ function storyPackText(scope) {
 
 /* ---------- UI ---------- */
 function spModalHTML() {
-  var btn = function (v, l) { return '<button class="btn sm ' + (SP.scope === v ? 'on' : '') + '" data-act="sp-scope" data-v="' + v + '">' + l + '</button>'; };
+  var btn = function (v, l) { return '<button class="btn sm ' + (SPK.scope === v ? 'on' : '') + '" data-act="sp-scope" data-v="' + v + '">' + l + '</button>'; };
   return '<h2>Story pack</h2><p class="dim">One block of text with the cars, teams, staff, drivers, news, full qualifying and race results and race logs. Copy it into a chat to get a story, no screenshots needed.</p>' +
-    '<div class="row" style="gap:6px;flex-wrap:wrap">' + btn('latest', 'Latest race') + btn('last', 'Last ' + SP.last + ' races') + btn('season', 'Whole season') + '</div>' +
+    '<div class="row" style="gap:6px;flex-wrap:wrap">' + btn('latest', 'Latest race') + btn('last', 'Last ' + SPK.last + ' races') + btn('season', 'Whole season') + '</div>' +
     '<textarea id="exp" readonly spellcheck="false" style="min-height:220px"></textarea><p class="dim" id="sp-size" style="margin:0;font-size:12px"></p>' +
     '<div class="row"><button class="btn pri" data-act="copy">Copy</button><button class="btn" data-act="sp-dl">Download .txt</button><button class="btn" data-act="mclose">Close</button></div>';
 }
 function spFill() {
   var ta = document.getElementById('exp'); if (!ta) return;
-  var txt = spSafe('story pack', function () { return storyPackText(SP.scope); }); ta.value = txt;
+  var txt = spSafe('story pack', function () { return storyPackText(SPK.scope); }); ta.value = txt;
   var sz = document.getElementById('sp-size'); if (sz) sz.textContent = txt.length.toLocaleString() + ' characters';
-  document.querySelectorAll('#modal [data-act="sp-scope"]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === SP.scope); });
+  document.querySelectorAll('#modal [data-act="sp-scope"]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === SPK.scope); });
 }
 if (typeof A !== 'undefined') {
-  A['sp-open'] = function (d) { if (UI.screen === 'menu') { var sv = loadSave(); if (sv) S = migrate(sv); } if (!S || !S.drivers) return; if (d && d.v) SP.scope = d.v; showModal(spModalHTML()); spFill(); };
-  A['sp-scope'] = function (d) { SP.scope = d.v; spFill(); };
+  A['sp-open'] = function (d) { if (UI.screen === 'menu') { var sv = loadSave(); if (sv) S = migrate(sv); } if (!S || !S.drivers) return; if (d && d.v) SPK.scope = d.v; showModal(spModalHTML()); spFill(); };
+  A['sp-scope'] = function (d) { SPK.scope = d.v; spFill(); };
   A['sp-dl'] = function () {
     var ta = document.getElementById('exp'); if (!ta) return;
     try {

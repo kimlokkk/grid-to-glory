@@ -6750,6 +6750,7 @@ function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requ
   if (typeof leadMigrate === 'function') { try { leadMigrate(o); } catch (e) { } }
   if (typeof puMigrate === 'function') { try { puMigrate(o); } catch (e) { } }
   if (typeof stewMigrate === 'function') { try { stewMigrate(o); } catch (e) { } }
+  if (typeof fameRepair === 'function') { try { fameRepair(o); } catch (e) { } }
   return o; }
 function me() { return S.drivers[S.pi]; }
 function myTeam() { return S.teams[me().team]; }
@@ -10699,6 +10700,19 @@ window.addEventListener('error', function (e) {
     save();
   } catch (x) { }
 });
+
+/* Repair (2.6.9): the story pack's settings once shared the name SP with the sponsor settings, which made fame NaN after the first race,
+   so no brand ever made an offer. A broken fame is rebuilt from the career record: the long-run level that the same results would give. */
+function fameRepair(S) {
+  if (!S || S.mode !== 'pro' || Number.isFinite(S.fame)) return;
+  if (S.fame == null && !(S.career && S.career.starts > 0)) return;   /* a new career simply starts at the default; a saved NaN comes back as null */
+  var c = S.career || {}, st = Math.max(1, c.starts || 0), wins = c.wins || 0, pods = Math.max(0, (c.pods || 0) - wins), pts = Math.max(0, (c.pts ? Math.min(st, Math.round(c.pts / 6)) : 0) - wins - pods);
+  var g = (7 * wins + 3.5 * pods + 1.2 * pts + 0.3 * Math.max(0, st - wins - pods - pts)) / st;
+  if (S.drivers && S.drivers[S.pi] && S.drivers[S.pi].nat === 'MY') g *= 1.15;
+  S.fame = clamp(Math.round(g / (1 - 0.97)), 6, 100);
+  S.fameFixed = S.season;
+  if ((S.round || 0) === 0 && typeof sponNew === 'function') sponNew(S);   /* the season has not started: brands can still make offers now */
+}
 /* ===== Fasa E4b: rakan sepasukan. Keserasian (-10..10) naik bila ikut arahan team, turun bila membantah.
    Team order dalam race: pemandu utama di belakang kau = diminta bagi laluan; kau pemandu utama di belakang rakan = rakan diminta bagi laluan. ===== */
 var TM = { gap: 0.05, obey: 1.5, refuse: -2, favour: -0.5 };
@@ -11153,6 +11167,7 @@ var CHANGELOG = [
     "Where to see it: during the race your engineer tells you on the radio when you get a penalty, when you serve it and when a rival is penalised for hitting you; the caption flashes and the timing tower shows the time still to serve (+5s) and then the penalty served. After the race: a Stewards' decisions panel, your penalty points on the Driver tab, the race log and the Story pack. In testing there were about 1.2 penalties a race across the grid.",
     "Team radio has far more to say: every common moment (overtakes, places lost, pace, tyres, safety cars, pit stops, retirements, penalties, spins, rain) now has several lines, and the same line never plays twice in a row. Your replies on the pit call card vary too.",
     "When your result decides the title, your engineer tells you on the radio as you cross the line.",
+    "Fixed personal sponsors stopping for good: a clash between two settings made your fame break after the first race, so brands stopped making offers whatever your results (it was not caused by turning offers down). Fame works again, offers come every season, and a save with a broken fame has it rebuilt from your career record when you load it.",
     "Titles are announced the moment they are decided. As soon as nobody can catch the leader any more (26 points a race for a driver, 44 for a team), the race result shows a champion banner, Home keeps it for the rest of the season, and the news and the Story pack record the round and how many races were left."
   ] },
   { v: '2.6.8', d: 'Power units, and reliability shown apart', date: '28 Nov 2026', l: [
@@ -15221,7 +15236,7 @@ if(UI.screen==='menu')render();
    full qualifying and race results, race logs). Copy it into a chat and a story can be written without screenshots. =====
    Extra per-race data (qualifying times, tyres, race log, key radio) is recorded in the existing S.rr entry when a race is
    committed and kept for the current and previous season only, so saves stay small. */
-var SP = { scope: 'latest', keep: 2, last: 5 };
+var SPK = { scope: 'latest', keep: 2, last: 5 };   /* story pack settings (was SP, which overwrote the sponsor settings SP in spon12.js and broke fame) */
 
 function spPct(v, lo, hi) { return clamp(Math.round((v - lo) / (hi - lo) * 100), 0, 100); }
 function spN(v, d) { return Number.isFinite(v) ? v.toFixed(d == null ? 0 : d) : '-'; }
@@ -15254,7 +15269,7 @@ function storyRecord(S, wk) {
     return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info, pos && pos[0] != null ? pos : 0];
   });
   rec.rd = (R.radio || []).filter(function (r) { return r.imp; }).slice(-60).map(function (r) { return [r.lap, r.t]; });
-  S.rr.forEach(function (r) { if (r.s < S.season - (SP.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
+  S.rr.forEach(function (r) { if (r.s < S.season - (SPK.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
 }
 
 /* ---------- text sections ---------- */
@@ -15379,7 +15394,7 @@ function spTrack(S, ci, beforeSeason) {
 }
 function spRaces(S, scope) {
   var lg = leagueOf(S), all = (S.rr || []).filter(function (r) { return r.s === S.season && r.league === lg; }).sort(function (a, b) { return a.r - b.r; });
-  var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SP.last) : all.slice(-1);
+  var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SPK.last) : all.slice(-1);
   if (!pick.length) return { text: '(no races completed this season yet)', first: 0 };
   var out = [];
   pick.forEach(function (rec) {
@@ -15431,7 +15446,7 @@ function spRaces(S, scope) {
 }
 function storyPackText(scope) {
   var races = spSafe('races', function () { return spRaces(S, scope); }), done = S.round, tot = seasonRounds(S);
-  var head = ['GRID TO GLORY · STORY PACK', spLead(S) + ' Season ' + S.season + ' · ' + done + '/' + tot + ' rounds completed · scope: ' + (scope === 'season' ? 'whole season' : scope === 'last' ? 'last ' + SP.last + ' races' : 'latest race'), '',
+  var head = ['GRID TO GLORY · STORY PACK', spLead(S) + ' Season ' + S.season + ' · ' + done + '/' + tot + ' rounds completed · scope: ' + (scope === 'season' ? 'whole season' : scope === 'last' ? 'last ' + SPK.last + ' races' : 'latest race'), '',
     'HOW TO USE: Everything below is fact from the game. Write the story in English from it: keep names, numbers, results and continuity exact; invent only dialogue, personalities and small scene details, and say which parts are invented.', ''];
   var sec = function (t, body) { return '## ' + t + '\n' + body + '\n'; };
   return head.join('\n') + '\n' + sec('MY DRIVER', spSafe('player', function () { return spPlayer(S); })) + '\n' + sec('STANDINGS', spSafe('standings', function () { return spStandings(S); })) + '\n' +
@@ -15441,21 +15456,21 @@ function storyPackText(scope) {
 
 /* ---------- UI ---------- */
 function spModalHTML() {
-  var btn = function (v, l) { return '<button class="btn sm ' + (SP.scope === v ? 'on' : '') + '" data-act="sp-scope" data-v="' + v + '">' + l + '</button>'; };
+  var btn = function (v, l) { return '<button class="btn sm ' + (SPK.scope === v ? 'on' : '') + '" data-act="sp-scope" data-v="' + v + '">' + l + '</button>'; };
   return '<h2>Story pack</h2><p class="dim">One block of text with the cars, teams, staff, drivers, news, full qualifying and race results and race logs. Copy it into a chat to get a story, no screenshots needed.</p>' +
-    '<div class="row" style="gap:6px;flex-wrap:wrap">' + btn('latest', 'Latest race') + btn('last', 'Last ' + SP.last + ' races') + btn('season', 'Whole season') + '</div>' +
+    '<div class="row" style="gap:6px;flex-wrap:wrap">' + btn('latest', 'Latest race') + btn('last', 'Last ' + SPK.last + ' races') + btn('season', 'Whole season') + '</div>' +
     '<textarea id="exp" readonly spellcheck="false" style="min-height:220px"></textarea><p class="dim" id="sp-size" style="margin:0;font-size:12px"></p>' +
     '<div class="row"><button class="btn pri" data-act="copy">Copy</button><button class="btn" data-act="sp-dl">Download .txt</button><button class="btn" data-act="mclose">Close</button></div>';
 }
 function spFill() {
   var ta = document.getElementById('exp'); if (!ta) return;
-  var txt = spSafe('story pack', function () { return storyPackText(SP.scope); }); ta.value = txt;
+  var txt = spSafe('story pack', function () { return storyPackText(SPK.scope); }); ta.value = txt;
   var sz = document.getElementById('sp-size'); if (sz) sz.textContent = txt.length.toLocaleString() + ' characters';
-  document.querySelectorAll('#modal [data-act="sp-scope"]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === SP.scope); });
+  document.querySelectorAll('#modal [data-act="sp-scope"]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === SPK.scope); });
 }
 if (typeof A !== 'undefined') {
-  A['sp-open'] = function (d) { if (UI.screen === 'menu') { var sv = loadSave(); if (sv) S = migrate(sv); } if (!S || !S.drivers) return; if (d && d.v) SP.scope = d.v; showModal(spModalHTML()); spFill(); };
-  A['sp-scope'] = function (d) { SP.scope = d.v; spFill(); };
+  A['sp-open'] = function (d) { if (UI.screen === 'menu') { var sv = loadSave(); if (sv) S = migrate(sv); } if (!S || !S.drivers) return; if (d && d.v) SPK.scope = d.v; showModal(spModalHTML()); spFill(); };
+  A['sp-scope'] = function (d) { SPK.scope = d.v; spFill(); };
   A['sp-dl'] = function () {
     var ta = document.getElementById('exp'); if (!ta) return;
     try {
