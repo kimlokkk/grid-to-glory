@@ -68,3 +68,19 @@ var TRACK_ZONES = {}, TRACK_ZQ = 1;
   GTG_TRACKS.forEach(function (x) { var t = TRACK_REAL[x[0]]; if (t) TRACK_ZONES[x[1]] = t.z; });
   if (typeof TRK !== 'undefined') Object.keys(TRACK_REAL).forEach(function (k) { delete TRK[k]; });
 })();
+
+/* Lap records after the circuit lengths changed (2.6.9). A fastest lap set before this version was on the older, longer or shorter
+   version of the circuit, so it is converted once by the ratio of the base lap times (measured in the engine: Sol de Vega 0.901 against
+   0.902 from the bases), so old records stay fair to beat. Pro careers only (classic circuits did not change). The race-by-race times in
+   the Story pack stay as they were run. */
+var TRK_BASE_OLD = { 0: 97, 10: 99, 3: 98, 11: 89, 12: 81, 2: 73, 13: 92, 14: 76, 6: 102, 5: 116, 7: 80, 15: 79, 16: 92, 17: 105, 8: 96, 18: 98, 19: 98, 4: 82, 1: 80, 20: 103, 21: 94, 9: 92 };
+function trkLapConv(S) {
+  if (!S || S.trkV >= 1) return;
+  S.trkV = 1;
+  if (S.mode !== 'pro' || !S.th) return;
+  Object.keys(S.th).forEach(function (ci) {
+    var c = CIRCUITS[+ci], b0 = TRK_BASE_OLD[ci]; if (!c || !c.pro || !b0 || c.pro.base === b0) return;
+    var k = c.pro.base / b0;
+    (S.th[ci] || []).forEach(function (r) { if (r.fl && r.fl.t > 0 && !r.fl.cv) { r.fl.t = +(r.fl.t * k).toFixed(3); r.fl.cv = 1; } });
+  });
+}

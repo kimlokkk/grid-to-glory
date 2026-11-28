@@ -75,6 +75,7 @@ function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requ
   if (typeof fameRepair === 'function') { try { fameRepair(o); } catch (e) { } }
   if (typeof spxMigrate === 'function') { try { spxMigrate(o); } catch (e) { } }
   if (typeof atrMigrate === 'function') { try { atrMigrate(o); } catch (e) { } }
+  if (typeof trkLapConv === 'function') { try { trkLapConv(o); } catch (e) { } }
   return o; }
 function me() { return S.drivers[S.pi]; }
 function myTeam() { return S.teams[me().team]; }
