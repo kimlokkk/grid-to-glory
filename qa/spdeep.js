@@ -13,14 +13,16 @@ const { assert, chooseStyle, clickUI } = require('./flow');
   assert.equal(await pg.evaluate('!!S.live'), true, 'race must actually start');
   await click('[data-act=r-fast]');
   let cards = 0, manual = false;
-  for (let i = 0; i < 4000; i++) {
+  for (let i = 0; i < 6000; i++) {
     await tick(250); if (await has('[data-act=r-done]')) break;
+    if (!(await has('#modal [data-act=pc-yes]')) && await has('#modal .mbox [data-act]')) { await pg.evaluate(() => { const m = document.querySelector('#modal .mbox'), b = m && (m.querySelector('[data-act=mclose]') || m.querySelector('.opt[data-act]') || m.querySelector('[data-act]')); if (b && A[b.getAttribute('data-act')]) A[b.getAttribute('data-act')]({ v: b.getAttribute('data-v'), i: b.getAttribute('data-i') }); }); await tick(250); continue; }
     if (await has('#modal [data-act=pc-yes]')) { cards++; await pg.evaluate(n => A[n === 1 ? 'pc-no' : 'pc-yes']({}), cards); await tick(250); continue; }
     if (!cards && await pg.evaluate('RUN && RUN.R && RUN.R.p.lap >= 3 && !RUN.R.p.pitReq && !RUN.wait && !RUN.R.p.fin && !RUN.R.p.dnf')) await pg.evaluate("(()=>{const p=RUN.R.p;p.pitReq=p.comp==='H'?'M':'H';p.why='pelan';p.pitOk=false;})()");
     if (!manual && await pg.evaluate('RUN && RUN.R && RUN.R.p.lap >= Math.round(RUN.R.L * 0.6) && !RUN.R.p.pitReq && !RUN.wait && !RUN.R.p.hold && !document.querySelector("#modal .mbox")')) {
       manual = await pg.evaluate("(()=>{A['r-pitm']();const c=RUN.R.p.comp==='S'?'M':'S';A['r-pit']({v:c});A['r-pit-confirm']();return !!RUN.R.p.pitReq})()"); await tick(300);
     }
   }
+  if (!(await has('[data-act=r-done]'))) console.log('STUCK', await pg.evaluate(() => JSON.stringify({ lap: RUN && RUN.R && RUN.R.p.lap, L: RUN && RUN.R && RUN.R.L, wait: RUN && RUN.wait, pause: RUN && RUN.pause, done: RUN && RUN.R && RUN.R.done, pitOpen: UI.pitOpen, modal: (document.querySelector('#modal') || {}).innerText ? document.querySelector('#modal').innerText.slice(0, 200) : '', acts: [...document.querySelectorAll('#modal [data-act]')].map(e => e.getAttribute('data-act')).slice(0, 8) })));
   assert.equal(await has('[data-act=r-done]'), true, 'race reaches the flag');
   const r = await pg.evaluate(() => { const rec = S.rr[S.rr.length - 1], d = rec.dp || {}; const t = storyPackText('latest'); return { has: !!rec.dp, dnf: (rw => !!rw && !rw[2])(rec.c.find(x => x[0] === S.drivers[S.pi].name)), laps: rec.laps, pl: (d.pl || []).length, pace: (d.pace || []).length, lc: (d.lc || []).length, pd: (d.pd || []).map(x => x[1]), size: JSON.stringify(rec.dp || {}).length, txt: t.slice(t.indexOf('Race pace'), t.indexOf('Race pace') + 200), dec: t.split('\n').filter(l => /^  L\d+ (the engineer|your own|the team|you cancelled)/.test(l)) }; });
   console.log(JSON.stringify({ cards, manual, ...r, txt: undefined }, null, 0)); console.log(r.txt); console.log(r.dec.join('\n'));
