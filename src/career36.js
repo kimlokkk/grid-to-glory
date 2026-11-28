@@ -7,7 +7,7 @@ function cvHead(eyebrow, title, tag) { return '<div class="tg-head"><div><small>
 function cvHelp(title, body) { return '<details class="driver-help dg-help"><summary>' + title + '</summary>' + body + '</details>'; }
 function cvRoundsLeft() { return Math.max(0, seasonRounds(S) - S.round); }
 function cvOpenOffers() { var w = S.market8.window; return w && w.season === S.season && !w.signed ? w.offers.filter(function (o) { return o.status === 'open'; }) : []; }
-function cvCarRank(league, team) { var ts = worldView(S, league).teams; return ts.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }).indexOf(team) + 1; }
+function cvCarRank(league, team) { var ts = worldView(S, league).teams; return ts.slice().sort(function (a, b) { return (ts[0].spec ? teamPower(b) - teamPower(a) : teamPace(b) - teamPace(a)); }).indexOf(team) + 1; }
 function cvBrand(name) {
   var h = 0, i; for (i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
   var ini = name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase();

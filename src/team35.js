@@ -66,7 +66,7 @@ function tgBlueprint(t) {
     dots += '<circle class="' + P[k[0]].tone + '" cx="' + h[0] + '" cy="' + h[1] + '" r="9"/>';
   });
   return '<section class="tg-bp">' +
-    '<div class="tg-bp-head"><div><small>Technical file</small><h2>' + esc(t.short) + ' car blueprint</h2></div><div class="tg-bp-pace"><small>Car pace</small><b>' + teamPower(t).toFixed(1) + '</b><span>#' + teamRank(S, t.id) + ' of ' + S.teams.length + '</span></div></div>' +
+    '<div class="tg-bp-head"><div><small>Technical file</small><h2>' + esc(t.short) + ' car blueprint</h2></div><div class="tg-bp-pace"><small>Car pace</small><b>' + teamPace(t).toFixed(1) + '</b><span>#' + teamPaceRank(S, t.id) + ' of ' + S.teams.length + ' · reliability ' + Math.round(t.car.rel) + ' (#' + teamRelRank(S, t.id) + ')</span></div></div>' +
     '<div class="tg-bp-stage"><div class="tg-bp-side">' + tiles.engine + tiles.rel + '</div>' +
     '<div class="tg-bp-car">' + carSVG(t, 700) + '<svg class="tg-bp-lines" viewBox="0 0 700 274" aria-hidden="true">' + lines + dots + '</svg></div>' +
     '<div class="tg-bp-side">' + tiles.aero + tiles.chassis + '</div></div></section>';
@@ -127,10 +127,10 @@ function tgBoss(t) {
 
 /* ---------- grid power ladder ---------- */
 function tgPower(t) {
-  var list = S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }), mine = teamPower(t), top = teamPower(list[0]), low = Math.min(50, teamPower(list[list.length - 1]) - 5);
+  var list = S.teams.slice().sort(function (a, b) { return teamPace(b) - teamPace(a); }), mine = teamPace(t), top = teamPace(list[0]), low = Math.min(50, teamPace(list[list.length - 1]) - 5);
   return '<section class="card team-panel tg-power">' + tgHead('Grid', 'Car pace ladder', '#' + (list.indexOf(t) + 1) + ' of ' + list.length) +
     '<div class="tg-ladder">' + list.map(function (x, i) {
-      var v = teamPower(x), d = v - mine;
+      var v = teamPace(x), d = v - mine;
       return '<div class="tg-ladder-row ' + (x === t ? 'me' : '') + '" style="--tc:' + x.color + '"><span class="tg-pos">' + (i + 1) + '</span><b>' + esc(x.short) + '</b><i><u style="width:' + clamp((v - low) / (top - low) * 100, 4, 100) + '%"></u></i><span class="tg-val">' + v.toFixed(1) + '</span><span class="tg-d ' + (x === t ? 'you' : d > 0 ? 'no' : 'ok') + '">' + (x === t ? 'YOU' : (d > 0 ? '+' : '−') + Math.abs(d).toFixed(1)) + '</span></div>';
     }).join('') + '</div>' + tgHelp('What is car pace?', '<p>The average of Aero, Engine, Chassis and Reliability. The last column shows each car against yours.</p>') + '</section>';
 }

@@ -70,6 +70,7 @@ function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requ
   if (o.rdLog) o.rdLog = o.rdLog.filter(function (l) { return !/^Musim |gagal|Pakej/.test(l); });
   if (typeof verMigrate === 'function') o = verMigrate(o);
   if (typeof leadMigrate === 'function') { try { leadMigrate(o); } catch (e) { } }
+  if (typeof puMigrate === 'function') { try { puMigrate(o); } catch (e) { } }
   return o; }
 function me() { return S.drivers[S.pi]; }
 function myTeam() { return S.teams[me().team]; }
@@ -297,8 +298,8 @@ function tKereta() {
   [['aero', 'Aero'], ['engine', 'Engine'], ['chassis', 'Chassis'], ['rel', 'Reliability']].forEach(function (k) { h += '<button class="btn sm ' + (S.rd === k[0] ? 'on' : '') + '" data-act="rd" data-v="' + k[0] + '">' + k[1] + '</button>'; });
   h += '</div><p class="dim">No fixed upgrade calendar: each team principal decides when their package is ready. Patient bosses wait for a big, safer step; teams under pressure rush parts out, and rushed parts fail more often. Your team follows this R&amp;D focus, helped by your feedback skill. Every few seasons, new regulations can shake up the whole grid.</p>';
   if (S.rdLog.length) h += '<h3>Development log</h3>' + S.rdLog.slice(0, 5).map(function (l) { return '<p class="dim" style="font-size:13px">' + esc(l) + '</p>'; }).join('');
-  h += '</div><div class="card"><h3 style="margin-bottom:8px">Car performance by team</h3><table class="t"><tbody>';
-  S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }).forEach(function (x, i) { h += '<tr class="' + (x.id === t.id ? 'me' : '') + '"><td class="mono dim" style="width:28px">' + (i + 1) + '</td><td>' + tagT(x) + ' ' + x.name + '</td><td class="r mono">' + teamPower(x).toFixed(1) + '</td></tr>'; });
+  h += '</div><div class="card"><h3 style="margin-bottom:8px">Car pace by team</h3><table class="t"><tbody>';
+  S.teams.slice().sort(function (a, b) { return teamPace(b) - teamPace(a); }).forEach(function (x, i) { h += '<tr class="' + (x.id === t.id ? 'me' : '') + '"><td class="mono dim" style="width:28px">' + (i + 1) + '</td><td>' + tagT(x) + ' ' + x.name + '</td><td class="r mono">' + teamPace(x).toFixed(1) + '</td></tr>'; });
   return h + '</tbody></table></div></div>';
 }
 A['rd'] = function (d) { S.rd = d.v; save(); render(); };

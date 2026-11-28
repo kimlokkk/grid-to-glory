@@ -6,6 +6,10 @@ function cbCmp(a, b) { var x = a.fp || [], y = b.fp || []; for (var i = 0; i < M
 function driverStandings(S) { return S.drivers.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || cbCmp(a, b) || b.pods - a.pods || a.id - b.id; }); }
 function teamStandings(S) { return S.teams.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins || a.id - b.id; }); }
 function teamPower(t) { return (t.car.aero + t.car.engine + t.car.chassis + t.car.rel) / 4; }
+/* what the car is worth on track: aero, engine and chassis (reliability decides finishes, not lap time). Shown to the player; AI decisions keep teamPower. */
+function teamPace(t) { return (t.car.aero + t.car.engine + t.car.chassis) / 3; }
+function teamPaceRank(S, id) { var l = S.teams.slice().sort(function (a, b) { return teamPace(b) - teamPace(a); }); for (var i = 0; i < l.length; i++) if (l[i].id === id) return i + 1; return 10; }
+function teamRelRank(S, id) { var l = S.teams.slice().sort(function (a, b) { return b.car.rel - a.car.rel; }); for (var i = 0; i < l.length; i++) if (l[i].id === id) return i + 1; return 10; }
 function teamRank(S, id) { var l = S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }); for (var i = 0; i < l.length; i++) if (l[i].id === id) return i + 1; return 10; }
 function rating(d) { return baseOverall(d); }
 function ageMul(S) { var p = S && S.drivers && S.drivers[S.pi]; return p && p.age > 32 ? 1 + 0.15 * (p.age - 32) : 1; }
@@ -52,6 +56,7 @@ function devRound(S) {
   return out;
 }
 function finishRace(S, R, mg) {
+  if (typeof puCommit === 'function') { try { puCommit(S, R); } catch (e) { } }
   evaluationRace(S, R);
   abilityRace(S, R);
   R.cls.forEach(function (x) {

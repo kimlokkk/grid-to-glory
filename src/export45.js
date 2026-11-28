@@ -59,6 +59,7 @@ function spPlayer(S) {
     L.push('Tier: ' + EVALUATION.tiers[p.evaluation.tier] + (ev && ev.sts != null ? ' · season STS ' + ev.sts.toFixed(1) + '/100 · head-to-head ' + ev.h2hWins + '/' + ev.h2hRaces : ''));
   }
   L.push('Career by league (incl. this season, never added together): ' + careerLeagueText(p));
+  if (typeof puOn === 'function' && puOn(S)) L.push('Power units (' + PU.units + ' per season, a further unit is a ' + PU.pen + '-place grid drop): ' + puPoolText(S, p));
   L.push('This season: ' + p.pts + ' pts, ' + p.wins + ' wins, ' + p.pods + ' podiums, ' + (S.results || []).filter(function (r) { return r.dnf; }).length + ' DNFs' + (S.round ? '' : ' (no races yet)'));
   if (mate) L.push('Teammate: ' + mate.name + ' (OVR ' + ovr(mate) + ', ' + mate.pts + ' pts)' + (S.tm ? ' · relationship ' + tmLabel(S.tm.rel) + ' (' + spN(S.tm.rel, 1) + '), team orders obeyed ' + S.tm.yes + ', refused ' + S.tm.no : ''));
   return L.join('\n');
@@ -75,7 +76,7 @@ function spTeams(S) {
   var ranks = { aero: spRank(S.teams, 'aero'), engine: spRank(S.teams, 'engine'), chassis: spRank(S.teams, 'chassis'), rel: spRank(S.teams, 'rel') }, pr = powerRank(S), me0 = S.drivers[S.pi].team, L = [];
   teamStandings(S).forEach(function (t, i) {
     var c = t.car, d = t.dev || {}, f = t.fin, tp = d.tp, ch = typeof TEAM_CHARS !== 'undefined' && t.char && TEAM_CHARS[t.char] ? TEAM_CHARS[t.char].name : '';
-    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + ' (' + t.short + ')' + (S.round ? ' · constructors P' + (i + 1) : ' · no races yet') + ' · car power rank #' + pr[t.id] + ' (avg ' + teamPower(t).toFixed(1) + ')');
+    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + ' (' + t.short + ')' + (S.round ? ' · constructors P' + (i + 1) : ' · no races yet') + ' · car pace rank #' + teamPaceRank(S, t.id) + ' (aero, engine, chassis avg ' + teamPace(t).toFixed(1) + ') · reliability ' + Math.round(c.rel) + ' (#' + teamRelRank(S, t.id) + ')');
     L.push('  Car: aero ' + Math.round(c.aero) + ' (#' + ranks.aero[t.id] + '), engine ' + Math.round(c.engine) + ' (#' + ranks.engine[t.id] + '), chassis ' + Math.round(c.chassis) + ' (#' + ranks.chassis[t.id] + '), reliability ' + Math.round(c.rel) + ' (#' + ranks.rel[t.id] + ')');
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
@@ -165,6 +166,8 @@ function spRaces(S, scope) {
     var m = rec.m || {}, c = CIRCUITS[rec.ci], L = [];
     L.push('### Round ' + (rec.r + 1) + ': ' + (c ? c.name : 'circuit ' + rec.ci) + ' (' + rec.laps + ' laps)' + (m.w ? ' · weather ' + spEn(m.w) : '') + (m.sc != null ? ' · safety cars ' + m.sc + ', VSC ' + m.vsc + ', clean overtakes ' + m.ot : ''));
     L.push(spSafe('track', function () { return spTrack(S, rec.ci, rec.s); }));
+    var pl = S.pu && S.pu.log ? S.pu.log.filter(function (z) { return z.s === rec.s && z.r === rec.r; })[0] : null;
+    if (pl) L.push('Power units: ' + (pl.me ? 'you ran unit ' + pl.me.unit + (pl.me.fresh ? ' (new' + (pl.me.pen ? ', with a grid penalty' : '') + ')' : ' (' + pl.me.w0 + '% worn at the start)') : 'not recorded for you') + ' · grid penalties: ' + (pl.pens.length ? pl.pens.map(function (q) { return q.n + ' -' + q.places + ' (unit ' + q.unit + ')'; }).join(', ') : 'none'));
     if (rec.fl) L.push('Fastest lap: ' + rec.fl + (m.flt ? ' ' + fmtT(m.flt) : ''));
     if (rec.qs && rec.qs.length) {
       var teamOf = {}; (rec.q || []).forEach(function (q) { teamOf[q[0]] = spTeamLine(S, q[1]); });

@@ -100,6 +100,7 @@ function paceFree(R, f) {
   var c = R.c, d = f.d;
   var p = c.base + (100 - f.perf) * P2.carK + (100 - f.a.rpace) * P2.drvK + f.setup;
   p += lossAt(f, R, f.comp, f.eff);
+  if (f.pu) p += puLoss(R, f);
   if (R.wet > 0.02) p += R.wet * 8 + (100 - (0.6 * d.wet + 0.4 * f.a.adapt)) * 0.04 * R.wet - (f.t.car.aero - 75) * 0.01 * R.wet + ((R.wet > 0.1 && R.wet < 0.6) ? (100 - f.a.adapt) * 0.01 : 0);
   p += P2.fuelPer * Math.max(f.fuel, 0) + (f.fuel <= 0 ? 3 : 0);
   if (!R.sc) {
@@ -378,6 +379,7 @@ function makeRace2(S, ci, gridIds, o) {
   trainingPrepare(S);
   evaluationPrepare(S, ci);
   o = o || {};
+  if (typeof puBefore === 'function') gridIds = puBefore(S, ci, gridIds, o);
   var c = circuitFor(S, ci), L = laps2(c);
   var R = { v: 2, distanceScale: c.distanceScale || 1, c: c, ci: ci, L: L, dt: c.base / TICKS_PER_LAP, t: 0, ticks: 0, cars: [], log: [], done: false, nPass: 0, nClean: 0, nStart: 0, nFail: 0, nContact: 0, tagCount: {}, zones: zonesFor(c), lap: 1, lapPos: 0, drsOK: true, sc: 0, scT: 0, scCool: 0, restartT: 0, nDNF: 0, nSC: 0, nVSC: 0, nSpin: 0, nMech: 0, nCrash: 0 };
   var qq = P2._q; P2._q = null;
@@ -405,6 +407,7 @@ function makeRace2(S, ci, gridIds, o) {
     refreshRaceModes(R, f);
     R.cars.push(f);
   });
+  if (typeof puAttach === 'function') puAttach(S, R);
   return R;
 }
 
@@ -453,7 +456,7 @@ function incidents(R, trk) {
   var T = TICKS_PER_LAP, wet = R.wet;
   trk.forEach(function (f) {
     if (f.fin || f.hold > 0) return;
-    var d = f.d, pm = (100 - f.t.car.rel) * P2.mechK * (1 + f.eff * 0.003) / T;
+    var d = f.d, pm = (100 - f.t.car.rel) * P2.mechK * (1 + f.eff * 0.003) / T * (f.pu ? puFail(R, f) : 1);
     var cv = 0.7 * d.cons + 0.3 * f.a.restart, pe = (P2.mistV === 2 ? P2.mistK2 * (P2.mistF + Math.pow(Math.max(0, 100 - cv) / P2.mistC, P2.mistP)) : P2.mistK * (1 + (100 - cv) / 30)) * (R.sc ? 1 : [0.7, 1, 1.5][f.push]) * (1 + Math.max(0, tyreHeat(f) - 0.78) * 3 + Math.max(0, 0.2 - tyreHealth(f, R)) * 2) * (1 + wet * 2.5 * (1 + (100 - (0.6 * d.wet + 0.4 * f.a.adapt)) / 40)) * (1 + (f.a.risk - 50) / 170) * (f.lap <= 1 ? 3 : 1) * (f.gA < 0.8 ? 1.3 : 1) * (R.sc ? 0.1 : 1) / T;
     pe *= combinedRisk(R, f);
     var r = rnd();

@@ -1,6 +1,13 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.8', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.9', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.9', d: 'Power units, and reliability shown apart', date: '28 Nov 2026', l: [
+    "Every F1 driver now has 4 power units a season. Before each race you choose which one to run on the qualifying page, with your engineer's suggestion: fresh units for engine-heavy tracks, worn ones where the engine matters less. A 5th or later unit is a 10-place grid drop after qualifying.",
+    "Wear costs race pace (never qualifying) and raises the failure chance. Almost nothing below 50% wear, about 0.05 s a lap at 60%, 0.15 s at 80% and 0.3 s at 100%, more on engine-heavy tracks. A failed unit is lost for the season.",
+    "Reliability decides how long a unit lasts (about 5.5 races at reliability 75) and how often it breaks. In testing, teams with reliability under 70 took a penalty in half of their seasons, teams above 80 in about 1 in 20. Overall failure rates stay about as before.",
+    "Car pace is now shown apart from reliability: Team HQ, the car pace ladder, contract offers, the Paddock and the Story pack rank cars on aero, engine and chassis, with reliability listed on its own.",
+    "Existing careers: a save with no race played this season switches at once, otherwise from the next season. Story pack: your power units, the unit you ran each race and every grid penalty."
+  ] },
   { v: '2.6.8', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
     "New XP use setting in Driver, Training: Buy skills with XP (the old behaviour, still the default) or Keep my XP. Keep my XP saves everything you earn so you can spend it yourself in the skill shop. Preparation and Focus still build either way."
