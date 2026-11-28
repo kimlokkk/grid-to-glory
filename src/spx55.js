@@ -20,8 +20,10 @@ function spxUsed(S) { var u = {}; S.teams.forEach(function (t) { var p = t.spxP;
 /* a brand for a slot: top brands go to prestigious teams, smaller ones fill the rest; no brand on two cars */
 function spxPick(S, t, used, big) {
   var pr = t.prestige || 5, want = big ? (pr >= 7 ? 1 : pr >= 4 ? 2 : 3) : (pr >= 7 ? 2 : 3);
-  var L = SPX_BRANDS.filter(function (b) { return !used[b[0]] && b[2] === want; });
-  if (!L.length) L = SPX_BRANDS.filter(function (b) { return !used[b[0]]; });
+  var gone = used['~' + t.id] || {}, free = function (b) { return !used[b[0]] && !gone[b[0]]; };
+  var L = SPX_BRANDS.filter(function (b) { return free(b) && b[2] === want; });
+  if (!L.length) L = SPX_BRANDS.filter(free);
+  if (!L.length) L = SPX_BRANDS.filter(function (b) { return !used[b[0]]; });   /* a brand that just left may come back only when nothing else is free */
   var b = L[Math.floor(hashS(S.season + ':' + t.id + ':' + (big ? 't' : 'p') + ':' + Object.keys(used).length) * L.length) % L.length]; used[b[0]] = 1; return b;
 }
 function spxDeal(S, t, b, share, title, years, N) {
@@ -38,10 +40,11 @@ function spxWinter(S, first) {
   var ts = teamStandings(S), pos = {}; ts.forEach(function (t, i) { pos[t.id] = i + 1; });
   S.teams.forEach(function (t) {
     var p = t.spxP || (t.spxP = { title: null, partners: [] });
+    var drop = function (d) { delete used[d.n]; (used['~' + t.id] = used['~' + t.id] || {})[d.n] = 1; };   /* a brand that leaves is free for other teams this winter */
     var judge = function (d) { if (!d || first) return d; var met = pos[t.id] <= d.tgt, far = pos[t.id] - d.tgt; d.met = met ? 1 : 0;
-      if (d.end >= N) { if (!met && far >= 3 && hashS(d.n + ':' + S.season) < 0.5) { spxNews(S, t, d, 'leave'); return null; } return d; }
+      if (d.end >= N) { if (!met && far >= 3 && hashS(d.n + ':' + S.season) < 0.5) { spxNews(S, t, d, 'leave'); drop(d); return null; } return d; }
       if (met || hashS(d.n + ':' + S.season + ':r') < 0.55) { var nd = spxDeal(S, t, [d.n, d.sec, d.tier], d.title ? SPX.title : d.v / spxTotal(t), !!d.title, 2 + Math.floor(hashS(d.n + N) * 2), N); nd.v = Math.round(nd.v * (met ? 1.08 : 0.92) * 10) / 10; nd.naming = d.naming; if (d.naming) nd.v = Math.round(nd.v * (1 + SPX.naming) * 10) / 10; return nd; }
-      spxNews(S, t, d, 'end'); return null; };
+      spxNews(S, t, d, 'end'); drop(d); return null; };
     p.title = judge(p.title); p.partners = p.partners.map(judge).filter(Boolean);
     if (!p.title) { var b = spxPick(S, t, used, true), d = spxDeal(S, t, b, SPX.title, true, 2 + Math.floor(hashS(b[0] + N) * 3), N); if ((t.prestige || 5) < SPX.heritage && hashS(b[0] + ':name:' + t.id) < clamp((SPX.heritage - t.prestige) / 6, 0, 0.9)) { d.naming = 1; d.v = Math.round(d.v * (1 + SPX.naming) * 10) / 10; } p.title = d; if (!first) spxNews(S, t, d, 'title'); }
     while (p.partners.length < SPX.parts.length) { var bp = spxPick(S, t, used, false); p.partners.push(spxDeal(S, t, bp, SPX.parts[p.partners.length], false, 1 + Math.floor(hashS(bp[0] + N) * 3), N)); }

@@ -3973,3 +3973,9 @@ svg.lp-av { display: block; }
 .spx-back span em { font-style: normal; color: #9fb0d0; font-size: 11.5px; } .spx-back span.on em { color: #33d6a6; font: 700 12px var(--mono); }
 .spx-pt .cv-logo { width: 38px; height: 38px; font-size: 14px; border-radius: 10px; }
 @media (max-width: 520px) { .spx-pts { grid-template-columns: 1fr; gap: 6px; } .spx-pt { grid-template-columns: auto minmax(0, 1fr) auto; justify-items: start; text-align: left; gap: 1px 10px; padding: 8px 10px; align-items: center; } .spx-pt .cv-logo { grid-row: 1 / 3; } .spx-pt b { grid-column: 2; grid-row: 1; } .spx-pt small { grid-column: 2; grid-row: 2; } .spx-pv { grid-column: 3; grid-row: 1; justify-self: end; } .spx-pg { grid-column: 3; grid-row: 2; justify-self: end; } }
+
+/* wind tunnel allowance (ATR) in the R&D workshop */
+.atr-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; align-items: end; margin: 4px 0 12px; padding: 12px 14px; border-radius: 14px; color: #fff; background: radial-gradient(ellipse at 100% 0%, #33d6a62e, transparent 60%), linear-gradient(160deg, #18213a, #0c1120); border-bottom: 3px solid #33d6a6; }
+.atr-l small { display: block; font: 600 9px var(--mono); letter-spacing: 2px; text-transform: uppercase; color: #9fb0d0; } .atr-l b { display: block; font: italic 700 30px/1 var(--disp); color: #33d6a6; margin: 3px 0; } .atr-l span { font: 10px var(--mono); letter-spacing: .5px; text-transform: uppercase; color: #c9d2e6; }
+.atr-bars { display: flex; align-items: flex-end; gap: 3px; height: 46px; } .atr-bars i { width: 8px; border-radius: 2px 2px 0 0; background: #ffffff26; } .atr-bars i.on { background: #33d6a6; box-shadow: 0 0 8px #33d6a6aa; }
+.atr-strip p { grid-column: 1 / -1; margin: 0; font-size: 11.5px; line-height: 1.45; color: #aeb9d0; }

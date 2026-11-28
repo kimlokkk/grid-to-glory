@@ -82,6 +82,7 @@ function spTeams(S) {
     L.push('  Car: aero ' + Math.round(c.aero) + ' (#' + ranks.aero[t.id] + '), engine ' + Math.round(c.engine) + ' (#' + ranks.engine[t.id] + '), chassis ' + Math.round(c.chassis) + ' (#' + ranks.chassis[t.id] + '), reliability ' + Math.round(c.rel) + ' (#' + ranks.rel[t.id] + ')');
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
     if (typeof spxOn === 'function' && spxOn(S) && t.spxP) L.push('  ' + spxPackLine(S, t));
+    if (typeof atrOn === 'function' && atrOn(S)) L.push('  ' + atrPackLine(S, t));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
     var LP = typeof leadOn === 'function' && leadOn(S) && typeof leadPerson === 'function' && !t.spec;
     if (tp && LP) L.push('  Team principal: ' + spPerson(S, leadPerson(S, tp, 'tp', t), 'tp', t));
