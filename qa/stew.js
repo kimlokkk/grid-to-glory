@@ -29,7 +29,7 @@ const path = require('node:path');
       { const d = S.drivers[5]; S.stew.grid.push({ k: stewKey(d), n: d.name, s: S.season, r: S.round, places: 3, why: 'impeded someone in Q2', q: 1 }); const ci = S.cal[S.round], g = qualiGrid2(S, ci), q0 = g.indexOf(5), R = makeRace2(S, ci, g, {}), at = R.cars.findIndex(f => f.di === 5);
         ck('a qualifying grid drop moves the driver back 3 places', at === Math.min(g.length - 1, q0 + 3) && R.stewGrid.length >= 1, [q0, at]); }
       /* penalty points to 12 = ban for the next race; the reserve drives; the player is put back */
-      { const me = S.drivers[S.pi], r0 = S.round; for (let i = 0; i < 6; i++) stewPoint(S, me, 2, 'Test'); ck('12 points ban the driver for the next race and clear the points', stewBanned(S, me, S.season, r0 + 1) && stewPts(S, me) === 0);
+      { const me = S.drivers[S.pi], r0 = S.round; S.stew.pts[stewKey(me)] = []; for (let i = 0; i < 6; i++) stewPoint(S, me, 2, 'Test'); ck('12 points ban the driver for the next race and clear the points', stewBanned(S, me, S.season, r0 + 1) && stewPts(S, me) === 0);
         const ci = S.cal[S.round]; fin(runRace2(S, ci, qualiGrid2(S, ci), {}));
         const res0 = S.results.length, pts0 = me.pts, starts0 = me.starts, teamPts0 = S.teams[me.team].pts; UI.screen = 'hub'; A['wk-start']();
         ck('the banned round is run with a reserve in the car', S.round === r0 + 2 && S.drivers[S.pi] === me && !S.sit && !S.bench, [S.round, r0]);

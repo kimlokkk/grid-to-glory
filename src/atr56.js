@@ -4,7 +4,7 @@
    season's final order; from mid-season the order at the halfway round. The winter package uses the final order of the season.
    The gain of every successful upgrade is multiplied by 1 + k x (allowance - average), so the league average stays the same.
    Gated by S.atr (Pro careers; new careers at once, older saves from the next season). No random numbers. */
-var ATR = { v: 1, top: 0.70, bot: 1.15, k: 1 };
+var ATR = { v: 1, top: 0.70, bot: 1.15, k: 1.5 };   /* k tuned in 12 careers x 20 seasons: 1 -> 14%, 1.25 -> 19%, 1.5 -> 27%, 2 -> 28% of bottom-half teams reach the top 3 within 5 seasons */
 function atrOn(S, season) { return !!(S && S.mode === 'pro' && S.atr && S.atr.v >= 1 && (season != null ? season : S.season) >= S.atr.from && S.teams && S.teams[0] && !S.teams[0].spec); }
 function atrMigrate(S) { if (!S || S.mode !== 'pro' || S.atr || !S.teams) return; S.atr = { v: ATR.v, from: (S.round || 0) === 0 ? S.season : S.season + 1 }; }
 function atrPctAt(S, p) { var n = S.teams.length; return ATR.top + (ATR.bot - ATR.top) * (p - 1) / Math.max(1, n - 1); }
