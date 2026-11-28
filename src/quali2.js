@@ -30,10 +30,10 @@ function qkInit(S, ci, wq) {
 function qkRun(Q, di, si, ch, mod) {
   var b = Q.base[di], o = QK.opt[ch] || QK.opt.biasa, t = b.t + QK.evo[si] + o.evo + gauss() * b.nz * QK.nzRun, ev = null;
   if (b.wet > 0.2) t += gauss() * 0.25;
-  if (rnd() < o.traffic) { t += rr(QK.trafLoss[0], QK.trafLoss[1]); ev = 'trafik'; }
+  var tl = 0; if (rnd() < o.traffic) { tl = rr(QK.trafLoss[0], QK.trafLoss[1]); t += tl; ev = 'trafik'; }
   if (rnd() < o.yellow) { t += 6; ev = 'kuning'; }
   if (mod != null) t += mod;
-  return { t: t, ev: ev };
+  return { t: t, ev: ev, tl: tl };
 }
 /* satu sesi. pl = { di, ch, mod } untuk pemain (mod hanya pada pusingan kedua) */
 function qkSession(Q, pl) {
@@ -43,8 +43,10 @@ function qkSession(Q, pl) {
     var r1 = qkRun(Q, di, si, ch, null), r2 = qkRun(Q, di, si, ch, me ? pl.mod : null), best = r1.t <= r2.t ? r1 : r2;
     rows.push({ di: di, t: best.t, ev: r1.ev && r2.ev ? r1.ev : (best.ev || null), r1: r1, r2: r2, ch: ch });
   });
+  if (typeof stewQualiPre === 'function') stewQualiPre(Q, si, rows);
   rows.sort(function (a, b) { return a.t - b.t; });
   rows.forEach(function (r, i) { r.pos = i + 1; r.lap = Q.c.base - 1.6 + r.t; });
+  if (typeof stewQualiPost === 'function') stewQualiPost(Q, si, rows);
   Q.res[si] = rows;
   if (si < 2) { var keep = QK.cut[si]; Q.elim[si] = rows.slice(keep); Q.alive = rows.slice(0, keep).map(function (r) { return r.di; }); }
   Q.s++;

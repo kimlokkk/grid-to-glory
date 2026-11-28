@@ -114,6 +114,7 @@ function liveRestore(S, lv) {
   if (!R.p) return null;
   if (lv.seed != null) seedRnd(lv.seed);
   while (!R.done) tick2(R);
+  if (typeof stewFinish === 'function') stewFinish(R);
   R.cls = R.cars.slice().sort(function (a, b) { var ta = a.dnf ? 1e9 - a.dnfS : a.tFin + (a.pen || 0), tb = b.dnf ? 1e9 - b.dnfS : b.tFin + (b.pen || 0); return ta - tb; });
   R.cls.forEach(function (f, i) { f.pos = i + 1; });
   return R;

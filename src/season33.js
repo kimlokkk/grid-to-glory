@@ -13,7 +13,7 @@ hKal = function () {
   for (var i = 0; i < n; i++) {
     var ci = S.cal[i], c = circuitFor(S, ci), r = S.results[i], cur = i === S.round, st = r ? 'past ' + ssResClass(r) : cur ? 'next' : 'future';
     h += '<div class="sc-card clk ' + st + '" role="button" tabindex="0" data-act="th" data-v="' + ci + '"><span class="sc-r">R' + (i + 1) + '</span>' + flagSVG(ci, 26) + '<span class="sc-art">' + circuitSVG(ci, 150, 'currentColor') + '</span><b>' + c.name + '</b><small>' + c.loc + ' · ' + laps2(c) + ' laps · rain ' + Math.round(c.rain * 100) + '%</small>' +
-      (r ? '<span class="sc-res"><b>' + (r.dnf ? 'DNF' : 'P' + r.pos) + '</b><em>' + (r.pts ? '+' + r.pts + ' pts' : r.dnf ? 'retired' : 'no points') + '</em></span>' : cur ? '<button class="sc-go" data-act="tab" data-v="utama"><i></i>Next race · go to grid →</button>' : '<span class="sc-res soon"><em>' + (i - S.round === 1 ? 'Up after this one' : 'In ' + (i - S.round) + ' races') + '</em></span>') + '</div>';
+      (r ? '<span class="sc-res"><b>' + (r.ban ? 'BAN' : r.dnf ? 'DNF' : 'P' + r.pos) + '</b><em>' + (r.ban ? 'reserve drove' : r.pts ? '+' + r.pts + ' pts' : r.dnf ? 'retired' : 'no points') + '</em></span>' : cur ? '<button class="sc-go" data-act="tab" data-v="utama"><i></i>Next race · go to grid →</button>' : '<span class="sc-res soon"><em>' + (i - S.round === 1 ? 'Up after this one' : 'In ' + (i - S.round) + ' races') + '</em></span>') + '</div>';
   }
   return h + '</div><p class="dim" style="font-size:12.5px;margin:10px 2px 0">Tap a circuit to see its history.</p>';
 };

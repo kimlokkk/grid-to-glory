@@ -2,6 +2,12 @@
 
 Note: the training XP clarity build (Keep my XP setting) was tested on the dev branch only and closed on 28 November 2026; it is not part of any release.
 
+## 2.6.9 — 28 November 2026 (stewards)
+
+- `src/stew52.js`, gate `S.stew`. Contact: `attemptPass` wrapper reads the pass chance `p` of the failed move; `p < 0.02` = 10 s, `< 0.08` = 5 s, else racing incident; up one step when the other car lost 2 s or more or the attacker retired; a retired attacker gets a 3 or 5-place drop at the next race. Served in the pit stop (`stewServe`, the car is held), else added at the flag (`stewFinish`, in `runRace2`, the live race and settle). Qualifying (`qkSession` hooks): traffic loss is recorded per run; a hold-up of 0.5 s or more that cost 3+ places is impeding (3-place drop, 1 point), smaller is a reprimand; one yellow-flag incident per session, half of them a driver error (culprit loses his better run). Culprits come from a hash, no extra race random numbers. Points: 5 s = 1, 10 s or grid = 2, impeding = 1; window 22 races; 12 = ban, points cleared. Ban: a reserve clone takes the seat before qualifying (`stewSwapIn`), the original is put back after `finishRace`; the player's round is run automatically (`S.sit` for that race) and recorded as BAN.
+- Measured (8 seeds x 3 seasons, 528 races): 2.9 contacts a race, 2.0 racing incidents; time penalties 0.73 (0.54 served in a stop, 0.15 added at the flag), grid drops after a crash 0.14, impeding 0.35, reprimands 0.74, yellow lap deletions 1.33 a qualifying; 1.22 penalties a race; no bans in 24 seasons (12 points within 22 races is hard to reach, as in F1).
+- Screens: Stewards' decisions fold on the result, penalty points card on the Driver tab, ban screen, BAN in the calendar, story pack lines. Test: `qa/stew.js`.
+
 ## 2.6.8 — 28 November 2026 (power units, reliability shown apart)
 
 - `src/pu50.js`: pool of 4 units per driver per season (`S.pu.d[uid]`), planner `puPlan` (least worn at pw >= 0.55, most worn healthy at pw <= 0.4, fit a free unit at power tracks when only used ones are left, no unit past 115%), `puBefore` in `makeRace2` (choice, 10-place drop capped at 15), `puAttach`, pace `puLoss` in `paceFree` (race only), failure `puFail` in `incidents`, `puCommit` in `finishRace` (idempotent per round, DNF counts half, mechanical failure marks the unit). Player choice on the qualifying page (`pu-pick`), penalties on the strategy page, news, story pack. Gate `S.pu` (round 0 now, else next season).

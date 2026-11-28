@@ -574,6 +574,7 @@ A['r-pitx'] = function () {
 /* ---------- tamat ---------- */
 function finishRun(R) {
   RUN.fin = true;
+  if (typeof stewFinish === 'function') stewFinish(R);
   R.cls = R.cars.slice().sort(function (a, b) { var ta = a.dnf ? 1e9 - a.dnfS : a.tFin + (a.pen || 0), tb = b.dnf ? 1e9 - b.dnfS : b.tFin + (b.pen || 0); return ta - tb; });
   R.cls.forEach(function (f, i) { f.pos = i + 1; });
   var fl = null; R.cars.forEach(function (f) { if (!f.dnf && f.best < 900 && (!fl || f.best < fl.best)) fl = f; });

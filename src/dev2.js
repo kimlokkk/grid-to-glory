@@ -46,6 +46,7 @@ function initDev(S) {
   S.regYear = S.mode === 'pro' && S.world ? S.world.era.next : S.season + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
   if (typeof leadMigrate === 'function') leadMigrate(S);
   if (typeof puMigrate === 'function') puMigrate(S);
+  if (typeof stewMigrate === 'function') stewMigrate(S);
 }
 
 /* kedudukan semasa ikut mata (jika belum ada mata, ikut kekuatan kereta) */

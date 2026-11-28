@@ -1,6 +1,13 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.8', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.9', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.9', d: 'Stewards', date: '28 Nov 2026', l: [
+    "Stewards now judge every contact. A hopeful lunge is the attacker's fault: 5 seconds, or 10 when the other car lost real time. A fair attempt is a racing incident with no action. In testing about two in three contacts were racing incidents.",
+    "Time penalties are served at the next pit stop: the car is held for the penalty before the crew works. If the car does not stop again, the time is added at the flag. A driver who caused a collision and retired gets a grid drop at the next race instead.",
+    "Qualifying: holding someone up now has a cause. A hold-up that cost a driver three places or more is impeding, a 3-place grid drop for the race; a smaller one is a reprimand. A driver who causes a yellow flag loses the lap he was on.",
+    "Penalty points: 1 or 2 for each offence, cleared after 22 races. 12 points is a one-race ban, for you too: a reserve drives your car, you score nothing, and the round is marked BAN in the calendar.",
+    "Where to see it: a Stewards' decisions panel on the race result, your penalty points on the Driver tab, radio calls during the race, and the Story pack. In testing there were about 1.2 penalties a race across the grid."
+  ] },
   { v: '2.6.8', d: 'Power units, and reliability shown apart', date: '28 Nov 2026', l: [
     "Every F1 driver now has 4 power units a season. Before each race you choose which one to run on the qualifying page, with your engineer's suggestion: fresh units for engine-heavy tracks, worn ones where the engine matters less. A 5th or later unit is a 10-place grid drop after qualifying.",
     "Wear costs race pace (never qualifying) and raises the failure chance. Almost nothing below 50% wear, about 0.05 s a lap at 60%, 0.15 s at 80% and 0.3 s at 100%, more on engine-heavy tracks. A failed unit is lost for the season.",

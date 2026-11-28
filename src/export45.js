@@ -59,6 +59,7 @@ function spPlayer(S) {
     L.push('Tier: ' + EVALUATION.tiers[p.evaluation.tier] + (ev && ev.sts != null ? ' · season STS ' + ev.sts.toFixed(1) + '/100 · head-to-head ' + ev.h2hWins + '/' + ev.h2hRaces : ''));
   }
   L.push('Career by league (incl. this season, never added together): ' + careerLeagueText(p));
+  if (typeof stewPackText === 'function' && stewOn(S)) L.push(stewPackText(S));
   if (typeof puOn === 'function' && puOn(S)) L.push('Power units (' + PU.units + ' per season, a further unit is a ' + PU.pen + '-place grid drop): ' + puPoolText(S, p));
   L.push('This season: ' + p.pts + ' pts, ' + p.wins + ' wins, ' + p.pods + ' podiums, ' + (S.results || []).filter(function (r) { return r.dnf; }).length + ' DNFs' + (S.round ? '' : ' (no races yet)'));
   if (mate) L.push('Teammate: ' + mate.name + ' (OVR ' + ovr(mate) + ', ' + mate.pts + ' pts)' + (S.tm ? ' · relationship ' + tmLabel(S.tm.rel) + ' (' + spN(S.tm.rel, 1) + '), team orders obeyed ' + S.tm.yes + ', refused ' + S.tm.no : ''));
@@ -166,6 +167,8 @@ function spRaces(S, scope) {
     var m = rec.m || {}, c = CIRCUITS[rec.ci], L = [];
     L.push('### Round ' + (rec.r + 1) + ': ' + (c ? c.name : 'circuit ' + rec.ci) + ' (' + rec.laps + ' laps)' + (m.w ? ' · weather ' + spEn(m.w) : '') + (m.sc != null ? ' · safety cars ' + m.sc + ', VSC ' + m.vsc + ', clean overtakes ' + m.ot : ''));
     L.push(spSafe('track', function () { return spTrack(S, rec.ci, rec.s); }));
+    var sr = S.stew && S.stew.races ? S.stew.races.filter(function (z) { return z.s === rec.s && z.r === rec.r; })[0] : null;
+    if (sr) L.push('Stewards: ' + (sr.grid.length ? 'grid drops ' + sr.grid.join('; ') + '. ' : '') + (sr.rulings.length ? sr.rulings.join('; ') : 'no penalties') + ' (' + sr.incidents + ' other contact' + (sr.incidents === 1 ? '' : 's') + ' judged racing incidents)');
     var pl = S.pu && S.pu.log ? S.pu.log.filter(function (z) { return z.s === rec.s && z.r === rec.r; })[0] : null;
     if (pl) L.push('Power units: ' + (pl.me ? 'you ran unit ' + pl.me.unit + (pl.me.fresh ? ' (new' + (pl.me.pen ? ', with a grid penalty' : '') + ')' : ' (' + pl.me.w0 + '% worn at the start)') : 'not recorded for you') + ' · grid penalties: ' + (pl.pens.length ? pl.pens.map(function (q) { return q.n + ' -' + q.places + ' (unit ' + q.unit + ')'; }).join(', ') : 'none'));
     if (rec.fl) L.push('Fastest lap: ' + rec.fl + (m.flt ? ' ' + fmtT(m.flt) : ''));
