@@ -16,7 +16,7 @@ function teamProfileHTML(id) {
     '<div class="pf-ovr"><b>#' + rk + '</b><small>CAR</small></div></div>' +
     '<div class="tpf-car">' + carSVG(t, 420) + '</div>';
   if (m.blurb) h += '<p class="pf-bio">' + esc(m.blurb) + '</p>';
-  h += '<h4>Car performance · ' + teamPower(t).toFixed(1) + '</h4><div class="pf-att">' + parts.map(function (p) { var v = Math.round(t.car[p[0]]); return '<div><span>' + p[1] + '</span><i><u style="width:' + clamp((v - 45) / 54 * 100, 0, 100) + '%"></u></i><b>' + v + '</b><em>#' + prk[p[0]] + '</em></div>'; }).join('') + '</div>';
+  h += '<h4>Car pace · ' + teamPace(t).toFixed(1) + ' (#' + teamPaceRank(S, t.id) + ') · reliability ' + Math.round(t.car.rel) + ' (#' + teamRelRank(S, t.id) + ')</h4><div class="pf-att">' + parts.map(function (p) { var v = Math.round(t.car[p[0]]); return '<div><span>' + p[1] + '</span><i><u style="width:' + clamp((v - 45) / 54 * 100, 0, 100) + '%"></u></i><b>' + v + '</b><em>#' + prk[p[0]] + '</em></div>'; }).join('') + '</div>';
   h += '<h4>Drivers</h4><div class="tpf-drv">' + drivers.map(function (d) { return '<button class="tpf-d" data-act="prof" data-v="d:' + d.id + '">' + helmetSVG(d, 46, false) + '<div><b>' + esc(d.name) + '</b><span>' + flagE(d.nat) + ' #' + d.num + ' · age ' + d.age + ' · until ' + conUntil(S, d) + (d.obj ? ' · ' + ROLEN[d.obj.role] : '') + '</span></div><em>' + ovr(d) + '<small>OVR</small></em></button>'; }).join('') + '</div>';
   h += '<h4>Season ' + S.season + '</h4>' + pfTiles([['Pos', 'P' + pos], ['Pts', t.pts], ['Wins', t.wins], ['Podiums', pods]]);
   if (dv.tp) {

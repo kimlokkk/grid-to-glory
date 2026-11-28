@@ -85,7 +85,7 @@ function hProf() {
       return '<button class="pfc ' + (k ? 'me' : '') + '" data-act="prof" data-v="d:' + d.id + '"><span class="pfh">' + helmetSVG(d, 46, false) + '</span><span class="pfn"><b>' + esc(d.name) + '</b><small>' + flagE(d.nat) + ' ' + esc(t.name) + ' · age ' + d.age + '</small></span><span class="pfo"><b>' + ovr(d) + '</b><small>OVR</small></span></button>';
     }).join('') + '</div>';
   } else {
-    var T = S.teams.slice().sort(function (a, b) { return teamPower(b) - teamPower(a); }), ts = teamStandings(S);
+    var T = S.teams.slice().sort(function (a, b) { return teamPace(b) - teamPace(a); }), ts = teamStandings(S);
     h += '<div class="pfgrid">' + T.map(function (t, i) {
       var mates = S.drivers.filter(function (d) { return d.team === t.id; });
       return '<button class="pfc ' + (t.id === S.drivers[S.pi].team ? 'me' : '') + '" data-act="tprof" data-v="' + t.id + '"><span class="pfh pfcar">' + carSVG(t, 70) + '</span><span class="pfn"><b>' + esc(t.name) + '</b><small>' + mates.map(function (d) { return esc(d.name.split(' ').slice(-1)[0]); }).join(' · ') + ' · P' + (ts.indexOf(t) + 1) + '</small></span><span class="pfo"><b>#' + (i + 1) + '</b><small>CAR</small></span></button>';

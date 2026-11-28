@@ -1,6 +1,16 @@
 /* App version and release notes; save format version is independent. */
-var APEX = { ver: '2.6.7', date: '25 Nov 2026', save: 2 };
+var APEX = { ver: '2.6.8', date: '25 Nov 2026', save: 2 };
 var CHANGELOG = [
+  { v: '2.6.8', d: 'Power units, and reliability shown apart', date: '28 Nov 2026', l: [
+    "Every F1 driver now has 4 power units a season. Before each race you choose which one to run on the qualifying page, with your engineer's suggestion: fresh units for engine-heavy tracks, worn ones where the engine matters less. A 5th or later unit is a 10-place grid drop after qualifying.",
+    "Wear costs race pace (never qualifying) and raises the failure chance. Almost nothing below 50% wear, about 0.05 s a lap at 60%, 0.15 s at 80% and 0.3 s at 100%, more on engine-heavy tracks. A failed unit is lost for the season.",
+    "Reliability decides how long a unit lasts (about 5.5 races at reliability 75) and how often it breaks. In testing, teams with reliability under 70 took a penalty in half of their seasons, teams above 80 in about 1 in 20. Overall failure rates stay about as before.",
+    "Car pace is now shown apart from reliability: Team HQ, the car pace ladder, contract offers, the Paddock and the Story pack rank cars on aero, engine and chassis, with reliability listed on its own.",
+    "Existing careers: a save with no race played this season switches at once, otherwise from the next season. Story pack: your power units, the unit you ran each race and every grid penalty.",
+    "The power unit choice is a Power unit bay on the qualifying page: one tile per unit with a health gauge, the pace it will cost by the flag at this track, the engineer's pick and your season allocation; grid penalties show as a stewards' panel on the strategy page.",
+    "Engine health on the Team tab and in every team's Paddock dossier (Performance): both drivers' units with health gauges, failures, units used and penalties.",
+    "The strategy page now opens with a Track profile: the circuit's character, tyre wear, overtaking, engine importance and rain with level bars, a race plan tip and the track's history in your series. The circuit guide uses the same wording as the chips everywhere."
+  ] },
   { v: '2.6.7', d: 'Story pack track fix', date: '25 Nov 2026', l: [
     "Fixed the Story pack describing overtaking the wrong way round: a track that is hard to pass on (such as the Monte Albrecht street circuit) was called easy. Overtaking, tyre wear and engine importance now use exactly the same bands as the circuit chips in the game, and the overtaking difficulty value is shown."
   ] },

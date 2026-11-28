@@ -9,6 +9,7 @@ var RG = { keep: 4, tgt: { champ: -6, last: 5 } };
 
 /* ---------- helpers ---------- */
 function rgPow(p) { return (p[0] + p[1] + p[2] + p[3]) / 4; }
+function rgPace(p) { return (p[0] + p[1] + p[2]) / 3; }   /* aero, engine, chassis: what the outlook calls car pace */
 function rgR1(v) { return Math.round(v * 10) / 10; }
 function rgSgn(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1); }
 function rgRanks(vals) { var idx = vals.map(function (v, i) { return i; }).sort(function (a, b) { return vals[b] - vals[a] || a - b; }), r = []; idx.forEach(function (i, n) { r[i] = n + 1; }); return r; }
@@ -160,7 +161,7 @@ function rgGarage(S) {
   S.rgSeen = S.rgSeen && S.rgSeen.s === S.season ? S.rgSeen : { s: S.season, keys: {} };
   /* car power of every team after each round: feeds the Team outlook graph (current season only) */
   if (!S.rgTrend || S.rgTrend.season !== S.season) S.rgTrend = { season: S.season, pts: [] };
-  if (!S.rgTrend.pts.some(function (x) { return x.r === S.round; })) S.rgTrend.pts.push({ r: S.round, p: S.teams.map(function (t) { return rgR1(teamPower(t)); }) });
+  if (!S.rgTrend.pts.some(function (x) { return x.r === S.round; })) S.rgTrend.pts.push({ r: S.round, p: S.teams.map(function (t) { return rgR1(teamPace(t)); }) });
   /* saves from before 2.4.0 have no winter snapshot: start measuring from now */
   if (!S.rgStart || S.rgStart.season !== S.season) S.rgStart = { season: S.season, cars: rgSnap(S).map(function (p) { return p.map(rgR1); }), late: true };
   /* money: a team crosses into a new budget state (at most one story per four rounds) */
@@ -178,7 +179,7 @@ function rgGarage(S) {
   if (last || rnd0 % 3 !== 0) return;
   /* development watch: who has moved since winter */
   if (S.rgStart && S.rgStart.season === S.season && made < 2) {
-    var p0 = S.rgStart.cars.map(rgPow), p1 = S.teams.map(function (t) { return teamPower(t); }), r0 = rgRanks(p0), r1 = rgRanks(p1), d = p1.map(function (v, i) { return v - p0[i]; });
+    var p0 = S.rgStart.cars.map(rgPace), p1 = S.teams.map(function (t) { return teamPace(t); }), r0 = rgRanks(p0), r1 = rgRanks(p1), d = p1.map(function (v, i) { return v - p0[i]; });
     var order = d.map(function (v, i) { return i; }).sort(function (x, y) { return Math.abs(d[y]) - Math.abs(d[x]); }), pick0 = order.filter(function (i) { return Math.abs(d[i]) >= 1 && !S.rgSeen.keys['dev' + i + (d[i] > 0 ? 'u' : 'd')]; })[0];
     if (pick0 != null) {
       var t = S.teams[pick0], j = 0, best = 0; PARTS.forEach(function (k, x) { var dd = t.car[k] - S.rgStart.cars[pick0][x]; if (Math.abs(dd) > Math.abs(best)) { best = dd; j = x; } });
@@ -380,7 +381,7 @@ function rgPackText(S) {
 /* ---------- Contract Outlook (2.4.1): today's picture of a team, shown on offer cards ---------- */
 function rgOutlook(id) {
   if (!rgIsF1(S) || !S.teams || !S.teams[id] || S.sit) return null;
-  var pows = S.teams.map(function (t) { return teamPower(t); }), rk = rgRanks(pows), n = S.teams.length, t = S.teams[id], o = { id: id, rank: rk[id], n: n, tags: [] };
+  var pows = S.teams.map(function (t) { return teamPace(t); }), rk = rgRanks(pows), n = S.teams.length, t = S.teams[id], o = { id: id, rank: rk[id], n: n, tags: [] };
   var st = S.rgStart && S.rgStart.season === S.season && S.rgStart.cars && S.rgStart.cars[id] ? S.rgStart : null;
   if (st) { var p0 = S.rgStart.cars.map(rgPow), r0 = rgRanks(p0); o.d = pows[id] - p0[id]; o.dr = r0[id] - rk[id]; }
   o.fin = t.fin && typeof finStatus === 'function' ? finStatus(t) : null;
@@ -412,7 +413,7 @@ function rgSpark(ser) {
 function rgOutlookHTML(id) {
   var o = rgOutlook(id); if (!o) return '';
   var ser = rgSeries(id), has = o.d != null, cls = !has ? '' : o.d >= 0.5 ? 'up' : o.d <= -0.5 ? 'dn' : '';
-  var order = S.teams.map(function (t) { return { id: t.id, v: teamPower(t) }; }).sort(function (a, b) { return b.v - a.v; });
+  var order = S.teams.map(function (t) { return { id: t.id, v: teamPace(t) }; }).sort(function (a, b) { return b.v - a.v; });
   var pos = '<span class="rg-field" aria-hidden="true">' + order.map(function (x) { return '<i class="' + (x.id === id ? 'me' : '') + '"></i>'; }).join('') + '</span>';
   var chips = [['Trend', has ? (cls === 'up' ? '▲ ' : cls === 'dn' ? '▼ ' : '') + rgSgn(rgR1(o.d)) : '–', cls, has ? (o.dr ? (o.dr > 0 ? 'Up ' : 'Down ') + Math.abs(o.dr) + (Math.abs(o.dr) > 1 ? ' places' : ' place') : 'Same place') + ' since winter' : 'From the next race']];
   if (o.fin) chips.push(['Money', o.fin.txt, o.fin.k === 'bad' ? 'dn' : o.fin.k === 'good' || o.fin.k === 'cap' ? 'up' : '', 'Budget status']);

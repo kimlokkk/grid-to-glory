@@ -89,7 +89,7 @@ var pdOldClose=closeModal;
 closeModal=function(){var profile=document.querySelector('#modal .pd42'),focus=PD42.focus;pdOldClose();if(profile){PD42.route=null;PD42.trail=[];PD42.focus=null;if(focus&&focus.isConnected)focus.focus({preventScroll:true});}};
 
 /* World: a searchable paddock, with IDs always scoped to their championship. */
-function pwTeamScore(t) { var o=t.ops||{};return t.spec?((o.setup||0)+(o.crew||0)+(o.coaching||0))/3:teamPower(t); }
+function pwTeamScore(t) { var o=t.ops||{};return t.spec?((o.setup||0)+(o.crew||0)+(o.coaching||0))/3:teamPace(t); }
 function pwOptions() { return {league:seasonBrowseLeague(),kind:UI.pwKind||'drivers',query:UI.pwQuery||'',sort:UI.pwSort||'points'}; }
 function pwCards() {
   var o0=pwOptions();if(o0.kind==='staff'&&typeof leadStaffTab==='function'&&leadStaffTab(o0))return leadStaffCards(o0);
