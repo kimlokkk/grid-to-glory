@@ -70,8 +70,7 @@ function stewQualiPost(Q, si, rows) {
     e.txt = b.d.name + ' caused a collision with ' + a.d.name + (out ? ' and retired: ' + e.places + '-place grid drop at the next race' : ': ' + sec + '-second time penalty');
     R.stew.push(e);
     if (!out) { b.penQ = (b.penQ || 0) + sec; b.penTot = (b.penTot || 0) + sec; }
-    R.log.push({ t: R.t, lap: b.lap, k: 'pen', b: b.di, a: a.di, sec: sec, txt: e.txt, tags: ['stewards'] });
-    if ((b.isP || a.isP) && typeof radio === 'function') { try { radio(R, b.isP ? (out ? 'Stewards: ' + e.places + '-place grid drop for the next race for that collision.' : 'Stewards gave us a ' + sec + '-second penalty for the contact. We serve it at the stop.') : 'Stewards are giving ' + b.d.name + ' a ' + sec + '-second penalty for hitting us.', 'x', 1); } catch (er) { } }
+    R.log.push({ t: R.t, lap: b.lap, k: 'pen', b: b.di, a: a.di, sec: sec, out: out ? 1 : 0, places: e.places, txt: e.txt, tags: ['stewards'] });
     return ok;
   };
 })();
@@ -211,4 +210,28 @@ function stewPackText(S) {
 (function () {
   if (typeof vResult === 'function') { var vr0 = vResult; vResult = function () { var h = vr0.apply(this, arguments), wk = UI.wk, R = wk && wk.R; if (!R || !R.stewOn || typeof rvFold !== 'function') return h; var L = (R.stew || []).filter(function (e) { return e.k !== 'noaction'; }).length + (R.stewGrid || []).length; var fold = rvFold('stewards', "Stewards' decisions", L ? L + ' decision' + (L === 1 ? '' : 's') + ' · your penalty points' : 'No penalties · your penalty points', stewResultHTML(R)); var k = h.indexOf('<details class="rv-file" data-rv-fold="storypack"'); return k >= 0 ? h.slice(0, k) + fold + h.slice(k) : h; }; }
   if (typeof hAku === 'function') { var ha0 = hAku; hAku = function () { var h = ha0.apply(this, arguments), box = stewCardHTML(); if (!box) return h; var k = h.indexOf('<div class="dg-col">', h.indexOf('<div class="dg-col">') + 1); return k >= 0 ? h.slice(0, k + 20) + box + h.slice(k + 20) : h; }; }
+})();
+
+/* ---------- the live race: the engineer tells you, the caption flashes, the tower shows the pending penalty ---------- */
+(function () {
+  if (typeof readLog !== 'function') return;
+  var rl0 = readLog;
+  readLog = function (R) {
+    try {
+      var p = R.p;
+      for (var i = RUN.logI; i < R.log.length; i++) {
+        var e = R.log[i]; if (e.k !== 'pen' && e.k !== 'penserve') continue;
+        var b = S.drivers[e.b], a = e.a != null ? S.drivers[e.a] : null;
+        if (e.k === 'pen') {
+          if (e.b === p.di) { if (typeof cap === 'function') cap(e.out ? 'Grid drop next race' : '+' + e.sec + 's penalty', 'lost'); radio(R, e.out ? 'Stewards: that collision is a ' + e.places + '-place grid drop at the next race.' : 'Stewards have given us a ' + e.sec + '-second penalty for the contact with ' + a.code + '. We serve it at the next stop. If we don’t stop again it goes on our race time.', 'x', 1); }
+          else if (e.a === p.di) radio(R, 'Stewards: ' + b.code + ' gets ' + (e.out ? 'a grid drop' : e.sec + ' seconds') + ' for hitting us.', 'i', 1);
+          else radio(R, 'Stewards: ' + e.sec + ' seconds for ' + b.code + ', contact with ' + (a ? a.code : '') + '.', 'i');
+        } else if (e.k === 'penserve') {
+          if (e.b === p.di) radio(R, 'Penalty served: we held you ' + e.sec + ' seconds in the box.', 'e', 1);
+          else radio(R, b.code + ' serves a ' + e.sec + '-second penalty in the stop.', 'i');
+        }
+      }
+    } catch (er) { }
+    return rl0.apply(this, arguments);
+  };
 })();

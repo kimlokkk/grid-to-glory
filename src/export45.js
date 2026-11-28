@@ -29,9 +29,9 @@ function storyRecord(S, wk) {
   if (wk.qr && wk.qr.length) rec.qs = wk.qr.map(function (rows) { return rows.map(function (r) { return [code(r[0]), +r[1].toFixed(3)]; }); });
   rec.q = (wk.q || []).map(function (r) { return [code(r.di), S.drivers[r.di] ? S.drivers[r.di].team : -1, +(r.lap || 0).toFixed(3), r.sess]; });
   rec.m = { w: R.w ? R.w.type : '', sc: R.nSC || 0, vsc: R.nVSC || 0, ot: R.nClean || 0, flt: R.fl && R.fl.t ? +R.fl.t.toFixed(3) : 0, L: R.L };
-  var keep = { pass: 1, contact: 1, spin: 1, dnf: 1, pit: 1, sc: 1, vsc: 1, restart: 1, wx: 1 };
+  var keep = { pass: 1, contact: 1, spin: 1, dnf: 1, pit: 1, sc: 1, vsc: 1, restart: 1, wx: 1, pen: 1, penserve: 1 };
   rec.lg = (R.log || []).filter(function (e) { return keep[e.k]; }).map(function (e) {
-    var info = e.k === 'pit' ? 'for ' + (COMP[e.comp] ? COMP[e.comp].n : (e.comp || '?')) + ' tyres' + (e.loss != null ? ', ' + e.loss.toFixed(1) + 's lost' : '') + (e.tags && e.tags[1] ? ' (' + e.tags[1] + ')' : '') : e.k === 'pass' ? [e.zone].concat((e.tags || []).filter(function (t) { return t !== 'peluang'; })).join(', ') : (e.tags || []).join(', ');
+    var info = e.k === 'pen' ? (e.out ? e.places + '-place grid drop next race' : e.sec + ' s time penalty') + ' for the contact' : e.k === 'penserve' ? e.sec + ' s held in the stop' : e.k === 'pit' ? 'for ' + (COMP[e.comp] ? COMP[e.comp].n : (e.comp || '?')) + ' tyres' + (e.loss != null ? ', ' + e.loss.toFixed(1) + 's lost' : '') + (e.tags && e.tags[1] ? ' (' + e.tags[1] + ')' : '') : e.k === 'pass' ? [e.zone].concat((e.tags || []).filter(function (t) { return t !== 'peluang'; })).join(', ') : (e.tags || []).join(', ');
     var pos = e.k === 'pass' || e.k === 'contact' ? [e.pb, e.pa] : e.k === 'spin' || e.k === 'pit' ? [e.p0, e.p1] : e.k === 'dnf' ? [e.p0] : null;
     return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info, pos && pos[0] != null ? pos : 0];
   });
@@ -59,6 +59,7 @@ function spPlayer(S) {
     L.push('Tier: ' + EVALUATION.tiers[p.evaluation.tier] + (ev && ev.sts != null ? ' · season STS ' + ev.sts.toFixed(1) + '/100 · head-to-head ' + ev.h2hWins + '/' + ev.h2hRaces : ''));
   }
   L.push('Career by league (incl. this season, never added together): ' + careerLeagueText(p));
+  if (typeof clinchPackText === 'function' && clinchPackText(S)) L.push(clinchPackText(S));
   if (typeof stewPackText === 'function' && stewOn(S)) L.push(stewPackText(S));
   if (typeof puOn === 'function' && puOn(S)) L.push('Power units (' + PU.units + ' per season, a further unit is a ' + PU.pen + '-place grid drop): ' + puPoolText(S, p));
   L.push('This season: ' + p.pts + ' pts, ' + p.wins + ' wins, ' + p.pods + ' podiums, ' + (S.results || []).filter(function (r) { return r.dnf; }).length + ' DNFs' + (S.round ? '' : ' (no races yet)'));
@@ -195,6 +196,8 @@ function spRaces(S, scope) {
       rec.lg.slice().sort(function (x, y) { return x[0] - y[0]; }).forEach(function (e) {
         var ps = e[5] || null, pp = function (n) { return n ? 'P' + n : '?'; };
         var k = e[1], t = k === 'pass' ? e[2] + ' passes ' + e[3] + (ps ? ' for ' + pp(ps[1]) + ' (from ' + pp(ps[0]) + ')' : '') + (e[4] ? ' (' + e[4] + ')' : '')
+          : k === 'pen' ? 'stewards: ' + e[2] + ' penalised' + (e[4] ? ' (' + e[4] + ')' : '')
+          : k === 'penserve' ? 'penalty served in the pit stop: ' + e[2] + (e[4] ? ' (' + e[4] + ')' : '')
           : k === 'contact' ? 'contact: ' + e[2] + ' (attacking' + (ps ? ', ' + pp(ps[0]) : '') + ') and ' + e[3] + (ps ? ' (' + pp(ps[1]) + ')' : '')
           : k === 'spin' ? e[2] + ' spins' + (ps ? ' from ' + pp(ps[0]) + (ps[1] ? ', rejoins ' + pp(ps[1]) + (ps[1] > ps[0] ? ' (lost ' + (ps[1] - ps[0]) + ')' : ' (no places lost)') : '') : '')
           : k === 'dnf' ? e[2] + ' retires' + (ps ? ' from ' + pp(ps[0]) : '') + ': ' + e[4]
