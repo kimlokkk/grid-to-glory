@@ -4021,3 +4021,4 @@ svg.lp-av { display: block; }
 .pf-card .driver-help, .pf-card .dg-help { color: #c9d0e0; } .pf-card .driver-help summary { color: #fff; }
 @media (max-width: 400px) { .atr-big b { font-size: 32px; } .spx-sum b { font-size: 13px; } .f1g-h h3 { font-size: 17px; } }
 .pf-card.f1g { margin-bottom: 0; }
+.flag5.flag-real { object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px #1b234026; flex: none; }
