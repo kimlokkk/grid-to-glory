@@ -71,6 +71,8 @@ function carPerf3(team, c, on) {
 /* zon pintas: lokasi dalam lap (0 hingga 1) dan kualiti zon */
 function zonesFor(c) {
   var z = [{ at: 0.03, q: 1.0, n: 'turn 1' }, { at: 0.46, q: 0.8, n: 'hairpin' }, { at: 0.78, q: 0.6, n: 'chicane' }];
+  var rz = typeof TRACK_ZONES !== 'undefined' && c && c.key ? TRACK_ZONES[c.key] : null;   /* 2.6.9: the zones sit at the real corners of the layout */
+  if (rz) z = rz.map(function (x, i) { return { at: x[0], q: z[i].q * (typeof TRACK_ZQ !== 'undefined' ? TRACK_ZQ : 1), n: x[1] }; });
   return c.ot > 0.85 ? z.slice(0, 2) : z;
 }
 
