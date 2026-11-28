@@ -6,7 +6,8 @@ var CHANGELOG = [
     "Wear costs race pace (never qualifying) and raises the failure chance. Almost nothing below 50% wear, about 0.05 s a lap at 60%, 0.15 s at 80% and 0.3 s at 100%, more on engine-heavy tracks. A failed unit is lost for the season.",
     "Reliability decides how long a unit lasts (about 5.5 races at reliability 75) and how often it breaks. In testing, teams with reliability under 70 took a penalty in half of their seasons, teams above 80 in about 1 in 20. Overall failure rates stay about as before.",
     "Car pace is now shown apart from reliability: Team HQ, the car pace ladder, contract offers, the Paddock and the Story pack rank cars on aero, engine and chassis, with reliability listed on its own.",
-    "Existing careers: a save with no race played this season switches at once, otherwise from the next season. Story pack: your power units, the unit you ran each race and every grid penalty."
+    "Existing careers: a save with no race played this season switches at once, otherwise from the next season. Story pack: your power units, the unit you ran each race and every grid penalty.",
+    "The power unit choice is a Power unit bay on the qualifying page: one tile per unit with a health gauge, the pace it will cost by the flag at this track, the engineer's pick and your season allocation; grid penalties show as a stewards' panel on the strategy page."
   ] },
   { v: '2.6.8', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",

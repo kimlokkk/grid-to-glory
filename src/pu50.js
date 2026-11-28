@@ -94,17 +94,29 @@ function puPoolText(S, d) {
   var P = puPool(S, d); if (!P.units.length) return 'no unit fitted yet (' + PU.units + ' free this season)';
   return P.units.map(function (u, i) { return 'unit ' + (i + 1) + ' ' + Math.round(u.w * 100) + '% worn' + (u.f ? ' (failed in round ' + u.f + ')' : ''); }).join(', ') + ' · ' + Math.max(0, PU.units - P.units.length) + ' free unit' + (PU.units - P.units.length === 1 ? '' : 's') + ' left' + (P.pens ? ' · ' + P.pens + ' penalty unit' + (P.pens === 1 ? '' : 's') : '');
 }
+function puGauge(w, col) {
+  var h = clamp(1 - w, 0, 1), r = 25, C = 2 * Math.PI * r, tone = w >= 1 ? '#ff5a4f' : w >= 0.7 ? '#ffb020' : '#33d6a6';
+  return '<svg class="pu-g" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="' + r + '" fill="none" stroke="#ffffff1a" stroke-width="7"/><circle cx="32" cy="32" r="' + r + '" fill="none" stroke="' + tone + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + (C * h).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 32 32)"/><text x="32" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">' + Math.round(h * 100) + '</text><text x="32" y="43" text-anchor="middle" font-size="7" fill="#c4cce0" letter-spacing="1">HEALTH</text></svg>';
+}
 function puCardHTML() {
   if (!S || !puOn(S) || !UI.wk) return '';
-  var d = S.drivers[S.pi], P = puPool(S, d), ci = UI.wk.ci, sug = puPlan(S, d, ci), pick = S.puPick && S.puPick.s === S.season && S.puPick.r === S.round ? S.puPick.i : sug.i, c = circuitFor(S, ci);
-  var row = function (i, label, w, note, off) { var on = pick === i; return '<button class="pu-u' + (on ? ' on' : '') + (off ? ' off' : '') + '" data-act="pu-pick" data-v="' + i + '"' + (off ? ' disabled' : '') + '><span><b>' + label + '</b><em>' + note + '</em></span>' + (w != null ? '<i><u style="width:' + clamp(w * 100 / 1.2, 0, 100) + '%" class="' + (w >= 1 ? 'bad' : w >= 0.7 ? 'mid' : '') + '"></u></i><strong>' + Math.round(w * 100) + '%</strong>' : '<strong>NEW</strong>') + '</button>'; };
-  var rows = P.units.map(function (u, i) { var loss = puLossAt(u.w + 1 / puLife(myTeam())) * c.pw / 0.55; return row(i, 'Unit ' + (i + 1), u.w, u.f ? 'Failed in round ' + u.f : 'End-of-race cost here about ' + loss.toFixed(2) + ' s a lap', !!u.f); }).join('');
-  var nextN = P.units.length + 1, pen = P.units.length >= PU.units;
-  rows += row(-1, 'Unit ' + nextN + (pen ? ' (penalty)' : ' (new)'), null, pen ? PU.pen + '-place grid drop after qualifying' : 'Free: ' + (PU.units - P.units.length) + ' of ' + PU.units + ' left', false);
-  return '<section class="card pu-card"><header><small>Power unit</small><h3>Choose for this race</h3></header><p class="pu-sug"><b>Engineer:</b> ' + esc(puWhy(S, d, ci, sug)) + '. ' + (c.pw >= 0.55 ? 'Engine-heavy track: wear costs more here.' : c.pw <= 0.4 ? 'Engine-light track: a good place for a worn unit.' : 'Balanced track.') + '</p><div class="pu-list">' + rows + '</div><p class="pu-note">Wear costs race pace only (not qualifying) and raises the failure risk. Reliability ' + Math.round(myTeam().car.rel) + ': a unit lasts about ' + puLife(myTeam()).toFixed(1) + ' races.</p></section>';
+  var d = S.drivers[S.pi], P = puPool(S, d), ci = UI.wk.ci, sug = puPlan(S, d, ci), pick = S.puPick && S.puPick.s === S.season && S.puPick.r === S.round ? S.puPick.i : sug.i, c = circuitFor(S, ci), t = myTeam();
+  var kind = c.pw >= 0.55 ? ['ENGINE-HEAVY', 'hot'] : c.pw <= 0.4 ? ['ENGINE-LIGHT', 'cool'] : ['BALANCED', 'mid'];
+  var tiles = P.units.map(function (u, i) {
+    var loss = puLossAt(Math.min(PU.maxW, u.w + 1 / puLife(t))) * c.pw / 0.55, on = pick === i, tag = u.f ? '<em class="pu-tag dead">FAILED</em>' : i === sug.i ? '<em class="pu-tag sug">ENGINEER PICK</em>' : u.w >= 1 ? '<em class="pu-tag warn">WORN OUT</em>' : '';
+    return '<button class="pu-tile' + (on ? ' on' : '') + (u.f ? ' dead' : '') + '" data-act="pu-pick" data-v="' + i + '"' + (u.f ? ' disabled' : '') + ' aria-pressed="' + on + '"><span class="pu-tn">PU ' + (i + 1) + '</span>' + tag + puGauge(u.w) +
+      '<span class="pu-ts">' + (u.f ? 'Out for the season' : '<b>' + (loss < 0.005 ? '±0.00' : '−' + loss.toFixed(2)) + 's</b> a lap by the flag') + '</span><span class="pu-tr">' + u.races + (u.races === 1 ? ' race' : ' races') + '</span></button>';
+  }).join('');
+  var pen = P.units.length >= PU.units, onNew = pick === -1;
+  tiles += '<button class="pu-tile new' + (onNew ? ' on' : '') + (pen ? ' pen' : '') + '" data-act="pu-pick" data-v="-1" aria-pressed="' + onNew + '"><span class="pu-tn">PU ' + (P.units.length + 1) + '</span>' + (sug.i === -1 ? '<em class="pu-tag sug">ENGINEER PICK</em>' : '') + '<span class="pu-plus">+</span><span class="pu-ts">' + (pen ? '<b class="bad">−' + PU.pen + ' GRID</b> penalty' : '<b>FREE</b> · ' + (PU.units - P.units.length) + ' of ' + PU.units + ' left') + '</span><span class="pu-tr">fresh unit</span></button>';
+  var dots = ''; for (var k = 0; k < PU.units; k++) dots += '<i class="' + (k < P.units.length ? (P.units[k].f ? 'dead' : 'used') : '') + '"></i>';
+  return '<section class="pu-bay" style="--tc:' + t.color + '"><header><div><small>Power unit bay</small><h3>Pick your engine</h3></div><div class="pu-alloc" title="Season allocation"><span>' + dots + '</span><small>' + P.units.length + '/' + PU.units + ' USED</small></div></header>' +
+    '<div class="pu-track ' + kind[1] + '"><b>' + kind[0] + '</b><span>' + esc(c.name) + ' · wear costs ' + (c.pw >= 0.55 ? 'more' : c.pw <= 0.4 ? 'less' : 'the usual') + ' here</span></div>' +
+    '<p class="pu-radio"><b>RADIO</b>' + esc(puWhy(S, d, ci, sug)) + '.</p><div class="pu-grid">' + tiles + '</div>' +
+    '<p class="pu-foot">Race pace only, never qualifying · reliability ' + Math.round(t.car.rel) + ' → about ' + puLife(t).toFixed(1) + ' races a unit</p></section>';
 }
 if (typeof A !== 'undefined') A['pu-pick'] = function (x) { S.puPick = { s: S.season, r: S.round, i: +x.v }; if (typeof save === 'function') save(); render(); };
 (function () {
   if (typeof vQuali === 'function') { var q0 = vQuali; vQuali = function () { var h = q0.apply(this, arguments); return h.replace('<div class="qv-side">', '<div class="qv-side">' + puCardHTML()); }; }
-  if (typeof vStrat === 'function') { var s0 = vStrat; vStrat = function () { var h = s0.apply(this, arguments), R = UI.wk && UI.wk.R, P = R && R.puPens || []; if (!P.length) return h; var box = '<section class="card pu-pens"><small>Stewards</small><h3>Grid penalties</h3>' + P.map(function (p) { return '<p><b>' + esc(p.n) + '</b> drops ' + p.places + ' places (power unit ' + p.unit + ')</p>'; }).join('') + '</section>'; var k = h.indexOf('<div class="stack">'); return k >= 0 ? h.slice(0, k + 19) + box + h.slice(k + 19) : box + h; }; }
+  if (typeof vStrat === 'function') { var s0 = vStrat; vStrat = function () { var h = s0.apply(this, arguments), R = UI.wk && UI.wk.R, P = R && R.puPens || []; if (!P.length) return h; var box = '<section class="pu-pens"><small>Stewards · grid penalties</small>' + P.map(function (p) { return '<p><b>' + esc(p.n) + '</b><em>−' + p.places + ' places</em><span>power unit ' + p.unit + '</span></p>'; }).join('') + '</section>'; var k = h.indexOf('<div class="qv-main">'); return k >= 0 ? h.slice(0, k + 21) + box + h.slice(k + 21) : h.replace('<div class="stack">', '<div class="stack">' + box); }; }
 })();
