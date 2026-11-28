@@ -7105,10 +7105,24 @@ function posAt(T, f) {
   var seg = T.cum[hi] - T.cum[lo] || 1, k = (u - T.cum[lo]) / seg, a = T.pts[lo], b = T.pts[hi % T.pts.length];
   return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
 }
+/* round every corner of a circuit outline (2.6.9): straights stay straight, each corner becomes a curve that starts up to 40% along
+   both neighbouring straights (at most 34 px), so long straights get wide sweepers and short links stay tight, like hairpins and chicanes */
+function trackRound(P) {
+  var n = P.length, out = [], i, k;
+  for (i = 0; i < n; i++) {
+    var a = P[(i - 1 + n) % n], v = P[i], b = P[(i + 1) % n];
+    var la = Math.hypot(v[0] - a[0], v[1] - a[1]), lb = Math.hypot(b[0] - v[0], b[1] - v[1]);
+    var c = Math.min(34, 0.4 * la, 0.4 * lb);
+    var p0 = [v[0] + (a[0] - v[0]) * c / la, v[1] + (a[1] - v[1]) * c / la], p2 = [v[0] + (b[0] - v[0]) * c / lb, v[1] + (b[1] - v[1]) * c / lb];
+    var m = Math.max(4, Math.round(c / 3));
+    for (k = 0; k <= m; k++) { var t = k / m, u = 1 - t; out.push([u * u * p0[0] + 2 * u * t * v[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * v[1] + t * t * p2[1]]); }
+  }
+  return out;
+}
 function buildTrack(ci) {
   if (TRK[ci]) return TRK[ci];
   var pts, N;
-  if (typeof GTG_LAYOUTS !== 'undefined' && GTG_LAYOUTS[ci]) { pts = GTG_LAYOUTS[ci].map(function (p) { return p.slice(); }); N = pts.length; }
+  if (typeof GTG_LAYOUTS !== 'undefined' && GTG_LAYOUTS[ci]) { pts = trackRound(GTG_LAYOUTS[ci]); N = pts.length; }
   else {
     var g = lcg(4242 + ci * 7919), N = 240, ks = [2, 3, 4, 5, 7], am = [0.20, 0.15, 0.10, 0.07, 0.04], ph = [], ap = [], pts = [], x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, i;
   ks.forEach(function (k, j) { ph.push(g() * 6.2832); ap.push(am[j] * (0.6 + g() * 0.9)); });
@@ -11252,6 +11266,7 @@ var CHANGELOG = [
     "Why: without the old penalty and with money following results, the top teams were locking in (in testing only 7% of bottom-half teams reached the top 3 within five seasons). With the allowance it is 28%, a small team wins the title within five seasons 9% of the time, and the champion repeats 41% of the time (52% without it). A top team with a strong principal and director still stays in the top 3 three seasons in four; a badly led one about half the time.",
     "Fixed giant upgrades: one package could add +25 to +36 to a part (aero 56 to 93 at once). Small and normal upgrades are unchanged; a single in-season package now tops out at about +14, a winter package at +30, so small teams climb over two or three seasons instead of jumping in one race.",
     "Story pack goes deeper without getting huge: every race now adds the race pace of every driver (median clean lap, so you can see who was really fast), a lap chart at five points of the race, your race lap by lap (time, place, gap to the cars ahead and behind, tyre and its age), your main battle, and who decided each of your pit stops: the engineer's call that you accepted, changed or turned down, your own press of the pit button, or the team when you were not asked. About 1.3 KB a race in the save; the whole-season pack shows your stints instead of every lap.",
+    "Circuit maps have rounded corners: straights stay straight, corners curve, wide sweepers on long straights and tight hairpins and chicanes where the layout is tight. Cars on the live race map follow the same line.",
     "Circuits now fly real flags: each fictional circuit is modelled on a real venue, and it shows the flag of that host country (Cempaka Raya: Malaysia, Senja Marina: Singapore, Monte Albrecht: Monaco and so on). The Story pack names the country too.",
     "Titles are announced the moment they are decided. As soon as nobody can catch the leader any more (26 points a race for a driver, 44 for a team), the race result shows a champion banner, Home keeps it for the rest of the season, and the news and the Story pack record the round and how many races were left."
   ] },
