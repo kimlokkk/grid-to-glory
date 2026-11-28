@@ -197,3 +197,16 @@ window.addEventListener('error', function (e) {
     save();
   } catch (x) { }
 });
+
+/* Repair (2.6.9): the story pack's settings once shared the name SP with the sponsor settings, which made fame NaN after the first race,
+   so no brand ever made an offer. A broken fame is rebuilt from the career record: the long-run level that the same results would give. */
+function fameRepair(S) {
+  if (!S || S.mode !== 'pro' || Number.isFinite(S.fame)) return;
+  if (S.fame == null && !(S.career && S.career.starts > 0)) return;   /* a new career simply starts at the default; a saved NaN comes back as null */
+  var c = S.career || {}, st = Math.max(1, c.starts || 0), wins = c.wins || 0, pods = Math.max(0, (c.pods || 0) - wins), pts = Math.max(0, (c.pts ? Math.min(st, Math.round(c.pts / 6)) : 0) - wins - pods);
+  var g = (7 * wins + 3.5 * pods + 1.2 * pts + 0.3 * Math.max(0, st - wins - pods - pts)) / st;
+  if (S.drivers && S.drivers[S.pi] && S.drivers[S.pi].nat === 'MY') g *= 1.15;
+  S.fame = clamp(Math.round(g / (1 - 0.97)), 6, 100);
+  S.fameFixed = S.season;
+  if ((S.round || 0) === 0 && typeof sponNew === 'function') sponNew(S);   /* the season has not started: brands can still make offers now */
+}

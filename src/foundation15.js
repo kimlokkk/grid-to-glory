@@ -2,30 +2,32 @@
 /* Save/data foundation. Legacy circuit indexes 0..9 and slot ids remain compatible. */
 var GTG_SCHEMA = 2;
 var GTG_LEAGUES = { f1: { rounds: 22, seats: 20 }, f2: { rounds: 10, seats: 20 }, f3: { rounds: 10, seats: 30 } };
-/* ci, stable key, name, laps, km, base, wear, passing difficulty, power, rain, pit */
+/* ci, stable key, name, laps, km, base, wear, passing difficulty, power, rain, pit.
+   2.6.9: km, wear, passing, power and rain follow the real venue each circuit is modelled on (see trk59.js); laps and base lap time
+   were scaled with the new length so the race distance and car speed stay as before; pit loss unchanged. */
 var GTG_TRACKS = [
-  [0,'cempaka-raya','Cempaka Raya',25,5.3,97,1.0,.58,.55,.40,14],
-  [10,'longwei','Longwei',24,5.5,99,1.25,.40,.65,.30,15],
-  [3,'hanabi','Hanabi',24,5.6,98,1.25,.58,.35,.30,15],
-  [11,'maravela','Maravela',26,4.9,89,1.0,.58,.55,.25,14],
-  [12,'ile-laurent','Île Laurent',28,4.4,81,1.0,.40,.60,.30,13],
-  [2,'monte-albrecht','Monte Albrecht',30,3.4,73,.80,.95,.30,.25,12],
-  [13,'sol-de-vega','Sol de Vega',25,5.2,92,1.25,.58,.40,.10,15],
-  [14,'falkenring','Falkenring',30,4.2,76,1.0,.40,.65,.30,13],
-  [6,'dunmere','Dunmere',24,5.8,102,1.25,.58,.35,.50,15],
-  [5,'nordkap','Nordkap',20,6.8,116,1.0,.40,.55,.50,17],
-  [7,'valle-dorado','Valle Dorado',29,4.4,80,1.25,.85,.35,.10,13],
-  [15,'duinveld','Duinveld',29,4.3,79,1.25,.88,.35,.30,14],
-  [16,'velocera','Velocera',25,5.7,92,.80,.40,.75,.30,15],
-  [17,'kaspira','Kaspira',23,6.1,105,1.0,.40,.65,.10,16],
-  [8,'seri-mutiara','Seri Mutiara',25,5.5,96,1.25,.40,.50,.50,15],
-  [18,'senja-marina','Senja Marina',26,4.9,98,1.25,.88,.35,.30,16],
-  [19,'redstone-hills','Redstone Hills',24,5.6,98,1.0,.58,.50,.30,15],
-  [4,'sierra-alta','Sierra Alta',28,4.4,82,1.25,.40,.65,.05,13],
-  [1,'costa-vermelha','Costa Vermelha',29,4.3,80,1.25,.40,.45,.30,13],
-  [20,'lumen-city','Lumen City',22,6.2,103,.80,.40,.75,.05,16],
-  [21,'qamar-dunes','Qamar Dunes',25,5.4,94,1.25,.58,.35,.05,15],
-  [9,'aurelia','Aurelia',26,5.2,92,1.0,.58,.55,.10,14]
+  [0,'cempaka-raya','Cempaka Raya',24,5.5,101,1.25,.4,.55,.5,14],
+  [10,'longwei','Longwei',24,5.5,99,1.25,.4,.65,.3,15],
+  [3,'hanabi','Hanabi',23,5.8,102,1.25,.72,.35,.35,15],
+  [11,'maravela','Maravela',27,4.7,85,1,.58,.5,.15,14],
+  [12,'ile-laurent','Île Laurent',28,4.4,81,.8,.4,.7,.35,13],
+  [2,'monte-albrecht','Monte Albrecht',31,3.3,71,.8,.95,.25,.2,12],
+  [13,'sol-de-vega','Sol de Vega',28,4.7,83,1.25,.72,.4,.1,15],
+  [14,'falkenring','Falkenring',29,4.3,78,1,.4,.65,.35,13],
+  [6,'dunmere','Dunmere',24,5.9,104,1.25,.58,.45,.5,15],
+  [5,'nordkap','Nordkap',19,7,119,1,.4,.65,.55,17],
+  [7,'valle-dorado','Valle Dorado',30,4.3,78,1,.72,.4,.15,13],
+  [15,'duinveld','Duinveld',29,4.3,79,1.25,.88,.3,.35,14],
+  [16,'velocera','Velocera',25,5.8,94,.8,.4,.85,.2,15],
+  [17,'kaspira','Kaspira',23,6,103,.8,.4,.7,.05,16],
+  [8,'seri-mutiara','Seri Mutiara',25,5.4,94,1.25,.58,.45,.02,15],
+  [18,'senja-marina','Senja Marina',26,4.9,98,1,.88,.25,.4,16],
+  [19,'redstone-hills','Redstone Hills',24,5.5,96,1.25,.4,.5,.2,15],
+  [4,'sierra-alta','Sierra Alta',29,4.3,80,1,.58,.65,.1,13],
+  [1,'costa-vermelha','Costa Vermelha',29,4.3,80,1,.4,.55,.45,13],
+  [20,'lumen-city','Lumen City',22,6.2,103,.8,.4,.85,.02,16],
+  [21,'qamar-dunes','Qamar Dunes',25,5.4,94,1.25,.4,.5,.03,15],
+  [9,'aurelia','Aurelia',26,5.3,94,.8,.58,.55,.2,14]
 ];
 GTG_TRACKS.forEach(function (x) {
   var profile = { name: 'GP ' + x[2], loc: x[2], raceLaps: x[3], km: x[4], base: x[5], wear: x[6], ot: x[7], pw: x[8], rain: x[9], pit: x[10] };

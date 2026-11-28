@@ -576,3 +576,7 @@ Measured (24 seeds x 20 seasons each): see CHANGELOG 2.6.1. Trade-off accepted b
 - **Qualifying traffic and yellow flags get a cause:** the driver who impeded or caused the yellow is identified and judged (reprimand, grid drop, or lap time deleted for the yellow).
 - **Team sponsors:** each team has its own title sponsor and smaller partners with names, contract value, targets, bonuses and the risk of losing them.
 - Build order: (1) reliability shown apart + power-unit pool, (2) stewards (contact, qualifying, penalty points, time and grid penalties), (3) team sponsors. Each phase measured by simulation before it is locked.
+
+## D3. Stewards as built (2.6.9)
+
+See CHANGELOG 2.6.9 for the rules and the measured rates. Decisions from the user: a ban is simulated without the player (a reserve drives), and the stewards aim at about one penalty a race across the grid (measured 1.22).

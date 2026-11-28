@@ -71,6 +71,8 @@ function carPerf3(team, c, on) {
 /* zon pintas: lokasi dalam lap (0 hingga 1) dan kualiti zon */
 function zonesFor(c) {
   var z = [{ at: 0.03, q: 1.0, n: 'turn 1' }, { at: 0.46, q: 0.8, n: 'hairpin' }, { at: 0.78, q: 0.6, n: 'chicane' }];
+  var rz = typeof TRACK_ZONES !== 'undefined' && c && c.key ? TRACK_ZONES[c.key] : null;   /* 2.6.9: the zones sit at the real corners of the layout */
+  if (rz) z = rz.map(function (x, i) { return { at: x[0], q: z[i].q * (typeof TRACK_ZQ !== 'undefined' ? TRACK_ZQ : 1), n: x[1] }; });
   return c.ot > 0.85 ? z.slice(0, 2) : z;
 }
 
@@ -379,6 +381,7 @@ function makeRace2(S, ci, gridIds, o) {
   trainingPrepare(S);
   evaluationPrepare(S, ci);
   o = o || {};
+  if (typeof stewBefore === 'function') gridIds = stewBefore(S, ci, gridIds, o);
   if (typeof puBefore === 'function') gridIds = puBefore(S, ci, gridIds, o);
   var c = circuitFor(S, ci), L = laps2(c);
   var R = { v: 2, distanceScale: c.distanceScale || 1, c: c, ci: ci, L: L, dt: c.base / TICKS_PER_LAP, t: 0, ticks: 0, cars: [], log: [], done: false, nPass: 0, nClean: 0, nStart: 0, nFail: 0, nContact: 0, tagCount: {}, zones: zonesFor(c), lap: 1, lapPos: 0, drsOK: true, sc: 0, scT: 0, scCool: 0, restartT: 0, nDNF: 0, nSC: 0, nVSC: 0, nSpin: 0, nMech: 0, nCrash: 0 };
@@ -575,7 +578,7 @@ function tick2(R) {
       dl = pitS - f.sPrev; drive(dl); tm = Math.max(0, tm - dl * f.pA);
       f.s = pitS; var entryT = R.t + dt - tm;
       var k = f.pitReq; f.pitReq = null;
-      f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); f.crewT = null; if (f.c0 == null) f.c0 = f.comp; f.comp = k; f.eff = 0; f.tyreTemp = 0.3; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
+      f.hold = pitLossOf(f, R) * (R.sc === 'SC' ? 0.5 : R.sc === 'VSC' ? 0.7 : 1); if (f.penQ > 0 && typeof stewServe === 'function') stewServe(R, f); f.crewT = null; if (f.c0 == null) f.c0 = f.comp; f.comp = k; f.eff = 0; f.tyreTemp = 0.3; f.stops++; f.used[k] = 1; f.pitFresh = 1; f.lastPit = f.lap;
       var pitE = { t: entryT, lap: f.lap, k: 'pit', b: f.di, comp: k, loss: f.hold, p0: raceOrderPos(R, f), tags: ['pit'].concat(f.why ? [f.why] : []) }; R.log.push(pitE); (R.pend = R.pend || []).push({ f: f, e: pitE }); f.why = null;
       var pitWait = Math.min(f.hold, tm); f.hold -= pitWait; tm -= pitWait; f.waitT += pitWait;
       if (tm > 0) drive(tm / f.pA);
@@ -631,6 +634,7 @@ function runRace2(S, ci, gridIds, o) {
   var R = makeRace2(S, ci, gridIds, o);
   R.cars.forEach(function (f) { engineerLap(R, f); });
   while (!R.done) tick2(R);
+  if (typeof stewFinish === 'function') stewFinish(R);
   R.cls = R.cars.slice().sort(function (a, b) { var ta = a.dnf ? 1e9 - a.dnfS : a.tFin + (a.pen || 0), tb = b.dnf ? 1e9 - b.dnfS : b.tFin + (b.pen || 0); return ta - tb; });
   R.cls.forEach(function (f, i) { f.pos = i + 1; });
   return R;

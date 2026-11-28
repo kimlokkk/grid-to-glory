@@ -268,9 +268,20 @@ var p31OldDevWinter = devWinter;
 devWinter = function (S, log) {
   if (S.mode === 'pro' && S.world && S.teams && S.teams.length) {
     var champ = S.teams.slice().sort(function (a, b) { return b.pts - a.pts; })[0];
-    if (S.titleRun && S.titleRun.id === champ.id) S.titleRun.n++; else S.titleRun = { id: champ.id, n: 1 };
-    if (S.titleRun.n >= 2) { var cut = S.titleRun.n >= 3 ? 8 : 5; PARTS.forEach(function (k) { champ.car[k] = clamp(champ.car[k] - cut, 45, 99); }); }
+    if (S.titleRun && S.titleRun.id === champ.id) S.titleRun.n++; else S.titleRun = { id: champ.id, n: 1 };   /* kept as a record only: the back-to-back champion handicap was removed in 2.6.9 */
   }
-  if (S.mode === 'pro' && S.world && S.teams) S.teams.forEach(function (t) { if (t.prestige != null) t.prestige = clamp(t.prestige + (6 - t.prestige) * 0.12 + gauss() * 0.5, 2, 9.5); });
+  if (S.mode === 'pro' && S.world && S.teams) S.teams.forEach(function (t) { if (t.prestige != null) t.prestige = prestigeNext(S, t); });
   return p31OldDevWinter(S, log);
 };
+
+/* Prestige follows results (2.6.9). Target from the constructors' positions of the last three seasons (weights 0.5, 0.3, 0.2) and titles won
+   in them; prestige moves a quarter of the way there each winter, with a little noise. P1 every year aims at 10, P10 every year at 1.
+   Before, prestige only drifted to 6 at random whatever the results. */
+var PRES = { w: [0.5, 0.3, 0.2], title: 0.5, step: 0.25, noise: 0.15, lo: 1, hi: 10 };
+function prestigeTarget(S, t) {
+  var sh = (t.sh || []).slice(-3).reverse(); if (!sh.length) return t.prestige;
+  var n = S.teams.length, sw = 0, v = 0, titles = 0;
+  sh.forEach(function (r, i) { var w = PRES.w[i] || 0; sw += w; v += w * (PRES.hi - (r.pos - 1) * (PRES.hi - PRES.lo) / Math.max(1, n - 1)); if (r.pos === 1) titles++; });
+  return clamp(v / sw + titles * PRES.title, PRES.lo, PRES.hi);
+}
+function prestigeNext(S, t) { var tg = prestigeTarget(S, t); return clamp(t.prestige + (tg - t.prestige) * PRES.step + gauss() * PRES.noise, PRES.lo, PRES.hi); }

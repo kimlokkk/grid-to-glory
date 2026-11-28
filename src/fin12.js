@@ -29,6 +29,7 @@ function finPayCap(t) { return FIN.payFrac * ((t.fin && t.fin.rev) || 140); }
 /* dipanggil di awal musim sejuk (sebelum pakej musim sejuk), selepas pasaran transfer */
 function finSeason(S) {
   finInit(S);
+  if (S.spx && S.spx.v >= 1 && S.mode === 'pro' && typeof spxWinter === 'function' && S.teams[0] && !S.teams[0].spec) { spxBackInit(S); spxWinter(S, false); }
   var ts = S.teams.slice().sort(function (a, b) { return b.pts - a.pts || b.wins - a.wins; }), pos = {};
   ts.forEach(function (t, i) { pos[t.id] = i + 1; });
   S.teams.forEach(function (t) {
@@ -37,6 +38,7 @@ function finSeason(S) {
     var prev = (t.sh && t.sh.length > 1) ? t.sh[t.sh.length - 2].pos : pos[t.id], avg = (pos[t.id] + prev) / 2;
     var target = finSponBase(t) * (1.08 - 0.016 * (avg - 1));          /* keputusan baik tarik penaja */
     f.spon += 0.5 * (target - f.spon);
+    if (S.spx && S.spx.v >= 1 && t.spxP) { f.spon = spxSum(S, t) + spxBackSum(S, t); f.spxBonus = 0; }   /* team sponsors (2.6.9): the contracts for next season plus the drivers' backing */
     f.pz = FIN.prize[pos[t.id] - 1]; f.rev = f.pz + f.spon + (typeof sponIncome === 'function' && t.id === S.drivers[S.pi].team ? sponIncome(S) : 0);
     f.pay = finPayroll(S, t);
     var carry = clamp(f.cash, 0, 0.25 * FIN.cap) * 0.7, debt = Math.max(0, -f.cash) * 1.25 + (f.debt || 0);

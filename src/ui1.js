@@ -37,7 +37,7 @@ function lzUnpack(z) {
 /* last resort when the browser still refuses: drop old heavy race detail and old news, then try again */
 function saveSlim() {
   try {
-    (S.rr || []).forEach(function (r) { delete r.q; delete r.lg; delete r.rd; });
+    (S.rr || []).forEach(function (r) { delete r.q; delete r.lg; delete r.rd; delete r.dp; });
     if (S.news && S.news.length > 120) S.news = S.news.slice(0, 120);
     if (S.events && S.events.length > 300) S.events = S.events.slice(-300);
   } catch (e) { }
@@ -71,6 +71,11 @@ function migrate(o) { if (o.saveVer > APEX.save) throw new Error('This save requ
   if (typeof verMigrate === 'function') o = verMigrate(o);
   if (typeof leadMigrate === 'function') { try { leadMigrate(o); } catch (e) { } }
   if (typeof puMigrate === 'function') { try { puMigrate(o); } catch (e) { } }
+  if (typeof stewMigrate === 'function') { try { stewMigrate(o); } catch (e) { } }
+  if (typeof fameRepair === 'function') { try { fameRepair(o); } catch (e) { } }
+  if (typeof spxMigrate === 'function') { try { spxMigrate(o); } catch (e) { } }
+  if (typeof atrMigrate === 'function') { try { atrMigrate(o); } catch (e) { } }
+  if (typeof trkLapConv === 'function') { try { trkLapConv(o); } catch (e) { } }
   return o; }
 function me() { return S.drivers[S.pi]; }
 function myTeam() { return S.teams[me().team]; }
@@ -267,7 +272,7 @@ function tKej() {
   var h = '<div class="cols two"><div class="card"><h3 style="margin-bottom:8px">Drivers</h3><div class="scroll"><table class="t"><thead><tr><th>#</th><th>Driver</th><th class="r">Wins</th><th class="r">Pts</th></tr></thead><tbody>';
   ds.forEach(function (d, i) { h += '<tr class="' + (d === p ? 'me' : '') + '"><td class="mono dim">' + (i + 1) + '</td><td>' + tagD(d) + ' ' + esc(d.name) + '</td><td class="r mono">' + d.wins + '</td><td class="r mono">' + d.pts + '</td></tr>'; });
   h += '</tbody></table></div></div><div class="card"><h3 style="margin-bottom:8px">Constructors</h3><table class="t"><thead><tr><th>#</th><th>Team</th><th class="r">Pts</th></tr></thead><tbody>';
-  ts.forEach(function (t, i) { h += '<tr class="' + (t.id === p.team ? 'me' : '') + '"><td class="mono dim">' + (i + 1) + '</td><td>' + tagT(t) + ' ' + t.name + '</td><td class="r mono">' + t.pts + '</td></tr>'; });
+  ts.forEach(function (t, i) { h += '<tr class="' + (t.id === p.team ? 'me' : '') + '"><td class="mono dim">' + (i + 1) + '</td><td>' + tagT(t) + ' ' + (typeof spxDisp === 'function' ? spxDisp(t) : t.name) + '</td><td class="r mono">' + t.pts + '</td></tr>'; });
   return h + '</tbody></table></div></div>';
 }
 function tPemandu() {

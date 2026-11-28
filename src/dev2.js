@@ -46,6 +46,10 @@ function initDev(S) {
   S.regYear = S.mode === 'pro' && S.world ? S.world.era.next : S.season + Math.floor(rr(DEV.regEvery[0], DEV.regEvery[1] + 1));
   if (typeof leadMigrate === 'function') leadMigrate(S);
   if (typeof puMigrate === 'function') puMigrate(S);
+  if (typeof stewMigrate === 'function') stewMigrate(S);
+  if (typeof spxMigrate === 'function') spxMigrate(S);
+  if (typeof atrMigrate === 'function') atrMigrate(S);
+  if (typeof trkLapConv === 'function') trkLapConv(S);
 }
 
 /* kedudukan semasa ikut mata (jika belum ada mata, ikut kekuatan kereta) */
@@ -84,10 +88,11 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   var lp = lead ? leadPackage(S, t) : null; if (lp) fail *= lp.fail;
   var gain;
   if (rnd() < fail) gain = -rr(0.3, 1.4) * (0.6 + back);                         /* naik taraf gagal, pasukan belakang lebih berani maka lebih risiko */
-  else gain = size * bud * (lp ? lp.q : t.dev.td) * Math.pow(t.dev.staff, lp ? LEAD.staffG : DEV.staffG) * Math.pow(t.dev.tp.skill, lp ? LEAD.tpG : DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1);
+  else gain = size * bud * (lp ? lp.q : t.dev.td) * Math.pow(t.dev.staff, lp ? LEAD.staffG : DEV.staffG) * Math.pow(t.dev.tp.skill, lp ? LEAD.tpG : DEV.tpG) * eff * rr(0.5, 1.6 + 0.5 * back) * (DEV.ceil - t.car[k]) / DEV.div * (typeof facMul === 'function' ? facMul(t) : 1) * (typeof atrMul === 'function' ? atrMul(S, t, !!(opt && opt.winter)) : 1);
   if (lead && gain > 0) gain *= (opt && opt.k ? LEAD.gainIn : LEAD.gainWin);
   if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
   else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
+  if (gain > 0 && typeof devCap === 'function') gain = devCap(S, gain, !!(opt && opt.winter) || !opt);   /* soft cap on one package (2.6.9): no more +30 in a single upgrade */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
   if (k === 'engine' && typeof engShare === 'function') engShare(S, t, gain);
   if (log) log.push({ t: t.id, k: k, g: gain, mode: mode, rush: !!(opt && opt.rush), big: !!(opt && opt.big) });
@@ -196,7 +201,7 @@ function devWinter(S, log) {
     if (pro) { S.regMinor = regNextMinor(S, kind); S.regLast = { kind: kind, season: S.season + 1 }; }
     if (log) log.push({ reg: true, kind: kind, parts: rgParts });
   }
-  S.teams.forEach(function (t) { var wsz = (typeof leadOn === 'function' && leadOn(S, S.season + 1) && t.dev.tp ? leadWinterSize(S, t) : DEV.winter) + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz, typeof leadOn === 'function' && leadOn(S, S.season + 1) ? LEAD.costMul : 1); devPackage(S, t, wsz, ranks, tops, log); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.regReady = false; t.dev.regDecided = false; t.dev.rum = false; t.dev.next = null; });
+  S.teams.forEach(function (t) { var wsz = (typeof leadOn === 'function' && leadOn(S, S.season + 1) && t.dev.tp ? leadWinterSize(S, t) : DEV.winter) + (t.dev.bank || 0) + (t.dev.prog || 0) * 0.5 / DEV.std; if (typeof finWinter === 'function' && t.fin) wsz *= finWinter(t, wsz, typeof leadOn === 'function' && leadOn(S, S.season + 1) ? LEAD.costMul : 1); devPackage(S, t, wsz, ranks, tops, log, { winter: 1 }); t.dev.bank = 0; t.dev.prog = 0; t.dev.banked = false; t.dev.regReady = false; t.dev.regDecided = false; t.dev.rum = false; t.dev.next = null; });
   if (typeof e4Winter === 'function') e4Winter(S, log);
   if (DEV.meanKeep) PARTS.forEach(function (k) { var d = S.target[k] - leagueMean(S, k); S.teams.forEach(function (t) { t.car[k] = clamp(t.car[k] + d, 45, 99); }); });
   if (DEV.sdTarget) {

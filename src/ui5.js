@@ -199,7 +199,7 @@ function stepOne(R) {
   if (p.stops !== RUN.stops) { RUN.stops = p.stops; p.pitOk = false; RUN.pitPending = null; }
   if (p.pitReq && !p.pitOk && !p.fin) {
     if (asking()) pitCard(R, p);
-    else p.pitOk = true;
+    else { p.pitOk = true; if (typeof spPitDec === 'function') spPitDec(R, 'auto', p.pitReq); }
   }
   if (typeof toCheck === 'function' && !RUN.wait) toCheck(R, p);
   if (S.live && S.live.lap !== p.lap && !R.done) { liveCheckpoint(R); save(); }
@@ -426,7 +426,7 @@ function towerHTML(R) {
     if (!keep) { if (!gapShown) { h += '<div class="tr gap">···</div>'; gapShown = true; } return; }
     gapShown = false;
     var v = i === 0 ? (f.fin ? 'Wins' : 'Leader') : gapTxt(R, f, UI.tw === 'int' ? o[i - 1] : lead), pit = f.hold > 0 && !f.fin && !f.dnf && f.lastPit === f.lap;
-    h += '<div class="tr ' + (f.isP ? 'me' : '') + (S.rival && f.di === S.rival.di ? ' rv' : '') + (f.dnf ? ' out' : '') + '"><span>' + (f.dnf ? '–' : i + 1) + '</span><span class="c" style="--tc:' + f.t.color + '">' + f.d.code + '</span><span class="dim nm">' + esc(lastName(f.d)) + (pit ? ' <span class="pit">PIT</span>' : '') + (f.pen ? ' <span class="warn">+' + f.pen + 's</span>' : '') + '</span><span class="g">' + v + '</span><span class="ty2">' + tyc(f.comp) + '<i>' + Math.floor(f.eff) + '</i></span><span class="dim">' + f.stops + '</span><span><i class="md m' + f.push + '" title="' + PUSHN[f.push] + '"></i></span></div>';
+    h += '<div class="tr ' + (f.isP ? 'me' : '') + (S.rival && f.di === S.rival.di ? ' rv' : '') + (f.dnf ? ' out' : '') + '"><span>' + (f.dnf ? '–' : i + 1) + '</span><span class="c" style="--tc:' + f.t.color + '">' + f.d.code + '</span><span class="dim nm">' + esc(lastName(f.d)) + (f.penQ > 0 && !f.dnf ? ' <span class="tw-pen" title="Penalty to serve">+' + f.penQ + 's</span>' : f.penServed && !f.dnf ? ' <span class="tw-pen ok" title="Penalty served">' + f.penServed + 's ✓</span>' : '') + (pit ? ' <span class="pit">PIT</span>' : '') + (f.pen ? ' <span class="warn">+' + f.pen + 's</span>' : '') + '</span><span class="g">' + v + '</span><span class="ty2">' + tyc(f.comp) + '<i>' + Math.floor(f.eff) + '</i></span><span class="dim">' + f.stops + '</span><span><i class="md m' + f.push + '" title="' + PUSHN[f.push] + '"></i></span></div>';
   });
   return h + '</div>';
 }
@@ -574,6 +574,7 @@ A['r-pitx'] = function () {
 /* ---------- tamat ---------- */
 function finishRun(R) {
   RUN.fin = true;
+  if (typeof stewFinish === 'function') stewFinish(R);
   R.cls = R.cars.slice().sort(function (a, b) { var ta = a.dnf ? 1e9 - a.dnfS : a.tFin + (a.pen || 0), tb = b.dnf ? 1e9 - b.dnfS : b.tFin + (b.pen || 0); return ta - tb; });
   R.cls.forEach(function (f, i) { f.pos = i + 1; });
   var fl = null; R.cars.forEach(function (f) { if (!f.dnf && f.best < 900 && (!fl || f.best < fl.best)) fl = f; });

@@ -56,6 +56,7 @@ function devRound(S) {
   return out;
 }
 function finishRace(S, R, mg) {
+  if (typeof stewCommit === 'function') { try { stewCommit(S, R); } catch (e) { } }
   if (typeof puCommit === 'function') { try { puCommit(S, R); } catch (e) { } }
   evaluationRace(S, R);
   abilityRace(S, R);

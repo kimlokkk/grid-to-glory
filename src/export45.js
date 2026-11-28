@@ -3,7 +3,7 @@
    full qualifying and race results, race logs). Copy it into a chat and a story can be written without screenshots. =====
    Extra per-race data (qualifying times, tyres, race log, key radio) is recorded in the existing S.rr entry when a race is
    committed and kept for the current and previous season only, so saves stay small. */
-var SP = { scope: 'latest', keep: 2, last: 5 };
+var SPK = { scope: 'latest', keep: 2, last: 5 };   /* story pack settings (was SP, which overwrote the sponsor settings SP in spon12.js and broke fame) */
 
 function spPct(v, lo, hi) { return clamp(Math.round((v - lo) / (hi - lo) * 100), 0, 100); }
 function spN(v, d) { return Number.isFinite(v) ? v.toFixed(d == null ? 0 : d) : '-'; }
@@ -29,14 +29,15 @@ function storyRecord(S, wk) {
   if (wk.qr && wk.qr.length) rec.qs = wk.qr.map(function (rows) { return rows.map(function (r) { return [code(r[0]), +r[1].toFixed(3)]; }); });
   rec.q = (wk.q || []).map(function (r) { return [code(r.di), S.drivers[r.di] ? S.drivers[r.di].team : -1, +(r.lap || 0).toFixed(3), r.sess]; });
   rec.m = { w: R.w ? R.w.type : '', sc: R.nSC || 0, vsc: R.nVSC || 0, ot: R.nClean || 0, flt: R.fl && R.fl.t ? +R.fl.t.toFixed(3) : 0, L: R.L };
-  var keep = { pass: 1, contact: 1, spin: 1, dnf: 1, pit: 1, sc: 1, vsc: 1, restart: 1, wx: 1 };
+  var keep = { pass: 1, contact: 1, spin: 1, dnf: 1, pit: 1, sc: 1, vsc: 1, restart: 1, wx: 1, pen: 1, penserve: 1 };
   rec.lg = (R.log || []).filter(function (e) { return keep[e.k]; }).map(function (e) {
-    var info = e.k === 'pit' ? 'for ' + (COMP[e.comp] ? COMP[e.comp].n : (e.comp || '?')) + ' tyres' + (e.loss != null ? ', ' + e.loss.toFixed(1) + 's lost' : '') + (e.tags && e.tags[1] ? ' (' + e.tags[1] + ')' : '') : e.k === 'pass' ? [e.zone].concat((e.tags || []).filter(function (t) { return t !== 'peluang'; })).join(', ') : (e.tags || []).join(', ');
+    var info = e.k === 'pen' ? (e.out ? e.places + '-place grid drop next race' : e.sec + ' s time penalty') + ' for the contact' : e.k === 'penserve' ? e.sec + ' s held in the stop' : e.k === 'pit' ? 'for ' + (COMP[e.comp] ? COMP[e.comp].n : (e.comp || '?')) + ' tyres' + (e.loss != null ? ', ' + e.loss.toFixed(1) + 's lost' : '') + (e.tags && e.tags[1] ? ' (' + e.tags[1] + ')' : '') : e.k === 'pass' ? [e.zone].concat((e.tags || []).filter(function (t) { return t !== 'peluang'; })).join(', ') : (e.tags || []).join(', ');
     var pos = e.k === 'pass' || e.k === 'contact' ? [e.pb, e.pa] : e.k === 'spin' || e.k === 'pit' ? [e.p0, e.p1] : e.k === 'dnf' ? [e.p0] : null;
     return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info, pos && pos[0] != null ? pos : 0];
   });
   rec.rd = (R.radio || []).filter(function (r) { return r.imp; }).slice(-60).map(function (r) { return [r.lap, r.t]; });
-  S.rr.forEach(function (r) { if (r.s < S.season - (SP.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
+  if (typeof spDeepRecord === 'function') { try { spDeepRecord(S, rec, R); } catch (e) { } }
+  S.rr.forEach(function (r) { if (r.s < S.season - (SPK.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; delete r.dp; } });
 }
 
 /* ---------- text sections ---------- */
@@ -59,6 +60,8 @@ function spPlayer(S) {
     L.push('Tier: ' + EVALUATION.tiers[p.evaluation.tier] + (ev && ev.sts != null ? ' · season STS ' + ev.sts.toFixed(1) + '/100 · head-to-head ' + ev.h2hWins + '/' + ev.h2hRaces : ''));
   }
   L.push('Career by league (incl. this season, never added together): ' + careerLeagueText(p));
+  if (typeof clinchPackText === 'function' && clinchPackText(S)) L.push(clinchPackText(S));
+  if (typeof stewPackText === 'function' && stewOn(S)) L.push(stewPackText(S));
   if (typeof puOn === 'function' && puOn(S)) L.push('Power units (' + PU.units + ' per season, a further unit is a ' + PU.pen + '-place grid drop): ' + puPoolText(S, p));
   L.push('This season: ' + p.pts + ' pts, ' + p.wins + ' wins, ' + p.pods + ' podiums, ' + (S.results || []).filter(function (r) { return r.dnf; }).length + ' DNFs' + (S.round ? '' : ' (no races yet)'));
   if (mate) L.push('Teammate: ' + mate.name + ' (OVR ' + ovr(mate) + ', ' + mate.pts + ' pts)' + (S.tm ? ' · relationship ' + tmLabel(S.tm.rel) + ' (' + spN(S.tm.rel, 1) + '), team orders obeyed ' + S.tm.yes + ', refused ' + S.tm.no : ''));
@@ -76,9 +79,11 @@ function spTeams(S) {
   var ranks = { aero: spRank(S.teams, 'aero'), engine: spRank(S.teams, 'engine'), chassis: spRank(S.teams, 'chassis'), rel: spRank(S.teams, 'rel') }, pr = powerRank(S), me0 = S.drivers[S.pi].team, L = [];
   teamStandings(S).forEach(function (t, i) {
     var c = t.car, d = t.dev || {}, f = t.fin, tp = d.tp, ch = typeof TEAM_CHARS !== 'undefined' && t.char && TEAM_CHARS[t.char] ? TEAM_CHARS[t.char].name : '';
-    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + ' (' + t.short + ')' + (S.round ? ' · constructors P' + (i + 1) : ' · no races yet') + ' · car pace rank #' + teamPaceRank(S, t.id) + ' (aero, engine, chassis avg ' + teamPace(t).toFixed(1) + ') · reliability ' + Math.round(c.rel) + ' (#' + teamRelRank(S, t.id) + ')');
+    L.push((t.id === me0 ? '[PLAYER TEAM] ' : '') + t.name + (typeof spxOn === 'function' && spxOn(S) && spxName(t) !== t.name ? ' [racing as ' + spxName(t) + ']' : '') + ' (' + t.short + ')' + (S.round ? ' · constructors P' + (i + 1) : ' · no races yet') + ' · car pace rank #' + teamPaceRank(S, t.id) + ' (aero, engine, chassis avg ' + teamPace(t).toFixed(1) + ') · reliability ' + Math.round(c.rel) + ' (#' + teamRelRank(S, t.id) + ')');
     L.push('  Car: aero ' + Math.round(c.aero) + ' (#' + ranks.aero[t.id] + '), engine ' + Math.round(c.engine) + ' (#' + ranks.engine[t.id] + '), chassis ' + Math.round(c.chassis) + ' (#' + ranks.chassis[t.id] + '), reliability ' + Math.round(c.rel) + ' (#' + ranks.rel[t.id] + ')');
     if (typeof engLabel === 'function') L.push('  Engine deal: ' + engLabel(S, t) + (t.fac ? ' · facilities ' + facName(t) + ' (R&D ' + (facMul(t) >= 1 ? '+' : '') + Math.round((facMul(t) - 1) * 100) + '%)' : ''));
+    if (typeof spxOn === 'function' && spxOn(S) && t.spxP) L.push('  ' + spxPackLine(S, t));
+    if (typeof atrOn === 'function' && atrOn(S)) L.push('  ' + atrPackLine(S, t));
     if (f) L.push('  Money: revenue ' + spM(f.rev) + ', payroll ' + spM(f.pay) + ', R&D fund ' + spM(f.fund) + ', cash ' + spM(f.cash) + (f.loan > 0.5 ? ', loan ' + spM(f.loan) : '') + ' · ' + finStatus(t).txt);
     var LP = typeof leadOn === 'function' && leadOn(S) && typeof leadPerson === 'function' && !t.spec;
     if (tp && LP) L.push('  Team principal: ' + spPerson(S, leadPerson(S, tp, 'tp', t), 'tp', t));
@@ -145,7 +150,7 @@ function spTrack(S, ci, beforeSeason) {
   var c = circuitFor(S, ci); if (!c) return '';
   /* same bands as the circuit chips on screen (circuitChips): a higher overtaking value means harder to pass */
   var wear = (c.wear < 0.95 ? 'low' : c.wear < 1.15 ? 'medium' : 'high') + ' tyre wear', ot = c.ot < 0.5 ? 'easy to overtake' : c.ot < 0.7 ? 'medium to overtake' : 'hard to overtake', pw = c.pw >= 0.55 ? 'power track (engine matters most)' : c.pw <= 0.4 ? 'downforce track (aero and chassis matter most)' : 'balanced (engine and aero both matter)';
-  var L = ['Track: ' + c.name + ' (' + c.loc + ') · ' + (c.km ? c.km + ' km, ' : '') + laps2(c) + ' laps · ' + pw + ' · ' + wear + ' (' + c.wear + ') · ' + ot + ' (difficulty ' + c.ot + ') · rain chance ' + Math.round(c.rain * 100) + '% · pit stop costs about ' + c.pit + 's'];
+  var L = ['Track: ' + c.name + ' (' + c.loc + (typeof trackNatName === 'function' && trackNatName(ci) ? ', ' + trackNatName(ci) : '') + ') · ' + (c.km ? c.km + ' km, ' : '') + laps2(c) + ' laps · ' + pw + ' · ' + wear + ' (' + c.wear + ') · ' + ot + ' (difficulty ' + c.ot + ') · rain chance ' + Math.round(c.rain * 100) + '% · pit stop costs about ' + c.pit + 's'];
   if (typeof thStats === 'function') {
     var st = thStats(ci, leagueOf(S)), past = st.a.filter(function (r) { return beforeSeason == null || r.s < beforeSeason; }).slice(-3).reverse();
     if (past.length) L.push('  History here (' + leagueOf(S).toUpperCase() + '): ' + past.map(function (r) { return 'S' + r.s + ' won by ' + (r.w ? r.w.n + ' (' + r.w.t + ')' : '?') + (r.pl ? ', pole ' + r.pl.n : ''); }).join('; ') + (st.top && st.top.n > 1 ? ' · most wins here: ' + st.top.name + ' x' + st.top.n : '') + (st.lap ? ' · lap record ' + fmtT(st.lap.t) + ' by ' + st.lap.n + ' (S' + st.lap.s + ')' : ''));
@@ -159,13 +164,15 @@ function spTrack(S, ci, beforeSeason) {
 }
 function spRaces(S, scope) {
   var lg = leagueOf(S), all = (S.rr || []).filter(function (r) { return r.s === S.season && r.league === lg; }).sort(function (a, b) { return a.r - b.r; });
-  var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SP.last) : all.slice(-1);
+  var pick = scope === 'season' ? all : scope === 'last' ? all.slice(-SPK.last) : all.slice(-1);
   if (!pick.length) return { text: '(no races completed this season yet)', first: 0 };
   var out = [];
   pick.forEach(function (rec) {
     var m = rec.m || {}, c = CIRCUITS[rec.ci], L = [];
     L.push('### Round ' + (rec.r + 1) + ': ' + (c ? c.name : 'circuit ' + rec.ci) + ' (' + rec.laps + ' laps)' + (m.w ? ' · weather ' + spEn(m.w) : '') + (m.sc != null ? ' · safety cars ' + m.sc + ', VSC ' + m.vsc + ', clean overtakes ' + m.ot : ''));
     L.push(spSafe('track', function () { return spTrack(S, rec.ci, rec.s); }));
+    var sr = S.stew && S.stew.races ? S.stew.races.filter(function (z) { return z.s === rec.s && z.r === rec.r; })[0] : null;
+    if (sr) L.push('Stewards: ' + (sr.grid.length ? 'grid drops ' + sr.grid.join('; ') + '. ' : '') + (sr.rulings.length ? sr.rulings.join('; ') : 'no penalties') + ' (' + sr.incidents + ' other contact' + (sr.incidents === 1 ? '' : 's') + ' judged racing incidents)');
     var pl = S.pu && S.pu.log ? S.pu.log.filter(function (z) { return z.s === rec.s && z.r === rec.r; })[0] : null;
     if (pl) L.push('Power units: ' + (pl.me ? 'you ran unit ' + pl.me.unit + (pl.me.fresh ? ' (new' + (pl.me.pen ? ', with a grid penalty' : '') + ')' : ' (' + pl.me.w0 + '% worn at the start)') : 'not recorded for you') + ' · grid penalties: ' + (pl.pens.length ? pl.pens.map(function (q) { return q.n + ' -' + q.places + ' (unit ' + q.unit + ')'; }).join(', ') : 'none'));
     if (rec.fl) L.push('Fastest lap: ' + rec.fl + (m.flt ? ' ' + fmtT(m.flt) : ''));
@@ -192,6 +199,8 @@ function spRaces(S, scope) {
       rec.lg.slice().sort(function (x, y) { return x[0] - y[0]; }).forEach(function (e) {
         var ps = e[5] || null, pp = function (n) { return n ? 'P' + n : '?'; };
         var k = e[1], t = k === 'pass' ? e[2] + ' passes ' + e[3] + (ps ? ' for ' + pp(ps[1]) + ' (from ' + pp(ps[0]) + ')' : '') + (e[4] ? ' (' + e[4] + ')' : '')
+          : k === 'pen' ? 'stewards: ' + e[2] + ' penalised' + (e[4] ? ' (' + e[4] + ')' : '')
+          : k === 'penserve' ? 'penalty served in the pit stop: ' + e[2] + (e[4] ? ' (' + e[4] + ')' : '')
           : k === 'contact' ? 'contact: ' + e[2] + ' (attacking' + (ps ? ', ' + pp(ps[0]) : '') + ') and ' + e[3] + (ps ? ' (' + pp(ps[1]) + ')' : '')
           : k === 'spin' ? e[2] + ' spins' + (ps ? ' from ' + pp(ps[0]) + (ps[1] ? ', rejoins ' + pp(ps[1]) + (ps[1] > ps[0] ? ' (lost ' + (ps[1] - ps[0]) + ')' : ' (no places lost)') : '') : '')
           : k === 'dnf' ? e[2] + ' retires' + (ps ? ' from ' + pp(ps[0]) : '') + ': ' + e[4]
@@ -200,6 +209,7 @@ function spRaces(S, scope) {
         L.push('  L' + e[0] + ' ' + spEn(t));
       });
     } else L.push('Race log: not recorded for this race.');
+    if (rec.dp && typeof spDeepText === 'function') L.push(spSafe('race analysis', function () { return spDeepText(S, rec, scope); }));
     if (rec.rd && rec.rd.length) { L.push('Player radio, key moments:'); rec.rd.forEach(function (r) { L.push('  L' + r[0] + ' ' + r[1]); }); }
     out.push(L.join('\n'));
   });
@@ -207,7 +217,7 @@ function spRaces(S, scope) {
 }
 function storyPackText(scope) {
   var races = spSafe('races', function () { return spRaces(S, scope); }), done = S.round, tot = seasonRounds(S);
-  var head = ['GRID TO GLORY · STORY PACK', spLead(S) + ' Season ' + S.season + ' · ' + done + '/' + tot + ' rounds completed · scope: ' + (scope === 'season' ? 'whole season' : scope === 'last' ? 'last ' + SP.last + ' races' : 'latest race'), '',
+  var head = ['GRID TO GLORY · STORY PACK', spLead(S) + ' Season ' + S.season + ' · ' + done + '/' + tot + ' rounds completed · scope: ' + (scope === 'season' ? 'whole season' : scope === 'last' ? 'last ' + SPK.last + ' races' : 'latest race'), '',
     'HOW TO USE: Everything below is fact from the game. Write the story in English from it: keep names, numbers, results and continuity exact; invent only dialogue, personalities and small scene details, and say which parts are invented.', ''];
   var sec = function (t, body) { return '## ' + t + '\n' + body + '\n'; };
   return head.join('\n') + '\n' + sec('MY DRIVER', spSafe('player', function () { return spPlayer(S); })) + '\n' + sec('STANDINGS', spSafe('standings', function () { return spStandings(S); })) + '\n' +
@@ -217,21 +227,21 @@ function storyPackText(scope) {
 
 /* ---------- UI ---------- */
 function spModalHTML() {
-  var btn = function (v, l) { return '<button class="btn sm ' + (SP.scope === v ? 'on' : '') + '" data-act="sp-scope" data-v="' + v + '">' + l + '</button>'; };
+  var btn = function (v, l) { return '<button class="btn sm ' + (SPK.scope === v ? 'on' : '') + '" data-act="sp-scope" data-v="' + v + '">' + l + '</button>'; };
   return '<h2>Story pack</h2><p class="dim">One block of text with the cars, teams, staff, drivers, news, full qualifying and race results and race logs. Copy it into a chat to get a story, no screenshots needed.</p>' +
-    '<div class="row" style="gap:6px;flex-wrap:wrap">' + btn('latest', 'Latest race') + btn('last', 'Last ' + SP.last + ' races') + btn('season', 'Whole season') + '</div>' +
+    '<div class="row" style="gap:6px;flex-wrap:wrap">' + btn('latest', 'Latest race') + btn('last', 'Last ' + SPK.last + ' races') + btn('season', 'Whole season') + '</div>' +
     '<textarea id="exp" readonly spellcheck="false" style="min-height:220px"></textarea><p class="dim" id="sp-size" style="margin:0;font-size:12px"></p>' +
     '<div class="row"><button class="btn pri" data-act="copy">Copy</button><button class="btn" data-act="sp-dl">Download .txt</button><button class="btn" data-act="mclose">Close</button></div>';
 }
 function spFill() {
   var ta = document.getElementById('exp'); if (!ta) return;
-  var txt = spSafe('story pack', function () { return storyPackText(SP.scope); }); ta.value = txt;
+  var txt = spSafe('story pack', function () { return storyPackText(SPK.scope); }); ta.value = txt;
   var sz = document.getElementById('sp-size'); if (sz) sz.textContent = txt.length.toLocaleString() + ' characters';
-  document.querySelectorAll('#modal [data-act="sp-scope"]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === SP.scope); });
+  document.querySelectorAll('#modal [data-act="sp-scope"]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === SPK.scope); });
 }
 if (typeof A !== 'undefined') {
-  A['sp-open'] = function (d) { if (UI.screen === 'menu') { var sv = loadSave(); if (sv) S = migrate(sv); } if (!S || !S.drivers) return; if (d && d.v) SP.scope = d.v; showModal(spModalHTML()); spFill(); };
-  A['sp-scope'] = function (d) { SP.scope = d.v; spFill(); };
+  A['sp-open'] = function (d) { if (UI.screen === 'menu') { var sv = loadSave(); if (sv) S = migrate(sv); } if (!S || !S.drivers) return; if (d && d.v) SPK.scope = d.v; showModal(spModalHTML()); spFill(); };
+  A['sp-scope'] = function (d) { SPK.scope = d.v; spFill(); };
   A['sp-dl'] = function () {
     var ta = document.getElementById('exp'); if (!ta) return;
     try {

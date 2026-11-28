@@ -11,10 +11,25 @@ function posAt(T, f) {
   var seg = T.cum[hi] - T.cum[lo] || 1, k = (u - T.cum[lo]) / seg, a = T.pts[lo], b = T.pts[hi % T.pts.length];
   return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
 }
+/* round every corner of a circuit outline (2.6.9): straights stay straight, each corner becomes a curve that starts up to 40% along
+   both neighbouring straights (at most 34 px), so long straights get wide sweepers and short links stay tight, like hairpins and chicanes */
+function trackRound(P) {
+  var n = P.length, out = [], i, k;
+  for (i = 0; i < n; i++) {
+    var a = P[(i - 1 + n) % n], v = P[i], b = P[(i + 1) % n];
+    var la = Math.hypot(v[0] - a[0], v[1] - a[1]), lb = Math.hypot(b[0] - v[0], b[1] - v[1]);
+    var c = Math.min(34, 0.4 * la, 0.4 * lb);
+    var p0 = [v[0] + (a[0] - v[0]) * c / la, v[1] + (a[1] - v[1]) * c / la], p2 = [v[0] + (b[0] - v[0]) * c / lb, v[1] + (b[1] - v[1]) * c / lb];
+    var m = Math.max(4, Math.round(c / 3));
+    for (k = 0; k <= m; k++) { var t = k / m, u = 1 - t; out.push([u * u * p0[0] + 2 * u * t * v[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * v[1] + t * t * p2[1]]); }
+  }
+  return out;
+}
 function buildTrack(ci) {
   if (TRK[ci]) return TRK[ci];
   var pts, N;
-  if (typeof GTG_LAYOUTS !== 'undefined' && GTG_LAYOUTS[ci]) { pts = GTG_LAYOUTS[ci].map(function (p) { return p.slice(); }); N = pts.length; }
+  if (typeof TRACK_REAL !== 'undefined' && TRACK_REAL[ci]) { pts = TRACK_REAL[ci].p.map(function (p) { return p.slice(); }); N = pts.length; }
+  else if (typeof GTG_LAYOUTS !== 'undefined' && GTG_LAYOUTS[ci]) { pts = trackRound(GTG_LAYOUTS[ci]); N = pts.length; }
   else {
     var g = lcg(4242 + ci * 7919), N = 240, ks = [2, 3, 4, 5, 7], am = [0.20, 0.15, 0.10, 0.07, 0.04], ph = [], ap = [], pts = [], x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, i;
   ks.forEach(function (k, j) { ph.push(g() * 6.2832); ap.push(am[j] * (0.6 + g() * 0.9)); });
