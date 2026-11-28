@@ -33,13 +33,19 @@ function atrMul(S, t, winter) {
 }
 function atrTxt(S, t) { return Math.round(atrPct(S, t) * 100) + '%'; }
 
-/* the allowance strip in the R&D workshop and the team dossier */
+/* the allowance panel in the R&D workshop: F1 broadcast style, the whole order with every team's share */
 function atrStripHTML(S, t) {
   if (!atrOn(S) || !t || t.spec) return '';
-  var o = atrOrder(S), p = o.pos[t.id] || 5, n = S.teams.length, mul = atrMul(S, t), half = Math.ceil(seasonRounds(S) / 2);
-  var bars = ''; for (var i = 1; i <= n; i++) bars += '<i class="' + (i === p ? 'on' : '') + '" style="height:' + Math.round(30 + 70 * (atrPctAt(S, i) - ATR.top) / (ATR.bot - ATR.top)) + '%" title="P' + i + ' ' + Math.round(atrPctAt(S, i) * 100) + '%"></i>';
-  var when = o.per === 1 ? 'Set by last season\'s final order · reset after round ' + half : 'Set by the order at mid-season · the winter car uses the final order';
-  return '<div class="atr-strip"><div class="atr-l"><small>Wind tunnel allowance</small><b>' + atrTxt(S, t) + '</b><span>as P' + p + ' · upgrades ' + (mul >= 1 ? '+' : '−') + Math.abs(Math.round((mul - 1) * 100)) + '% against the average</span></div><div class="atr-bars" aria-hidden="true">' + bars + '</div><p>' + when + '. The leaders get the least testing time, the last team the most.</p></div>';
+  var o = atrOrder(S), p = o.pos[t.id] || 5, n = S.teams.length, mul = atrMul(S, t), rounds = seasonRounds(S), half = Math.ceil(rounds / 2), byPos = {};
+  S.teams.forEach(function (x) { byPos[o.pos[x.id] || 5] = x; });
+  var rows = ''; for (var i = 1; i <= n; i++) { var x = byPos[i], pc = atrPctAt(S, i), me = x === t;
+    rows += '<div class="atr-row' + (me ? ' on' : '') + '"><em>P' + i + '</em><span class="atr-tm" style="--c:' + (x ? x.color : '#888') + '">' + esc(x ? x.short : '—') + '</span><span class="atr-bar"><i class="' + (me ? 'on' : '') + '" style="width:' + Math.round(pc / ATR.bot * 100) + '%"></i></span><b>' + Math.round(pc * 100) + '%</b></div>'; }
+  var segs = ''; for (var r = 1; r <= rounds; r++) segs += '<i class="' + (r <= (S.round || 0) ? 'done' : '') + (r === half + 1 ? ' reset' : '') + '"></i>';
+  return '<section class="f1g atr-strip" style="--tc:' + t.color + '"><header class="f1g-h"><span class="f1g-chip">ATR</span><div><small>Aerodynamic testing restrictions</small><h3>Wind tunnel allowance</h3></div><span class="f1g-per"><b>Period ' + o.per + '</b><small>' + (o.per === 1 ? 'R1–R' + half : 'R' + (half + 1) + '–R' + rounds) + '</small></span></header>' +
+    '<div class="atr-main"><div class="atr-big"><small>Your share · P' + p + '</small><b>' + Math.round(atrPct(S, t) * 100) + '<i>%</i></b></div><div class="atr-fx ' + (mul >= 1 ? 'up' : 'down') + '"><small>Upgrade gain</small><b>' + (mul >= 1 ? '+' : '−') + Math.abs(Math.round((mul - 1) * 100)) + '%</b><span>against the average</span></div></div>' +
+    '<div class="atr-bars">' + rows + '</div>' +
+    '<div class="atr-period"><span>' + segs + '</span><small>' + (o.per === 1 ? 'Set by last season\'s final order · resets after round ' + half : 'Set by the order at mid-season · the winter car uses the final order') + '</small></div>' +
+    '<p class="f1g-foot">The leaders get the least wind tunnel time, the last team the most</p></section>';
 }
 (function () {
   if (typeof tgWorkshop === 'function') { var w0 = tgWorkshop; tgWorkshop = function (t) { var h = w0.apply(this, arguments), box = atrStripHTML(S, t); if (!box) return h; var k = h.indexOf('<div class="tg-rd">'); return k >= 0 ? h.slice(0, k) + box + h.slice(k) : h; }; }

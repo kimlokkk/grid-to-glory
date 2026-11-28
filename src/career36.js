@@ -66,20 +66,22 @@ function cvWallet() {
 function cvFame() {
   var f = fameOf(S), act = sponActive(S), offers = S.sponOffers || [], tier = 0, i;
   for (i = 0; i < CV_FAME.length; i++) if (f >= CV_FAME[i][0]) tier = i;
-  var next = CV_FAME[tier + 1], base = CV_FAME[tier][0], prog = next ? clamp((f - base) / (next[0] - base) * 100, 0, 100) : 100, slots = '';
-  act.forEach(function (d) {
-    var n = sponProg(S, d), done = Math.min(n, d.need.n);
-    slots += '<div class="cv-brand on">' + cvBrand(d.n) + '<div class="cv-brand-m"><b>' + esc(d.n) + '</b><small>Signed · ' + d.left + (d.left === 1 ? ' season left' : ' seasons left') + '</small><p>' + esc(sponTxt(d)) + ' · ' + done + ' / ' + d.need.n + '</p>' + driverMeter(done, Math.max(1, d.need.n), 'Sponsor target progress') + '</div><span class="cv-brand-v"><b>' + marketCash(d.v) + '</b><small>/ season</small></span></div>';
+  var next = CV_FAME[tier + 1], base = CV_FAME[tier][0], prog = next ? clamp((f - base) / (next[0] - base) * 100, 0, 100) : 100, slots = '', tot = 0;
+  var tc = (typeof myTeam === 'function' && myTeam() && myTeam().color) || '#e10600';
+  var pips = function (done, need) { var h = '', k, n = Math.min(need, 10); for (k = 0; k < n; k++) h += '<i class="' + (k < Math.round(done / need * n) ? 'on' : '') + '"></i>'; return '<span class="pf-pips' + (done >= need ? ' ok' : '') + '">' + h + '</span>'; };
+  act.forEach(function (d, k) {
+    var n = sponProg(S, d), done = Math.min(n, d.need.n); tot += d.v;
+    slots += '<div class="cv-brand on pf-row' + (done >= d.need.n ? ' met' : '') + '"><em class="spx-no">' + ('0' + (k + 1)).slice(-2) + '</em>' + cvBrand(d.n) + '<div class="cv-brand-m"><b>' + esc(d.n) + '</b><small>' + esc(sponTxt(d)) + ' · <u>' + done + '/' + d.need.n + '</u></small>' + pips(done, Math.max(1, d.need.n)) + '</div><span class="cv-brand-v"><b>' + marketCash(d.v) + '</b><small>' + d.left + (d.left === 1 ? ' season' : ' seasons') + '</small></span></div>';
   });
   offers.forEach(function (o, i) {
-    slots += '<div class="cv-brand offer">' + cvBrand(o.n) + '<div class="cv-brand-m"><b>' + esc(o.n) + '</b><small>New offer · ' + o.yrs + (o.yrs === 1 ? ' season' : ' seasons') + '</small><p>Target: ' + esc(sponTxt(o)) + '</p></div><span class="cv-brand-v"><b>' + marketCash(o.v) + '</b><small>/ season</small></span><div class="ability-actions cv-brand-act"><button class="btn sm" data-act="spon-no" data-i="' + i + '">Pass</button><button class="btn sm pri" data-act="spon-yes" data-i="' + i + '">Sign sponsor</button></div></div>';
+    slots += '<div class="cv-brand offer pf-row pf-offer"><em class="spx-no">NEW</em>' + cvBrand(o.n) + '<div class="cv-brand-m"><b>' + esc(o.n) + '</b><small>Target: ' + esc(sponTxt(o)) + ' · ' + o.yrs + (o.yrs === 1 ? ' season' : ' seasons') + '</small></div><span class="cv-brand-v"><b>' + marketCash(o.v) + '</b><small>/ season</small></span><div class="ability-actions cv-brand-act"><button class="btn sm" data-act="spon-no" data-i="' + i + '">Pass</button><button class="btn sm pri" data-act="spon-yes" data-i="' + i + '">Sign sponsor</button></div></div>';
   });
-  for (i = act.length; i < SP.max; i++) slots += offers.length && i === act.length ? '' : '<div class="cv-brand empty"><span class="cv-logo" aria-hidden="true">+</span><div class="cv-brand-m"><b>Open sponsor slot</b><small>' + (i === act.length ? 'Offers are reviewed at the season break.' : 'Grow your fame to fill it.') + '</small></div></div>';
-  return '<section class="card career-panel career-sponsors cv-fame" id="career-sponsors">' + cvHead('Fame &amp; sponsors', 'Build your name', act.length + ' / ' + SP.max + ' deals') +
-    '<ol class="cv-fame-ladder">' + CV_FAME.map(function (x, i) { return '<li class="' + (i < tier ? 'past' : i === tier ? 'current' : 'locked') + '"><b>' + x[1] + '</b><small>' + x[0] + '+</small></li>'; }).join('') + '</ol>' +
-    '<div class="cv-fame-bar"><span><b>' + Math.round(f) + '</b> fame</span><i><u style="width:' + prog + '%"></u></i><span>' + (next ? (Math.ceil(next[0] - f)) + ' to ' + next[1] : 'Top level') + '</span></div>' +
-    '<div class="cv-brands">' + slots + '</div>' +
-    cvHelp('How sponsor money works', '<p>Personal sponsor fees pay your wallet. Seat funding is agreed separately. Results and press exposure affect fame.' + (me().nat === 'MY' ? ' Malaysian drivers receive home-market fame and sponsor bonuses.' : '') + '</p>') + '</section>';
+  for (i = act.length; i < SP.max; i++) slots += offers.length && i === act.length ? '' : '<div class="cv-brand empty pf-row"><em class="spx-no">' + ('0' + (i + 1)).slice(-2) + '</em><span class="cv-logo" aria-hidden="true">+</span><div class="cv-brand-m"><b>Open slot</b><small>' + (i === act.length ? 'Offers are reviewed at the season break.' : 'Grow your fame to fill it.') + '</small></div></div>';
+  var back = typeof spxOn === 'function' && spxOn(S) && act.length ? '<div class="pf-team" style="--c:' + tc + '"><small>Backing for ' + esc(typeof spxDisp === 'function' ? spxDisp(myTeam()) : myTeam().name) + '</small><b>+' + marketCash(spxBack(S, me())) + '</b><span>Half of your sponsors\' fees also go to the team you race for, so teams value you more.</span></div>' : '';
+  return '<section class="card career-panel career-sponsors cv-fame f1g pf-card" id="career-sponsors" style="--tc:' + tc + '"><header class="f1g-h"><span class="f1g-chip">' + (me().nat === 'MY' ? 'MY · FAME' : 'FAME') + '</span><div><small>Personal sponsors · ' + act.length + ' / ' + SP.max + ' deals</small><h3>Build your name</h3></div><span class="f1g-per"><b>' + marketCash(tot) + '</b><small>A SEASON</small></span></header>' +
+    '<div class="pf-fame"><div class="pf-lvl"><small>Fame</small><b>' + Math.round(f) + '</b><span>' + esc(CV_FAME[tier][1]) + '</span></div><div class="pf-ladder"><ol>' + CV_FAME.map(function (x, i) { return '<li class="' + (i < tier ? 'past' : i === tier ? 'current' : 'locked') + '"><i></i><small>' + x[1] + '</small></li>'; }).join('') + '</ol><span class="pf-bar"><u style="width:' + prog + '%"></u></span><small class="pf-next">' + (next ? Math.ceil(next[0] - f) + ' to ' + next[1] : 'Top level') + '</small></div></div>' +
+    '<div class="cv-brands">' + slots + '</div>' + back +
+    cvHelp('How sponsor money works', '<p>Personal sponsor fees pay your wallet. Seat funding is agreed separately. Results and press exposure affect fame.' + (me().nat === 'MY' ? ' Malaysian drivers receive home-market fame and sponsor bonuses.' : '') + (typeof spxOn === 'function' && spxOn(S) ? ' Half of what your sponsors pay you is also backing for your F1 team.' : '') + '</p>') + '</section>';
 }
 
 /* ---------- scout radar ---------- */

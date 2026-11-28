@@ -91,16 +91,21 @@ function spxStatus(S, t, d) {
 }
 function spxTeamHTML(t) {
   if (!S || !spxOn(S) || !t || t.spec || !t.spxP) return '';
-  var p = t.spxP, m = function (v) { return '$' + (Math.round(v * 10) / 10).toFixed(1) + 'M'; }, tot = spxSum(S, t), back = spxBackSum(S, t);
-  var tl = p.title, st = tl ? spxStatus(S, t, tl) : null, yrs = function (d) { var n = d.end - S.season + 1; return n <= 1 ? 'Final year' : n + ' seasons left'; };
-  var title = tl ? '<div class="spx-title ' + st[0] + '">' + cvBrand(tl.n) + '<div class="spx-tn"><small>Title sponsor' + (tl.naming ? ' · name on the car' : '') + '</small><b>' + esc(tl.n) + '</b><span>' + esc(tl.sec) + ' · ' + yrs(tl) + '</span></div><div class="spx-tv"><b>' + m(tl.v) + '</b><small>A YEAR</small></div>' +
-    '<div class="spx-tgt"><span>Target <b>P' + tl.tgt + '</b></span><em>' + st[1] + '</em></div></div>' : '';
-  var parts = (p.partners || []).map(function (d) { var s2 = spxStatus(S, t, d); return '<div class="spx-pt ' + s2[0] + '">' + cvBrand(d.n) + '<b>' + esc(d.n) + '</b><small>' + esc(d.sec) + '</small><span class="spx-pv">' + m(d.v) + '</span><span class="spx-pg">P' + d.tgt + ' · ' + yrs(d) + '</span></div>'; }).join('');
-  var ds = S.drivers.filter(function (d) { return d.team === t.id; }), brow = ds.map(function (d) { var v = spxBack(S, d), me = d === S.drivers[S.pi]; return '<span class="' + (v > 0 ? 'on' : '') + '"><b>' + esc(d.name) + (me ? ' <i>YOU</i>' : '') + '</b><em>' + (v > 0 ? '+' + m(v) : me ? (S.spons && S.spons.length ? 'Your sponsors back you' : 'Sign personal sponsors to bring backing') : 'No backing') + '</em></span>'; }).join('');
-  var bon = t.fin && t.fin.spxBonus ? t.fin.spxBonus : 0;
-  return '<section class="pu-bay spx-card" style="--tc:' + t.color + '"><header><div><small>Commercial · season ' + S.season + '</small><h3>Partners</h3></div><div class="pu-life"><b>' + m(tot + back) + '</b><small>A YEAR</small></div></header>' + title +
-    '<div class="spx-pts">' + parts + '</div><div class="spx-back"><small>Driver backing</small>' + brow + '</div>' +
-    '<p class="pu-foot">Podium bonus ' + (SPX.pod * 100).toFixed(1) + '% · win bonus ' + (SPX.win * 100).toFixed(1) + '% of the deals' + (bon ? ' · earned this season ' + m(bon) : '') + (spxName(t) !== t.name ? ' · racing as ' + esc(spxName(t)) : (t.prestige || 5) >= SPX.heritage ? ' · heritage team: the name is not for sale' : '') + '</p></section>';
+  var p = t.spxP, m = function (v) { return '$' + (Math.round(v * 10) / 10).toFixed(1) + 'M'; }, tot = spxSum(S, t), back = spxBackSum(S, t), bon = t.fin && t.fin.spxBonus ? t.fin.spxBonus : 0;
+  var pips = function (d) { var n = Math.max(1, d.end - S.season + 1), h = ''; for (var i = 0; i < Math.min(4, n); i++) h += '<i></i>'; return '<span class="spx-yrs" title="' + n + ' seasons left">' + h + '</span>'; };
+  var left = function (d) { var n = d.end - S.season + 1; return n <= 1 ? 'Final year' : n + ' seasons'; };
+  var tl = p.title, st = tl ? spxStatus(S, t, tl) : null, nm = spxName(t);
+  var hero = '<div class="spx-hero"><div class="spx-car">' + (typeof carSVG === 'function' ? carSVG(t, 230) : '') + '</div><div class="spx-plate"><small>' + (tl && tl.naming ? 'Racing as' : (t.prestige || 5) >= SPX.heritage ? 'Heritage name · not for sale' : 'Team name') + '</small><b>' + esc(nm) + '</b></div></div>';
+  var title = tl ? '<div class="spx-title ' + st[0] + '">' + cvBrand(tl.n) + '<div class="spx-tn"><small>Title partner' + (tl.naming ? ' · naming rights' : '') + '</small><b>' + esc(tl.n) + '</b><span>' + esc(tl.sec) + ' · ' + left(tl) + ' ' + pips(tl) + '</span></div><div class="spx-tv"><b>' + m(tl.v) + '</b><small>A YEAR</small></div>' +
+    '<div class="spx-tgt"><span>Target <b>P' + tl.tgt + '</b> constructors</span><em>' + st[1] + '</em></div></div>' : '';
+  var mx = Math.max.apply(null, (p.partners || []).map(function (d) { return d.v; }).concat([1]));
+  var parts = (p.partners || []).map(function (d, i) { var s2 = spxStatus(S, t, d); return '<div class="spx-pt ' + s2[0] + '"><em class="spx-no">' + ('0' + (i + 2)).slice(-2) + '</em>' + cvBrand(d.n) + '<div class="spx-pn"><b>' + esc(d.n) + '</b><small>' + esc(d.sec) + ' · P' + d.tgt + ' · ' + left(d) + '</small><span class="spx-vb"><i style="width:' + Math.round(d.v / mx * 100) + '%"></i></span></div><span class="spx-pv">' + m(d.v) + '</span><i class="spx-dot" title="' + s2[1] + '"></i></div>'; }).join('');
+  var ds = S.drivers.filter(function (d) { return d.team === t.id; }), brow = ds.map(function (d) { var v = spxBack(S, d), me = d === S.drivers[S.pi]; return '<div class="spx-bk ' + (v > 0 ? 'on' : '') + '"><b>' + esc(d.name) + (me ? ' <i>YOU</i>' : '') + '</b><em>' + (v > 0 ? '+' + m(v) : me ? (S.spons && S.spons.length ? 'Your sponsors back you' : 'Sign personal sponsors to bring backing') : 'No backing') + '</em></div>'; }).join('');
+  return '<section class="f1g spx-card" style="--tc:' + t.color + '"><header class="f1g-h"><span class="f1g-chip">PARTNERS</span><div><small>Commercial · season ' + S.season + '</small><h3>Sponsor portfolio</h3></div><span class="f1g-per"><b>' + m(tot + back) + '</b><small>A YEAR</small></span></header>' + hero + title +
+    '<div class="spx-pts">' + parts + '</div>' +
+    '<div class="spx-sum"><span><small>Contracts</small><b>' + m(tot) + '</b></span><span><small>Driver backing</small><b>' + m(back) + '</b></span><span><small>Race bonuses</small><b>' + m(bon) + '</b></span></div>' +
+    '<div class="spx-back"><small>Driver backing</small>' + brow + '</div>' +
+    '<p class="f1g-foot">Podium ' + (SPX.pod * 100).toFixed(1) + '% · win ' + (SPX.win * 100).toFixed(1) + '% of the deals, paid race by race · targets met keep sponsors</p></section>';
 }
 (function () {
   if (typeof hTeam === 'function') { var t0 = hTeam; hTeam = function () { var h = t0.apply(this, arguments), t = typeof myTeam === 'function' ? myTeam() : null, box = spxTeamHTML(t); if (!box) return h; var k = h.indexOf('<div class="team-development tg-col">'); return k >= 0 ? h.slice(0, k) + box + h.slice(k) : h + box; }; }
