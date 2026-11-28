@@ -28,7 +28,8 @@ function trackRound(P) {
 function buildTrack(ci) {
   if (TRK[ci]) return TRK[ci];
   var pts, N;
-  if (typeof GTG_LAYOUTS !== 'undefined' && GTG_LAYOUTS[ci]) { pts = trackRound(GTG_LAYOUTS[ci]); N = pts.length; }
+  if (typeof TRACK_LAYOUT2 !== 'undefined' && TRACK_LAYOUT2[ci]) { pts = trackRound2(trackFit(TRACK_LAYOUT2[ci])); N = pts.length; }
+  else if (typeof GTG_LAYOUTS !== 'undefined' && GTG_LAYOUTS[ci]) { pts = trackRound(GTG_LAYOUTS[ci]); N = pts.length; }
   else {
     var g = lcg(4242 + ci * 7919), N = 240, ks = [2, 3, 4, 5, 7], am = [0.20, 0.15, 0.10, 0.07, 0.04], ph = [], ap = [], pts = [], x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, i;
   ks.forEach(function (k, j) { ph.push(g() * 6.2832); ap.push(am[j] * (0.6 + g() * 0.9)); });
