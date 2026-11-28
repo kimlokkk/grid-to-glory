@@ -34,9 +34,9 @@ function pitCard(R, p) {
   RUN.wait = true;
   var w = WHYT[p.why] || ['Engineer wants to pit', 'Fresh tyres are faster for the rest of the race.'], hp = Math.round(tyreHealth(p, R) * 100), ah = nearAhead(R, p);
   var body = w[1] + ' Currently on ' + TYN[p.comp] + ', ' + Math.floor(p.eff) + ' laps old, ' + hp + '% left. Recommended: <b>' + TYN[p.pitReq] + '</b>.' + (p.why === 'undercut' && ah ? ' Target: ' + ah.d.code + '.' : '') + (mandOf(p) ? ' <span class="fr-warn">You haven\'t used two dry compounds yet.</span>' : '');
-  var opts = '<button class="opt" data-act="pc-yes"><div class="t">“Box, box.” ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</div><div class="s">Pit at the end of this lap. ' + (S.settings.mini && !RUN.fast ? 'Pit-stop challenge as you enter the lane; cancel any time before.' : '') + '</div></button>';
+  var opts = '<button class="opt" data-act="pc-yes"><div class="t">' + (typeof rvStable === 'function' ? rvStable('boxYes', p.lap * 7 + p.di) : '“Box, box.”') + ' ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</div><div class="s">Pit at the end of this lap. ' + (S.settings.mini && !RUN.fast ? 'Pit-stop challenge as you enter the lane; cancel any time before.' : '') + '</div></button>';
   ['S', 'M', 'H', 'I', 'W'].forEach(function (k) { if (k !== p.pitReq && (SLICK[k] === SLICK[p.pitReq] || R.wet > 0.1)) opts += '<button class="opt" data-act="pc-alt" data-v="' + k + '"><div class="t">Box, but ' + tyc(k) + ' ' + TYN[k] + '</div><div class="s">Your call.</div></button>'; });
-  opts += '<button class="opt" data-act="pc-no"><div class="t">“Negative, staying out.”</div><div class="s">Engineer will ask again in 2 laps.</div></button>';
+  opts += '<button class="opt" data-act="pc-no"><div class="t">' + (typeof rvStable === 'function' ? rvStable('boxNo', p.lap * 5 + p.di) : '“Negative, staying out.”') + '</div><div class="s">Engineer will ask again in 2 laps.</div></button>';
   var col = p.why === 'sc' ? RKC.sc : p.why === 'cuaca' ? RKC.w : null;
   showModal(radioCard({ t: '“' + w[0] + '”', sub: body, lap: p.lap, col: col, live: true, big: true }) + '<div class="fr-rep">Reply</div><div class="evopts">' + opts + '</div>');
 }

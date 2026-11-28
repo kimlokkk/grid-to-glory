@@ -7,6 +7,8 @@ var CHANGELOG = [
     "Qualifying: holding someone up now has a cause. A hold-up that cost a driver three places or more is impeding, a 3-place grid drop for the race; a smaller one is a reprimand. A driver who causes a yellow flag loses the lap he was on.",
     "Penalty points: 1 or 2 for each offence, cleared after 22 races. 12 points is a one-race ban, for you too: a reserve drives your car, you score nothing, and the round is marked BAN in the calendar.",
     "Where to see it: during the race your engineer tells you on the radio when you get a penalty, when you serve it and when a rival is penalised for hitting you; the caption flashes and the timing tower shows the time still to serve (+5s) and then the penalty served. After the race: a Stewards' decisions panel, your penalty points on the Driver tab, the race log and the Story pack. In testing there were about 1.2 penalties a race across the grid.",
+    "Team radio has far more to say: every common moment (overtakes, places lost, pace, tyres, safety cars, pit stops, retirements, penalties, spins, rain) now has several lines, and the same line never plays twice in a row. Your replies on the pit call card vary too.",
+    "When your result decides the title, your engineer tells you on the radio as you cross the line.",
     "Titles are announced the moment they are decided. As soon as nobody can catch the leader any more (26 points a race for a driver, 44 for a team), the race result shows a champion banner, Home keeps it for the rest of the season, and the news and the Story pack record the round and how many races were left."
   ] },
   { v: '2.6.8', d: 'Power units, and reliability shown apart', date: '28 Nov 2026', l: [

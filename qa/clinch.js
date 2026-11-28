@@ -15,7 +15,11 @@ const path = require('node:path');
       /* live race: a penalty for the player reaches the radio, the caption and the tower */
       UI.screen = 'hub'; render(); A['wk-start'](); A['q-fin'](); A['q-next'](); const wk = UI.wk; A['s-start']({ v: wk.R.p.comp }); A['s-go'](); stopRace();
       const R = wk.R, p = R.p, a = R.cars.find(f => !f.isP); p.penQ = 5; R.log.push({ t: R.t, lap: 2, k: 'pen', b: p.di, a: a.di, sec: 5, out: 0, places: 0, txt: 't', tags: ['stewards'] }); readLog(R);
-      ck('the engineer tells the player about a penalty on the radio', /5-second penalty/.test((R.radio || []).slice(-1)[0].t));
+      ck('the engineer tells the player about a penalty on the radio', /\b5\b/.test((R.radio || []).slice(-1)[0].t) && /penalt|stewards/i.test((R.radio || []).slice(-1)[0].t));
+      const seen = []; for (let i = 0; i < 24; i++) seen.push(rvSay('contact', { a: 'ABC' }));
+      ck('radio lines vary and never repeat back to back', new Set(seen).size >= 4 && seen.every((t, i) => i === 0 || t !== seen[i - 1]), new Set(seen).size);
+      ck('the common radio pools are much bigger now', ['gain', 'lose', 'idle', 'sc', 'dnf', 'fastpit'].every(k => RADIO[k].length >= 5));
+      ck('the pit call card shows a varied but steady reply', rvStable('boxYes', 7) === rvStable('boxYes', 7) && rvStable('boxYes', 7) !== rvStable('boxYes', 8));
       ck('the timing tower shows the penalty to serve', /tw-pen/.test(towerHTML(R)));
       A['wk-quit']();
       /* a dominant car: the title is decided before the last round */
@@ -25,6 +29,8 @@ const path = require('node:path');
       ck('the title is decided as soon as the lead is bigger than what is left (26 a race)', at && at.left > 0 && ds[0] === me, at);
       ck('the race where it is decided shows the champion banner', at && /You are the champion|Double champions/.test(at.html));
       ck('Home keeps the champion banner for the rest of the season', /cl-ban/.test(hUtama()) || S.round >= seasonRounds(S));
+      { seedRnd(5); const S0 = S; S = newProCareer('Flag', 'pace', 7, 'f1'); const me2 = S.drivers[S.pi]; me2.pts = 400; S.round = seasonRounds(S) - 3; const ci = S.cal[S.round], R3 = makeRace2(S, ci, qualiGrid2(S, ci), {}); R3.cars.forEach((f, i) => { f.fin = true; f.tFin = f.isP ? 1 : 100 + i; });
+        ck('at the flag the engineer can tell the player the title is won', clinchWouldDecide(R3).d === true); S = S0; }
       ck('the news and the story pack say when the title was decided', (S.news || []).some(n => n.kick === 'CHAMPION') && /Titles decided this season: drivers/.test(storyPackText('latest')));
       return rows;
     });

@@ -223,11 +223,12 @@ function stewPackText(S) {
         var e = R.log[i]; if (e.k !== 'pen' && e.k !== 'penserve') continue;
         var b = S.drivers[e.b], a = e.a != null ? S.drivers[e.a] : null;
         if (e.k === 'pen') {
-          if (e.b === p.di) { if (typeof cap === 'function') cap(e.out ? 'Grid drop next race' : '+' + e.sec + 's penalty', 'lost'); radio(R, e.out ? 'Stewards: that collision is a ' + e.places + '-place grid drop at the next race.' : 'Stewards have given us a ' + e.sec + '-second penalty for the contact with ' + a.code + '. We serve it at the next stop. If we don’t stop again it goes on our race time.', 'x', 1); }
-          else if (e.a === p.di) radio(R, 'Stewards: ' + b.code + ' gets ' + (e.out ? 'a grid drop' : e.sec + ' seconds') + ' for hitting us.', 'i', 1);
+          var say = typeof rvSay === 'function' ? rvSay : null;
+          if (e.b === p.di) { if (typeof cap === 'function') cap(e.out ? 'Grid drop next race' : '+' + e.sec + 's penalty', 'lost'); radio(R, say ? say(e.out ? 'penGrid' : 'pen', { sec: e.sec, a: a ? a.code : '', places: e.places }) : 'Stewards: ' + e.sec + '-second penalty.', 'x', 1); }
+          else if (e.a === p.di) radio(R, say ? say('penVictim', { b: b.code, pen: e.out ? 'a grid drop' : e.sec + ' seconds' }) : 'Stewards: ' + b.code + ' penalised.', 'i', 1);
           else radio(R, 'Stewards: ' + e.sec + ' seconds for ' + b.code + ', contact with ' + (a ? a.code : '') + '.', 'i');
         } else if (e.k === 'penserve') {
-          if (e.b === p.di) radio(R, 'Penalty served: we held you ' + e.sec + ' seconds in the box.', 'e', 1);
+          if (e.b === p.di) radio(R, typeof rvSay === 'function' ? rvSay('penServe', { sec: e.sec }) : 'Penalty served.', 'e', 1);
           else radio(R, b.code + ' serves a ' + e.sec + '-second penalty in the stop.', 'i');
         }
       }

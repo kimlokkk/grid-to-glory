@@ -43,3 +43,18 @@ function clinchPackText(S) {
   if (typeof vResult === 'function') { var v0 = vResult; vResult = function () { var h = v0.apply(this, arguments), b = clinchBannerHTML('result'); if (!b) return h; var k = h.indexOf('<section class="rv-hero'); if (k < 0) return b + h; var e = h.indexOf('</section>', k); return e >= 0 ? h.slice(0, e + 10) + b + h.slice(e + 10) : b + h; }; }
   if (typeof hUtama === 'function') { var h0 = hUtama; hUtama = function () { var h = h0.apply(this, arguments), b = clinchBannerHTML('home'); return b ? h.replace('<div class="hp', b + '<div class="hp') : h; }; }
 })();
+
+/* at the flag, before the race is scored: would this result decide a title? (for the engineer's call) */
+function clinchWouldDecide(R) {
+  var out = { d: false, c: false }; if (!R || !R.cars) return out;
+  var cur = S.clinch && S.clinch.s === S.season && S.clinch.lg === leagueOf(S) ? S.clinch : {}, left = seasonRounds(S) - S.round - 1;
+  var order = R.cars.filter(function (f) { return f.fin && !f.dnf; }).sort(function (a, b) { return (a.tFin + (a.pen || 0) + (a.penQ || 0)) - (b.tFin + (b.pen || 0) + (b.penQ || 0)); });
+  var add = {}; order.forEach(function (f, i) { if (i < 10) add[f.di] = (add[f.di] || 0) + PTS[i]; });
+  var dpts = S.drivers.map(function (d, i) { return { d: d, p: d.pts + (add[i] || 0) }; }).sort(function (a, b) { return b.p - a.p; });
+  var tp = {}; S.drivers.forEach(function (d, i) { tp[d.team] = (tp[d.team] == null ? S.teams[d.team].pts : tp[d.team]) + (add[i] || 0); });
+  var tl = Object.keys(tp).map(function (k) { return { t: +k, p: tp[k] }; }).sort(function (a, b) { return b.p - a.p; });
+  var me = S.drivers[S.pi];
+  if (!cur.d && dpts[0].d === me && dpts[0].p - dpts[1].p > CL.drv * left) out.d = true;
+  if (!cur.c && tl[0].t === me.team && tl[0].p - tl[1].p > CL.team * left) out.c = true;
+  return out;
+}

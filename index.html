@@ -9303,9 +9303,9 @@ function pitCard(R, p) {
   RUN.wait = true;
   var w = WHYT[p.why] || ['Engineer wants to pit', 'Fresh tyres are faster for the rest of the race.'], hp = Math.round(tyreHealth(p, R) * 100), ah = nearAhead(R, p);
   var body = w[1] + ' Currently on ' + TYN[p.comp] + ', ' + Math.floor(p.eff) + ' laps old, ' + hp + '% left. Recommended: <b>' + TYN[p.pitReq] + '</b>.' + (p.why === 'undercut' && ah ? ' Target: ' + ah.d.code + '.' : '') + (mandOf(p) ? ' <span class="fr-warn">You haven\'t used two dry compounds yet.</span>' : '');
-  var opts = '<button class="opt" data-act="pc-yes"><div class="t">“Box, box.” ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</div><div class="s">Pit at the end of this lap. ' + (S.settings.mini && !RUN.fast ? 'Pit-stop challenge as you enter the lane; cancel any time before.' : '') + '</div></button>';
+  var opts = '<button class="opt" data-act="pc-yes"><div class="t">' + (typeof rvStable === 'function' ? rvStable('boxYes', p.lap * 7 + p.di) : '“Box, box.”') + ' ' + tyc(p.pitReq) + ' ' + TYN[p.pitReq] + '</div><div class="s">Pit at the end of this lap. ' + (S.settings.mini && !RUN.fast ? 'Pit-stop challenge as you enter the lane; cancel any time before.' : '') + '</div></button>';
   ['S', 'M', 'H', 'I', 'W'].forEach(function (k) { if (k !== p.pitReq && (SLICK[k] === SLICK[p.pitReq] || R.wet > 0.1)) opts += '<button class="opt" data-act="pc-alt" data-v="' + k + '"><div class="t">Box, but ' + tyc(k) + ' ' + TYN[k] + '</div><div class="s">Your call.</div></button>'; });
-  opts += '<button class="opt" data-act="pc-no"><div class="t">“Negative, staying out.”</div><div class="s">Engineer will ask again in 2 laps.</div></button>';
+  opts += '<button class="opt" data-act="pc-no"><div class="t">' + (typeof rvStable === 'function' ? rvStable('boxNo', p.lap * 5 + p.di) : '“Negative, staying out.”') + '</div><div class="s">Engineer will ask again in 2 laps.</div></button>';
   var col = p.why === 'sc' ? RKC.sc : p.why === 'cuaca' ? RKC.w : null;
   showModal(radioCard({ t: '“' + w[0] + '”', sub: body, lap: p.lap, col: col, live: true, big: true }) + '<div class="fr-rep">Reply</div><div class="evopts">' + opts + '</div>');
 }
@@ -11151,6 +11151,8 @@ var CHANGELOG = [
     "Qualifying: holding someone up now has a cause. A hold-up that cost a driver three places or more is impeding, a 3-place grid drop for the race; a smaller one is a reprimand. A driver who causes a yellow flag loses the lap he was on.",
     "Penalty points: 1 or 2 for each offence, cleared after 22 races. 12 points is a one-race ban, for you too: a reserve drives your car, you score nothing, and the round is marked BAN in the calendar.",
     "Where to see it: during the race your engineer tells you on the radio when you get a penalty, when you serve it and when a rival is penalised for hitting you; the caption flashes and the timing tower shows the time still to serve (+5s) and then the penalty served. After the race: a Stewards' decisions panel, your penalty points on the Driver tab, the race log and the Story pack. In testing there were about 1.2 penalties a race across the grid.",
+    "Team radio has far more to say: every common moment (overtakes, places lost, pace, tyres, safety cars, pit stops, retirements, penalties, spins, rain) now has several lines, and the same line never plays twice in a row. Your replies on the pit call card vary too.",
+    "When your result decides the title, your engineer tells you on the radio as you cross the line.",
     "Titles are announced the moment they are decided. As soon as nobody can catch the leader any more (26 points a race for a driver, 44 for a team), the race result shows a champion banner, Home keeps it for the rest of the season, and the news and the Story pack record the round and how many races were left."
   ] },
   { v: '2.6.8', d: 'Power units, and reliability shown apart', date: '28 Nov 2026', l: [
@@ -16986,11 +16988,12 @@ function stewPackText(S) {
         var e = R.log[i]; if (e.k !== 'pen' && e.k !== 'penserve') continue;
         var b = S.drivers[e.b], a = e.a != null ? S.drivers[e.a] : null;
         if (e.k === 'pen') {
-          if (e.b === p.di) { if (typeof cap === 'function') cap(e.out ? 'Grid drop next race' : '+' + e.sec + 's penalty', 'lost'); radio(R, e.out ? 'Stewards: that collision is a ' + e.places + '-place grid drop at the next race.' : 'Stewards have given us a ' + e.sec + '-second penalty for the contact with ' + a.code + '. We serve it at the next stop. If we don’t stop again it goes on our race time.', 'x', 1); }
-          else if (e.a === p.di) radio(R, 'Stewards: ' + b.code + ' gets ' + (e.out ? 'a grid drop' : e.sec + ' seconds') + ' for hitting us.', 'i', 1);
+          var say = typeof rvSay === 'function' ? rvSay : null;
+          if (e.b === p.di) { if (typeof cap === 'function') cap(e.out ? 'Grid drop next race' : '+' + e.sec + 's penalty', 'lost'); radio(R, say ? say(e.out ? 'penGrid' : 'pen', { sec: e.sec, a: a ? a.code : '', places: e.places }) : 'Stewards: ' + e.sec + '-second penalty.', 'x', 1); }
+          else if (e.a === p.di) radio(R, say ? say('penVictim', { b: b.code, pen: e.out ? 'a grid drop' : e.sec + ' seconds' }) : 'Stewards: ' + b.code + ' penalised.', 'i', 1);
           else radio(R, 'Stewards: ' + e.sec + ' seconds for ' + b.code + ', contact with ' + (a ? a.code : '') + '.', 'i');
         } else if (e.k === 'penserve') {
-          if (e.b === p.di) radio(R, 'Penalty served: we held you ' + e.sec + ' seconds in the box.', 'e', 1);
+          if (e.b === p.di) radio(R, typeof rvSay === 'function' ? rvSay('penServe', { sec: e.sec }) : 'Penalty served.', 'e', 1);
           else radio(R, b.code + ' serves a ' + e.sec + '-second penalty in the stop.', 'i');
         }
       }
@@ -17042,5 +17045,79 @@ function clinchPackText(S) {
   if (typeof finishRace === 'function') { var f0 = finishRace; finishRace = function (S) { var r = f0.apply(this, arguments); try { if (!S.sit || (S.sit && S.sit.ban)) clinchCheck(S); } catch (e) { } return r; }; }
   if (typeof vResult === 'function') { var v0 = vResult; vResult = function () { var h = v0.apply(this, arguments), b = clinchBannerHTML('result'); if (!b) return h; var k = h.indexOf('<section class="rv-hero'); if (k < 0) return b + h; var e = h.indexOf('</section>', k); return e >= 0 ? h.slice(0, e + 10) + b + h.slice(e + 10) : b + h; }; }
   if (typeof hUtama === 'function') { var h0 = hUtama; hUtama = function () { var h = h0.apply(this, arguments), b = clinchBannerHTML('home'); return b ? h.replace('<div class="hp', b + '<div class="hp') : h; }; }
+})();
+
+/* at the flag, before the race is scored: would this result decide a title? (for the engineer's call) */
+function clinchWouldDecide(R) {
+  var out = { d: false, c: false }; if (!R || !R.cars) return out;
+  var cur = S.clinch && S.clinch.s === S.season && S.clinch.lg === leagueOf(S) ? S.clinch : {}, left = seasonRounds(S) - S.round - 1;
+  var order = R.cars.filter(function (f) { return f.fin && !f.dnf; }).sort(function (a, b) { return (a.tFin + (a.pen || 0) + (a.penQ || 0)) - (b.tFin + (b.pen || 0) + (b.penQ || 0)); });
+  var add = {}; order.forEach(function (f, i) { if (i < 10) add[f.di] = (add[f.di] || 0) + PTS[i]; });
+  var dpts = S.drivers.map(function (d, i) { return { d: d, p: d.pts + (add[i] || 0) }; }).sort(function (a, b) { return b.p - a.p; });
+  var tp = {}; S.drivers.forEach(function (d, i) { tp[d.team] = (tp[d.team] == null ? S.teams[d.team].pts : tp[d.team]) + (add[i] || 0); });
+  var tl = Object.keys(tp).map(function (k) { return { t: +k, p: tp[k] }; }).sort(function (a, b) { return b.p - a.p; });
+  var me = S.drivers[S.pi];
+  if (!cur.d && dpts[0].d === me && dpts[0].p - dpts[1].p > CL.drv * left) out.d = true;
+  if (!cur.c && tl[0].t === me.team && tl[0].p - tl[1].p > CL.team * left) out.c = true;
+  return out;
+}
+'use strict';
+/* ===== Radio variety (2.6.9): many more lines per moment, no line twice in a row, and the title call at the flag =====
+   The race random numbers are never touched: the existing pick(RADIO.x) calls draw one number whatever the list length, so the lists can
+   simply grow; fixed one-line calls are swapped afterwards with Math.random (flavour only). */
+var RV_ADD = {
+  start: ['Engineer: Lights out and away we go. Keep it clean into turn one.', 'Engineer: Green, green, green. Elbows out, brain on.', 'Engineer: Off we go. Long race, short memory.', 'Engineer: Lights out. Make the first lap count.', 'Engineer: We\'re racing. Remember: brakes are your friends.'],
+  gain: ['Engineer: Got him. Lovely job, now build the gap.', 'Engineer: Beautiful. That\'s one more place in the bag.', 'Engineer: Textbook. The pit wall just stood up.', 'Engineer: Mega move. Keep the tyres happy now.', 'Engineer: Yes! Now don\'t look back, look forward.', 'Engineer: Clinical. Next target is already in range.'],
+  lose: ['Engineer: Lost that one. Stay calm, the race is long.', 'Engineer: Okay, a place gone. Reset and go again.', 'Engineer: They had the tyres for that. Our turn will come.', 'Engineer: Don\'t fight the car. We\'ll get it back later.', 'Engineer: Annoying. Breathe, then attack.', 'Engineer: Let it go. Protect the tyres, the chance will come.'],
+  tyre: ['Engineer: Tyres are on their last legs. Gentle on the exits.', 'Engineer: Rears are going. Short-shift out of the slow corners.', 'Engineer: Grip is dropping off. Manage it, don\'t fight it.', 'Engineer: Tyres are cooking. Ease off for a lap.'],
+  lead: ['Engineer: Leading the race. Hit your marks, nothing fancy.', 'Engineer: P1. Smooth hands, clean laps.', 'Engineer: You\'re in front. Let the others make the mistakes.', 'Engineer: Lead\'s yours. Manage the gap and the tyres.'],
+  idle: ['Engineer: Pace is good. Keep doing exactly that.', 'Engineer: Strong lap. The data looks lovely.', 'Engineer: All systems green. Keep it ticking.', 'Engineer: Rhythm is great. Stay out of trouble.', 'Engineer: Nice and tidy. Nothing to report, which is perfect.'],
+  sc: ['Engineer: Safety car is out. Stay sharp, think about the stop.', 'Engineer: Safety car. Tyres warm, gap to the car ahead.', 'Engineer: SC deployed. Big moment for strategy.', 'Engineer: Safety car. Keep the temperatures up.'],
+  dnf: ['Engineer: That\'s the end of our race. Bring it back if you can.', 'Engineer: We\'re out. Not your day, not our day.', 'Engineer: Retire the car. We\'ll go through everything tonight.', 'Engineer: Sorry, that\'s it. Head up, next one.'],
+  slowpit: ['Engineer: Slow stop, sorry. We lost a couple of seconds there.', 'Engineer: Not our best stop. Push now, we can recover it.', 'Engineer: Problem on the right front. We\'ll fix it for next time.'],
+  fastpit: ['Engineer: Rapid stop! The crew are flying today.', 'Engineer: What a stop. That\'s time gained right there.', 'Engineer: Superb work from the crew. Go, go!', 'Engineer: Lightning stop. Use it.']
+};
+var RV_LINES = {
+  contact: ['Contact with {a}. Check the car feels okay.', 'We touched {a}. Any damage? Talk to me.', 'Contact with {a}. Front wing looks okay from here.', 'That was a bump with {a}. Keep going, we\'re watching the data.', 'Contact with {a}. Stay calm, the stewards will look at it.'],
+  spin: ['You spun. Deep breath, carry on.', 'Spin! Get it pointing the right way and go.', 'Round you go. Tyres okay? Back on it.', 'We spun. No damage showing, rebuild the rhythm.', 'Spin. It happens. Forget it and focus on the next corner.'],
+  vsc: ['VSC. Keep to the delta, no overtaking.', 'Virtual safety car. Stay above the delta.', 'VSC deployed. Keep the tyres warm, mind the delta.', 'VSC. Easy, keep the positive delta.'],
+  restart: ['Safety car in this lap. Get ready for the restart!', 'Safety car is coming in. Tyres warm, be ready.', 'Restart this lap. Get a good run out of the last corner.', 'SC in this lap. Time to go racing again.'],
+  dry: ['A dry line is appearing.', 'Track is drying. Slicks are close.', 'Dry line forming on the racing line.', 'It\'s drying out. Think about slicks.'],
+  rain: ['Rain is starting. Easy on the throttle.', 'Rain coming down. Careful on the white lines.', 'It\'s raining. Gentle hands, gentle feet.', 'Drops on the visor? It\'s rain. Take care.'],
+  pen: ['Stewards have given us a {sec}-second penalty for the contact with {a}. We serve it at the next stop. If we don\'t stop again it goes on our race time.', '{sec} seconds from the stewards for the contact with {a}. We take it at the next stop, or it goes on the race time.', 'Penalty: {sec} seconds for the incident with {a}. We\'ll serve it in the box.', 'Bad news, {sec}-second penalty for that one with {a}. Keep pushing, we\'ll serve it at the stop.'],
+  penGrid: ['Stewards: that collision is a {places}-place grid drop at the next race.', 'We\'re out, and the stewards add a {places}-place grid drop for next time.', '{places}-place grid penalty for the next race. Not ideal.'],
+  penVictim: ['Stewards: {b} gets {pen} for hitting us.', '{b} is penalised, {pen}. Justice.', 'The stewards agree: {pen} for {b}.', '{pen} for {b} for that contact. Keep your head down.'],
+  penServe: ['Penalty served: we held you {sec} seconds in the box.', 'That\'s the {sec} seconds done. Clean slate.', 'Penalty served. Go get those places back.', '{sec} seconds served. Now we race.'],
+  champ: ['WORLD CHAMPION! You are the world champion! Nobody can catch you now!', 'That\'s it! That\'s the title! You are the champion of the world!', 'You\'ve done it! Champion! The whole team is going crazy here!', 'Mathematically done! You are the world champion! Enjoy every second of this.'],
+  champTeam: ['And that\'s the constructors\' title for the team too! Everyone in the factory thanks you!', 'Constructors\' champions as well! What a team, what a season!'],
+  boxYes: ['“Box, box.”', '“Copy, boxing this lap.”', '“Understood, box.”', '“Bring me in.”', '“Okay, box box.”'],
+  boxNo: ['“Negative, staying out.”', '“No, I\'ll stay out.”', '“Tyres are fine, staying out.”', '“Not yet. Give me two more laps.”', '“Staying out, trust me.”']
+};
+Object.keys(RV_ADD).forEach(function (k) { if (typeof RADIO !== 'undefined' && RADIO[k]) RV_ADD[k].forEach(function (l) { if (RADIO[k].indexOf(l) < 0) RADIO[k].push(l); }); });
+var RV_LAST = {};
+function rvSay(key, vars) {
+  var L = RV_LINES[key] || [], last = RV_LAST[key], i = Math.floor(Math.random() * L.length); if (L.length > 1 && i === last) i = (i + 1 + Math.floor(Math.random() * (L.length - 1))) % L.length;
+  RV_LAST[key] = i; var t = L[i] || '';
+  return t.replace(/\{(\w+)\}/g, function (m, k) { return vars && vars[k] != null ? vars[k] : ''; });
+}
+/* a stable choice for a screen that is drawn many times (pit card) */
+function rvStable(key, seed) { var L = RV_LINES[key] || []; return L.length ? L[Math.abs(seed) % L.length] : ''; }
+(function () {
+  if (typeof readLog !== 'function') return;
+  var swap = [[/^Contact with (\w+)\. Front wing okay\? Okay\. Probably\.$/, 'contact'], [/^You spun\. Deep breath, carry on\.$/, 'spin'], [/^VSC\. Keep to the delta, no overtaking\.$/, 'vsc'], [/^Safety car in this lap\. Get ready for the restart!$/, 'restart'], [/^A dry line is appearing\.$/, 'dry'], [/^Rain is starting\. Easy on the throttle\.$/, 'rain']];
+  var rl0 = readLog;
+  readLog = function (R) {
+    var n0 = (R.radio || []).length, out = rl0.apply(this, arguments);
+    try {
+      (R.radio || []).slice(n0).forEach(function (x) {
+        swap.forEach(function (s) { var m = x.t.match(s[0]); if (m) x.t = rvSay(s[1], { a: m[1] }); });
+        /* the same pooled line twice in a row: take another one from the pool */
+        Object.keys(RADIO).forEach(function (k) { RADIO[k].forEach(function (l) { if (x.t.indexOf(l) >= 0) { if (RV_LAST['p:' + k] === l && RADIO[k].length > 1) { var o = RADIO[k].filter(function (z) { return z !== l; }); var nl = o[Math.floor(Math.random() * o.length)]; x.t = x.t.replace(l, nl); l = nl; } RV_LAST['p:' + k] = l; } }); });
+      });
+      /* at the flag: the title call */
+      var p = R.p; if (p && p.fin && !R.rvChamp && typeof clinchWouldDecide === 'function') { R.rvChamp = true; var w = clinchWouldDecide(R); if (w.d) radio(R, rvSay('champ'), 'me', 1); if (w.c) radio(R, rvSay('champTeam'), 'me', 1); }
+    } catch (e) { }
+    return out;
+  };
 })();
 </script>
