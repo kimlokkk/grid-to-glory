@@ -37,7 +37,7 @@ function lzUnpack(z) {
 /* last resort when the browser still refuses: drop old heavy race detail and old news, then try again */
 function saveSlim() {
   try {
-    (S.rr || []).forEach(function (r) { delete r.q; delete r.lg; delete r.rd; });
+    (S.rr || []).forEach(function (r) { delete r.q; delete r.lg; delete r.rd; delete r.dp; });
     if (S.news && S.news.length > 120) S.news = S.news.slice(0, 120);
     if (S.events && S.events.length > 300) S.events = S.events.slice(-300);
   } catch (e) { }

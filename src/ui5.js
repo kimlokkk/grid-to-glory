@@ -199,7 +199,7 @@ function stepOne(R) {
   if (p.stops !== RUN.stops) { RUN.stops = p.stops; p.pitOk = false; RUN.pitPending = null; }
   if (p.pitReq && !p.pitOk && !p.fin) {
     if (asking()) pitCard(R, p);
-    else p.pitOk = true;
+    else { p.pitOk = true; if (typeof spPitDec === 'function') spPitDec(R, 'auto', p.pitReq); }
   }
   if (typeof toCheck === 'function' && !RUN.wait) toCheck(R, p);
   if (S.live && S.live.lap !== p.lap && !R.done) { liveCheckpoint(R); save(); }

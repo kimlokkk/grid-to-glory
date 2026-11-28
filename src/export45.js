@@ -36,7 +36,8 @@ function storyRecord(S, wk) {
     return [e.lap || 0, e.k, e.b != null ? code(e.b) : '', e.a != null ? code(e.a) : '', info, pos && pos[0] != null ? pos : 0];
   });
   rec.rd = (R.radio || []).filter(function (r) { return r.imp; }).slice(-60).map(function (r) { return [r.lap, r.t]; });
-  S.rr.forEach(function (r) { if (r.s < S.season - (SPK.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; } });
+  if (typeof spDeepRecord === 'function') { try { spDeepRecord(S, rec, R); } catch (e) { } }
+  S.rr.forEach(function (r) { if (r.s < S.season - (SPK.keep - 1)) { delete r.q; delete r.qs; delete r.lg; delete r.rd; delete r.dp; } });
 }
 
 /* ---------- text sections ---------- */
@@ -208,6 +209,7 @@ function spRaces(S, scope) {
         L.push('  L' + e[0] + ' ' + spEn(t));
       });
     } else L.push('Race log: not recorded for this race.');
+    if (rec.dp && typeof spDeepText === 'function') L.push(spSafe('race analysis', function () { return spDeepText(S, rec, scope); }));
     if (rec.rd && rec.rd.length) { L.push('Player radio, key moments:'); rec.rd.forEach(function (r) { L.push('  L' + r[0] + ' ' + r[1]); }); }
     out.push(L.join('\n'));
   });
