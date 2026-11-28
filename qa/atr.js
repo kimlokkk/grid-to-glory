@@ -23,6 +23,7 @@ const path = require('node:path');
       const o2 = atrOrder(S), ts = teamStandings(S);
       ck('from mid-season the order is the standings at the halfway round', o2.per === 2 && ts.every((t, i) => o2.pos[t.id] === i + 1));
       play(2); ck('the mid-season order stays fixed after that', atrOrder(S).k === o2.k && ts.every(t => atrOrder(S).pos[t.id] === o2.pos[t.id]));
+      ck('one package is capped: small gains unchanged, a huge one bends to the cap (season 14, winter 30)', devCap(S, 5, false) === 5 && devCap(S, 36, false) <= DEVCAP.cap && devCap(S, 36, false) > DEVCAP.knee && devCap(S, 15, true) === 15 && devCap(S, 90, true) <= DEVCAP.wCap, [devCap(S, 36, false), devCap(S, 90, true)]);
       ck('the story pack lists the allowance', /Wind tunnel allowance \(ATR\): \d+% as P\d+/.test(storyPackText('season')));
       UI.screen = 'hub'; UI.tab = 'team'; if (A['onb-style']) A['onb-style']({ v: 'casual' }); closeModal(); render();
       ck('the R&D workshop shows the allowance strip', !!document.querySelector('.atr-strip .atr-bars i.on'));

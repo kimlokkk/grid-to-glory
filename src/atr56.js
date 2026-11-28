@@ -4,7 +4,7 @@
    season's final order; from mid-season the order at the halfway round. The winter package uses the final order of the season.
    The gain of every successful upgrade is multiplied by 1 + k x (allowance - average), so the league average stays the same.
    Gated by S.atr (Pro careers; new careers at once, older saves from the next season). No random numbers. */
-var ATR = { v: 1, top: 0.70, bot: 1.15, k: 1.5 };   /* k tuned in 12 careers x 20 seasons: 1 -> 14%, 1.25 -> 19%, 1.5 -> 27%, 2 -> 28% of bottom-half teams reach the top 3 within 5 seasons */
+var ATR = { v: 1, top: 0.70, bot: 1.15, k: 2 };   /* k tuned in 12 careers x 20 seasons with the package cap: 1.5 -> 15%, 2 -> 28%, 2.5 -> 26% of bottom-half teams reach the top 3 within 5 seasons */
 function atrOn(S, season) { return !!(S && S.mode === 'pro' && S.atr && S.atr.v >= 1 && (season != null ? season : S.season) >= S.atr.from && S.teams && S.teams[0] && !S.teams[0].spec); }
 function atrMigrate(S) { if (!S || S.mode !== 'pro' || S.atr || !S.teams) return; S.atr = { v: ATR.v, from: (S.round || 0) === 0 ? S.season : S.season + 1 }; }
 function atrPctAt(S, p) { var n = S.teams.length; return ATR.top + (ATR.bot - ATR.top) * (p - 1) / Math.max(1, n - 1); }
@@ -45,3 +45,13 @@ function atrStripHTML(S, t) {
   if (typeof tgWorkshop === 'function') { var w0 = tgWorkshop; tgWorkshop = function (t) { var h = w0.apply(this, arguments), box = atrStripHTML(S, t); if (!box) return h; var k = h.indexOf('<div class="tg-rd">'); return k >= 0 ? h.slice(0, k) + box + h.slice(k) : h; }; }
 })();
 function atrPackLine(S, t) { var o = atrOrder(S); return 'Wind tunnel allowance (ATR): ' + atrTxt(S, t) + ' as P' + (o.pos[t.id] || 5) + ' (' + (o.per === 1 ? 'from last season\'s final order' : 'from the mid-season order') + '), upgrade gains x' + atrMul(S, t).toFixed(2); }
+
+/* Soft cap on one package (2.6.9). Catch-up, diminishing returns and the wider luck of a back marker multiplied together could give
+   +25 to +36 in one in-season upgrade (1 in 100 packages, seen as aero 56 -> 93 at once). Gains up to the knee are unchanged, above it they
+   bend towards the cap. Winter packages (the next car) have their own, higher limits. Same gate as the allowance. */
+var DEVCAP = { knee: 8, cap: 14, wKnee: 20, wCap: 30 };
+function devCap(S, g, winter) {
+  if (!atrOn(S, winter ? S.season + 1 : null)) return g;
+  var k = winter ? DEVCAP.wKnee : DEVCAP.knee, c = winter ? DEVCAP.wCap : DEVCAP.cap;
+  return g <= k ? g : k + (c - k) * Math.tanh((g - k) / (c - k));
+}

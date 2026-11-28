@@ -91,6 +91,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   if (lead && gain > 0) gain *= (opt && opt.k ? LEAD.gainIn : LEAD.gainWin);
   if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
   else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
+  if (gain > 0 && typeof devCap === 'function') gain = devCap(S, gain, !!(opt && opt.winter) || !opt);   /* soft cap on one package (2.6.9): no more +30 in a single upgrade */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
   if (k === 'engine' && typeof engShare === 'function') engShare(S, t, gain);
   if (log) log.push({ t: t.id, k: k, g: gain, mode: mode, rush: !!(opt && opt.rush), big: !!(opt && opt.big) });

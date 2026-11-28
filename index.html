@@ -6422,6 +6422,7 @@ function devPackage(S, t, size, ranks, tops, log, opt) {
   if (lead && gain > 0) gain *= (opt && opt.k ? LEAD.gainIn : LEAD.gainWin);
   if (lead) { if (gain > 0) gain *= clamp(leadFbGain(S, t) * (mine && S.mode === 'pro' ? 1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback : 1), 0.8, 1.25); }
   else if (mine && gain > 0) gain *= S.mode === 'pro' ? clamp((1 + (S.drivers[S.pi].fb - 70) / 150) * (1 + abilityEffects(S, S.cal[Math.min(S.round, S.cal.length - 1)]).feedback), 0.8, 1.25) : 1 + (S.drivers[S.pi].fb - 70) / 150;            /* maklum balas pemandu bantu */
+  if (gain > 0 && typeof devCap === 'function') gain = devCap(S, gain, !!(opt && opt.winter) || !opt);   /* soft cap on one package (2.6.9): no more +30 in a single upgrade */
   t.car[k] = clamp(t.car[k] + gain, 45, 99);
   if (k === 'engine' && typeof engShare === 'function') engShare(S, t, gain);
   if (log) log.push({ t: t.id, k: k, g: gain, mode: mode, rush: !!(opt && opt.rush), big: !!(opt && opt.big) });
@@ -11204,8 +11205,9 @@ var CHANGELOG = [
     "Naming rights: a smaller team can sell its name, so the title sponsor goes on the car (for example 'Coral Alpenwerk Racing'). Heritage teams keep their own name. The archive and records always use the team's own name.",
     "Driver backing: some drivers bring personal money to the team they race for. You do too: half of what your personal sponsors pay is backing for your team, so building fame makes F1 teams keener to sign you. Teams also count a driver's backing when they choose who to sign.",
     "Prestige now follows results: a team's prestige moves towards its constructors' places over the last three seasons, plus a little for titles. The old dynasty penalty (a hidden handicap for teams that kept winning) is gone.",
-    "Wind tunnel allowance (ATR), as in real F1: the constructors' leader gets 70% of the testing time and the last team 115%, in equal steps. It is set from last season's final order, reset at mid-season, and the winter car is built with the final order. Upgrades for the leader gain about a third less than average, the last team's about a third more. The R&D workshop on the Team tab shows your allowance; the dossier and the Story pack show every team's.",
-    "Why: without the old penalty and with money following results, the top teams were locking in (in testing only 7% of bottom-half teams reached the top 3 within five seasons). With the allowance it is 27%, a small team wins the title within five seasons 9% of the time, and the champion repeats 40% of the time (52% without it).",
+    "Wind tunnel allowance (ATR), as in real F1: the constructors' leader gets 70% of the testing time and the last team 115%, in equal steps. It is set from last season's final order, reset at mid-season, and the winter car is built with the final order. Upgrades for the leader gain about 45% less than average, the last team's about 45% more. The R&D workshop on the Team tab shows your allowance; the dossier and the Story pack show every team's.",
+    "Why: without the old penalty and with money following results, the top teams were locking in (in testing only 7% of bottom-half teams reached the top 3 within five seasons). With the allowance it is 28%, a small team wins the title within five seasons 9% of the time, and the champion repeats 41% of the time (52% without it). A top team with a strong principal and director still stays in the top 3 three seasons in four; a badly led one about half the time.",
+    "Fixed giant upgrades: one package could add +25 to +36 to a part (aero 56 to 93 at once). Small and normal upgrades are unchanged; a single in-season package now tops out at about +14, a winter package at +30, so small teams climb over two or three seasons instead of jumping in one race.",
     "Titles are announced the moment they are decided. As soon as nobody can catch the leader any more (26 points a race for a driver, 44 for a team), the race result shows a champion banner, Home keeps it for the rest of the season, and the news and the Story pack record the round and how many races were left."
   ] },
   { v: '2.6.8', d: 'Power units, and reliability shown apart', date: '28 Nov 2026', l: [
@@ -17307,7 +17309,7 @@ function spxPackLine(S, t) {
    season's final order; from mid-season the order at the halfway round. The winter package uses the final order of the season.
    The gain of every successful upgrade is multiplied by 1 + k x (allowance - average), so the league average stays the same.
    Gated by S.atr (Pro careers; new careers at once, older saves from the next season). No random numbers. */
-var ATR = { v: 1, top: 0.70, bot: 1.15, k: 1.5 };   /* k tuned in 12 careers x 20 seasons: 1 -> 14%, 1.25 -> 19%, 1.5 -> 27%, 2 -> 28% of bottom-half teams reach the top 3 within 5 seasons */
+var ATR = { v: 1, top: 0.70, bot: 1.15, k: 2 };   /* k tuned in 12 careers x 20 seasons with the package cap: 1.5 -> 15%, 2 -> 28%, 2.5 -> 26% of bottom-half teams reach the top 3 within 5 seasons */
 function atrOn(S, season) { return !!(S && S.mode === 'pro' && S.atr && S.atr.v >= 1 && (season != null ? season : S.season) >= S.atr.from && S.teams && S.teams[0] && !S.teams[0].spec); }
 function atrMigrate(S) { if (!S || S.mode !== 'pro' || S.atr || !S.teams) return; S.atr = { v: ATR.v, from: (S.round || 0) === 0 ? S.season : S.season + 1 }; }
 function atrPctAt(S, p) { var n = S.teams.length; return ATR.top + (ATR.bot - ATR.top) * (p - 1) / Math.max(1, n - 1); }
@@ -17348,4 +17350,14 @@ function atrStripHTML(S, t) {
   if (typeof tgWorkshop === 'function') { var w0 = tgWorkshop; tgWorkshop = function (t) { var h = w0.apply(this, arguments), box = atrStripHTML(S, t); if (!box) return h; var k = h.indexOf('<div class="tg-rd">'); return k >= 0 ? h.slice(0, k) + box + h.slice(k) : h; }; }
 })();
 function atrPackLine(S, t) { var o = atrOrder(S); return 'Wind tunnel allowance (ATR): ' + atrTxt(S, t) + ' as P' + (o.pos[t.id] || 5) + ' (' + (o.per === 1 ? 'from last season\'s final order' : 'from the mid-season order') + '), upgrade gains x' + atrMul(S, t).toFixed(2); }
+
+/* Soft cap on one package (2.6.9). Catch-up, diminishing returns and the wider luck of a back marker multiplied together could give
+   +25 to +36 in one in-season upgrade (1 in 100 packages, seen as aero 56 -> 93 at once). Gains up to the knee are unchanged, above it they
+   bend towards the cap. Winter packages (the next car) have their own, higher limits. Same gate as the allowance. */
+var DEVCAP = { knee: 8, cap: 14, wKnee: 20, wCap: 30 };
+function devCap(S, g, winter) {
+  if (!atrOn(S, winter ? S.season + 1 : null)) return g;
+  var k = winter ? DEVCAP.wKnee : DEVCAP.knee, c = winter ? DEVCAP.wCap : DEVCAP.cap;
+  return g <= k ? g : k + (c - k) * Math.tanh((g - k) / (c - k));
+}
 </script>
