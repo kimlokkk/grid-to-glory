@@ -120,3 +120,24 @@ if (typeof A !== 'undefined') A['pu-pick'] = function (x) { S.puPick = { s: S.se
   if (typeof vQuali === 'function') { var q0 = vQuali; vQuali = function () { var h = q0.apply(this, arguments); return h.replace('<div class="qv-side">', '<div class="qv-side">' + puCardHTML()); }; }
   if (typeof vStrat === 'function') { var s0 = vStrat; vStrat = function () { var h = s0.apply(this, arguments), R = UI.wk && UI.wk.R, P = R && R.puPens || []; if (!P.length) return h; var box = '<section class="pu-pens"><small>Stewards · grid penalties</small>' + P.map(function (p) { return '<p><b>' + esc(p.n) + '</b><em>−' + p.places + ' places</em><span>power unit ' + p.unit + '</span></p>'; }).join('') + '</section>'; var k = h.indexOf('<div class="qv-main">'); return k >= 0 ? h.slice(0, k + 21) + box + h.slice(k + 21) : h.replace('<div class="stack">', '<div class="stack">' + box); }; }
 })();
+
+/* ---------- team view: both drivers' units (Team tab and the team dossier) ---------- */
+function puMiniGauge(u) {
+  var w = u.w, h = clamp(1 - w, 0, 1), r = 13, C = 2 * Math.PI * r, tone = u.f ? '#ff5a4f' : w >= 1 ? '#ff5a4f' : w >= 0.7 ? '#ffb020' : '#33d6a6';
+  return '<svg class="pu-mg" viewBox="0 0 34 34" aria-label="' + (u.f ? 'Failed' : Math.round(w * 100) + '% worn') + '"><circle cx="17" cy="17" r="' + r + '" fill="none" stroke="#ffffff1a" stroke-width="4"/>' + (u.f ? '<path d="M11 11 L23 23 M23 11 L11 23" stroke="#ff5a4f" stroke-width="3" stroke-linecap="round"/>' : '<circle cx="17" cy="17" r="' + r + '" fill="none" stroke="' + tone + '" stroke-width="4" stroke-linecap="round" stroke-dasharray="' + (C * h).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 17 17)"/><text x="17" y="21" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">' + Math.round(h * 100) + '</text>') + '</svg>';
+}
+function puTeamHTML(t) {
+  if (!S || !puOn(S) || !t || t.spec) return '';
+  var ds = S.drivers.filter(function (d) { return d.team === t.id; });
+  var rows = ds.map(function (d) {
+    var P = puPool(S, d), dots = ''; for (var k = 0; k < PU.units; k++) dots += '<i class="' + (k < P.units.length ? (P.units[k].f ? 'dead' : 'used') : '') + '"></i>';
+    var units = P.units.length ? P.units.map(function (u, i) { return '<span class="pu-mu"><small>PU' + (i + 1) + '</small>' + puMiniGauge(u) + '</span>'; }).join('') : '<em class="pu-none">No unit fitted yet</em>';
+    return '<div class="pu-drow"><div class="pu-dn"><b>' + esc(d.name) + (d === S.drivers[S.pi] ? ' <i>YOU</i>' : '') + '</b><span class="pu-alloc"><span>' + dots + '</span></span><small>' + P.units.length + '/' + PU.units + ' used' + (P.pens ? ' · <b class="bad">' + P.pens + ' penalt' + (P.pens === 1 ? 'y' : 'ies') + '</b>' : '') + '</small></div><div class="pu-mus">' + units + '</div></div>';
+  }).join('');
+  return '<section class="pu-bay pu-team" style="--tc:' + t.color + '"><header><div><small>Power units · season ' + S.season + '</small><h3>Engine health</h3></div><div class="pu-life"><b>' + puLife(t).toFixed(1) + '</b><small>RACES A UNIT</small></div></header>' + rows +
+    '<p class="pu-foot">Reliability ' + Math.round(t.car.rel) + ' sets how long a unit lasts · beyond ' + PU.units + ' units: −' + PU.pen + ' grid</p></section>';
+}
+(function () {
+  if (typeof hTeam === 'function') { var t0 = hTeam; hTeam = function () { var h = t0.apply(this, arguments), t = typeof myTeam === 'function' ? myTeam() : null, box = puTeamHTML(t); if (!box) return h; var k = h.indexOf('<div class="team-development tg-col">'); return k >= 0 ? h.slice(0, k) + box + h.slice(k) : h; }; }
+  if (typeof pdTeamHTML === 'function') { var d0 = pdTeamHTML; pdTeamHTML = function (r) { var h = d0.apply(this, arguments); if (!h || PD42.tab !== 'performance' || r.league !== leagueOf(S)) return h; var t = S.teams[r.index], box = puTeamHTML(t); if (!box) return h; var k = h.lastIndexOf('</div></div>'); return k >= 0 ? h.slice(0, k) + '<div class="pd-span">' + box + '</div>' + h.slice(k) : h + box; }; }
+})();

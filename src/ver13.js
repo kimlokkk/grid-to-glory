@@ -7,7 +7,9 @@ var CHANGELOG = [
     "Reliability decides how long a unit lasts (about 5.5 races at reliability 75) and how often it breaks. In testing, teams with reliability under 70 took a penalty in half of their seasons, teams above 80 in about 1 in 20. Overall failure rates stay about as before.",
     "Car pace is now shown apart from reliability: Team HQ, the car pace ladder, contract offers, the Paddock and the Story pack rank cars on aero, engine and chassis, with reliability listed on its own.",
     "Existing careers: a save with no race played this season switches at once, otherwise from the next season. Story pack: your power units, the unit you ran each race and every grid penalty.",
-    "The power unit choice is a Power unit bay on the qualifying page: one tile per unit with a health gauge, the pace it will cost by the flag at this track, the engineer's pick and your season allocation; grid penalties show as a stewards' panel on the strategy page."
+    "The power unit choice is a Power unit bay on the qualifying page: one tile per unit with a health gauge, the pace it will cost by the flag at this track, the engineer's pick and your season allocation; grid penalties show as a stewards' panel on the strategy page.",
+    "Engine health on the Team tab and in every team's Paddock dossier (Performance): both drivers' units with health gauges, failures, units used and penalties.",
+    "The strategy page now opens with a Track profile: the circuit's character, tyre wear, overtaking, engine importance and rain with level bars, a race plan tip and the track's history in your series. The circuit guide uses the same wording as the chips everywhere."
   ] },
   { v: '2.6.8', d: 'Training XP clarity (test build)', date: '25 Nov 2026', l: [
     "Pro careers: training sessions that use XP (Simulator, Racecraft, Wet, Technical) buy a skill point automatically each weekend when you can afford one. This was easy to miss and made XP look like it was not adding up. It is now shown on the weekend Focus card and in Driver, Training.",
