@@ -1,15 +1,13 @@
 # Changelog
 
-## 2.6.9 — 28 November 2026 (power units, reliability shown apart)
+Note: the training XP clarity build (Keep my XP setting) was tested on the dev branch only and closed on 28 November 2026; it is not part of any release.
+
+## 2.6.8 — 28 November 2026 (power units, reliability shown apart)
 
 - `src/pu50.js`: pool of 4 units per driver per season (`S.pu.d[uid]`), planner `puPlan` (least worn at pw >= 0.55, most worn healthy at pw <= 0.4, fit a free unit at power tracks when only used ones are left, no unit past 115%), `puBefore` in `makeRace2` (choice, 10-place drop capped at 15), `puAttach`, pace `puLoss` in `paceFree` (race only), failure `puFail` in `incidents`, `puCommit` in `finishRace` (idempotent per round, DNF counts half, mechanical failure marks the unit). Player choice on the qualifying page (`pu-pick`), penalties on the strategy page, news, story pack. Gate `S.pu` (round 0 now, else next season).
 - Measured (8 seeds x 3 seasons, 10,560 car-races): penalties per season by reliability under 70: 0.57 (50% of seasons), 70-79: 0.15, 80-89: 0.06, 90+: 0.05; mechanical failures 0.047 per car-race (0.043 without units); end-of-race pace cost mean 0.08 s, 90th percentile 0.24 s.
 - `teamPace` / `teamPaceRank` / `teamRelRank` for screens (Team HQ, pace ladder, offers, Paddock sort, outlook, story pack); AI keeps `teamPower`.
 - Test: `qa/pu.js`.
-
-## 2.6.8 — 25 November 2026 (training XP clarity, dev branch only)
-
-- Training shows what XP it spends (Focus card and Driver, Training) and has an XP use setting: Buy skills with XP (default, old behaviour) or Keep my XP. Held on the dev branch for testing; not on main.
 
 ## 2.6.7 — 25 November 2026 (story pack track fix)
 
